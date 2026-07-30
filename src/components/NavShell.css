@@ -1,0 +1,20 @@
+.nav-shell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1F3864;
+  padding: 16px 32px;
+}
+
+.nav-logo {
+  color: #FFFFFF;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.nav-page-title {
+  color: #B8860B;
+  font-size: 15px;
+  font-weight: 500;
+}
