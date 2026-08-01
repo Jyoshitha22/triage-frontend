@@ -1,0 +1,44 @@
+/* Login.css */
+ 
+.page-container {
+  max-width: 500px;   /* narrower than hospital form — this is a simple single-field screen */
+  margin: 60px auto;  /* pushes it toward the vertical center of the page */
+  padding: 0 16px;
+}
+ 
+.form-label {
+  display: block;
+  margin-top: 14px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1A1A1A;
+}
+ 
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  margin-bottom: 16px;
+}
+ 
+.form-input:focus {
+  outline: none;
+  border-color: #1F3864;
+}
+ 
+/* "Resend OTP" — styled like a text link, not a button, since it's a
+   secondary action the user only needs occasionally */
+.link-btn {
+  display: block;
+  margin-top: 14px;
+  background: none;
+  border: none;
+  color: #1F3864;
+  text-decoration: underline;
+  font-size: 13px;
+  cursor: pointer;
+}
