@@ -5,12 +5,14 @@
 // I switch modes" problem entirely).
  
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import NavShell from "../components/NavShell";
 import Card from "../components/Card";
 import Button from "../components/Button";
 import "./BasicDetails.css";
  
 function BasicDetails() {
+    const navigate = useNavigate();
   // "mode" starts as null — nothing chosen yet. Once the user taps
   // "Type it" or "Speak it", this becomes "form" or "voice" and stays
   // that way for the rest of this screen.
@@ -86,6 +88,8 @@ function BasicDetails() {
       console.log("Details submitted (voice):", { audioUrl });
       alert("Details saved (mock) — via voice recording.");
     }
+    // Go to the Symptom Recording page
+  navigate("/symptoms");
   };
  
   return (

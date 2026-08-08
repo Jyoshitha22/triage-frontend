@@ -5,12 +5,14 @@
 // connected to a real backend.
  
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import NavShell from "../components/NavShell";
 import Card from "../components/Card";
 import Button from "../components/Button";
-import "./Login.css";
+import "./login.css";
  
 function Login() {
+      const navigate = useNavigate();
   // "step" controls which part of the screen shows: entering the phone
   // number first, then the OTP box after. Using a single string instead
   // of two booleans (like showPhone/showOtp) keeps it simple — there's
@@ -19,7 +21,6 @@ function Login() {
  
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
- 
   // Runs when "Send OTP" is clicked.
   const handleSendOtp = (e) => {
     e.preventDefault(); // stop the form from refreshing the page
@@ -47,9 +48,7 @@ function Login() {
       alert("Please enter the 6-digit OTP.");
       return;
     }
- 
-    console.log("Mock OTP verified:", otp);
-    alert("Login successful (mock) — next screen would be Basic Details.");
+    navigate("/basic-details");
   };
  
   // Lets the user request a new OTP without retyping their phone number.

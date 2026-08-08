@@ -1,31 +1,18 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import HospitalRegistration from "./pages/HospitalRegistration";
+import Login from "./pages/login";
+import BasicDetails from "./pages/BasicDetails";
 import SymptomRecording from "./pages/SymptomRecording";
+
+import "./theme/typography.css";
 
 function App() {
   return (
     <BrowserRouter>
-      <nav>
-        <Link to="/hospital-registration">
-          Hospital Registration
-        </Link>
-
-        <Link to="/symptom-recording">
-          Symptom Recording
-        </Link>
-      </nav>
-
       <Routes>
-        <Route
-          path="/hospital-registration"
-          element={<HospitalRegistration />}
-        />
-
-        <Route
-          path="/symptom-recording"
-          element={<SymptomRecording />}
-        />
+        <Route path="/" element={<Login />} />
+        <Route path="/basic-details" element={<BasicDetails />} />
+        <Route path="/symptoms" element={<SymptomRecording />} />
       </Routes>
     </BrowserRouter>
   );
