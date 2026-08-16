@@ -1,24 +1,45 @@
-/* SymptomRecording.css */
- 
-.page-container {
-  max-width: 500px;
-  margin: 60px auto;
-  padding: 0 16px;
+.symptom-recording { width: 100%; max-width: 512px; }
+.symptom-recording__title { text-align: center; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
+@media (min-width: 640px) { .symptom-recording__title { font-size: 30px; } }
+.symptom-recording__subtitle { margin-top: 8px; text-align: center; font-size: 14px; color: var(--color-slate); }
+
+.symptom-recording__card { margin-top: 32px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+
+.symptom-recording__mic {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 112px; height: 112px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--color-navy); box-shadow: 0 10px 30px -8px rgba(14,107,71,0.5);
+  transition: all 0.3s;
 }
- 
-.voice-controls {
-  margin: 20px 0;
-  display: flex;
-  justify-content: center;
+.symptom-recording__mic--active { background: var(--color-gold); box-shadow: 0 0 0 12px rgba(16,185,129,0.12); }
+.symptom-recording__mic-icon { color: var(--color-gold-glow); }
+.symptom-recording__mic-icon-stop { color: white; fill: white; }
+
+.symptom-recording__timer { margin-top: 16px; font-family: var(--font-mono); font-size: 14px; color: var(--color-slate); }
+.symptom-recording__wave { margin-top: 24px; }
+
+.symptom-recording__transcript-area { width: 100%; text-align: left; }
+.symptom-recording__transcript { border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); background: var(--color-mist); padding: 16px; }
+.symptom-recording__transcript p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-navy); }
+
+.symptom-recording__sending { margin-top: 20px; }
+.symptom-recording__progress-track { height: 4px; width: 100%; overflow: hidden; border-radius: var(--radius-full); background: rgba(14,107,71,0.1); }
+.symptom-recording__progress-fill { height: 100%; border-radius: var(--radius-full); background: var(--color-gold); animation: sr-shrink 2200ms linear forwards; }
+@keyframes sr-shrink { from { width: 100%; } to { width: 0%; } }
+.symptom-recording__add-more { margin-top: 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-gold); }
+.symptom-recording__add-more:hover { color: var(--color-navy); }
+
+.qa-bubble { margin-top: 16px; border-radius: var(--radius-lg); background: rgba(14,107,71,0.05); padding: 16px; }
+.qa-bubble__q { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: rgba(14,107,71,0.6); }
+.qa-bubble__a { margin: 4px 0 0; font-size: 14px; color: var(--color-navy); }
+
+.followup { margin-top: 16px; border-radius: var(--radius-lg); background: rgba(16,185,129,0.1); padding: 16px; }
+.followup__q { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 14px; font-weight: 500; color: var(--color-navy); }
+.followup__q-icon { margin-top: 2px; flex-shrink: 0; color: var(--color-gold); }
+.followup__mic {
+  margin-top: 12px; display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--color-navy); color: var(--color-gold-glow); box-shadow: 0 8px 20px -8px rgba(14,107,71,0.5);
 }
- 
-.playback-row {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
- 
-.audio-player {
-  width: 100%;
-}
+.followup__mic--active { background: var(--color-gold); color: var(--color-navy); box-shadow: 0 0 0 8px rgba(16,185,129,0.15); }
+.followup__answer { margin-top: 8px; font-size: 14px; color: var(--color-navy); }

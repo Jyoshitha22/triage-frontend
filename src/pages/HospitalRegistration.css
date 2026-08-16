@@ -1,48 +1,21 @@
-.page-container {
-  max-width: 700px;
-  margin: 32px auto;
-  padding: 0 16px;
-}
+.hospital-registration { margin: 0 auto; width: 100%; max-width: 576px; }
+.hospital-registration__header { display: flex; align-items: center; gap: 12px; }
+.hospital-registration__icon-badge { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(14,107,71,0.1); color: var(--color-navy); flex-shrink: 0; }
+.hospital-registration__title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
+.hospital-registration__lede { margin: 2px 0 0; font-size: 14px; color: var(--color-slate); }
 
-.form-label {
-  display: block;
-  margin-top: 14px;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1A1A1A;
-}
+.hospital-registration__card { margin-top: 24px; }
+.hospital-registration__grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+@media (min-width: 640px) { .hospital-registration__grid { grid-template-columns: 1fr 1fr; } }
+.hospital-registration__span2 { grid-column: 1 / -1; }
 
-.form-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: 'Inter', sans-serif;
+.hospital-registration__field-label { margin-bottom: 8px; display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.hospital-registration__input, .hospital-registration__textarea {
+  width: 100%; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15);
+  background: var(--color-mist); padding: 12px 16px; font-size: 14px; color: var(--color-navy);
+  font-family: var(--font-body); outline: none;
 }
+.hospital-registration__input:focus, .hospital-registration__textarea:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+.hospital-registration__input::placeholder, .hospital-registration__textarea::placeholder { color: rgba(92,107,100,0.5); }
 
-.form-input:focus {
-  outline: none;
-  border-color: #1F3864;
-}
-
-.specialist-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.form-input-small {
-  max-width: 100px;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  color: #DC2626;
-  font-size: 16px;
-  cursor: pointer;
-  padding: 6px;
-}
+.hospital-registration__footer { margin-top: 32px; display: flex; justify-content: flex-end; }

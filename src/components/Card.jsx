@@ -1,14 +1,10 @@
-import "./Card.css";
+import React from 'react';
+import './Card.css';
 
-function Card({ title, children }) {
+export default function Card({ children, elevated = true, className = '' }) {
   return (
-    <div className="card">
-      {title && <h3 className="card-title">{title}</h3>}
-      <div className="card-body">
-        {children}
-      </div>
+    <div className={`card ${elevated ? 'card--elevated' : ''} ${className}`}>
+      {children}
     </div>
   );
 }
-
-export default Card;

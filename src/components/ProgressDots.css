@@ -1,0 +1,30 @@
+.progress-dots {
+  display: none;
+  align-items: center;
+}
+@media (min-width: 640px) { .progress-dots { display: flex; } }
+
+.progress-dots__item { display: flex; align-items: center; }
+.progress-dots__node { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+
+.progress-dots__circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--color-slate-200);
+  color: var(--color-slate);
+  transition: background-color 0.2s;
+}
+.progress-dots__circle--done { background: var(--color-navy); color: var(--color-gold-glow); }
+.progress-dots__circle--current { background: var(--color-gold); color: var(--color-navy); }
+
+.progress-dots__label { font-size: 11px; font-weight: 500; color: rgba(92, 107, 100, 0.7); }
+.progress-dots__label--current { color: var(--color-navy); }
+
+.progress-dots__line { width: 32px; height: 1px; margin: 0 8px; background: var(--color-slate-200); }
+.progress-dots__line--done { background: var(--color-navy); }

@@ -1,0 +1,29 @@
+.doctor-reply { width: 100%; max-width: 512px; }
+.doctor-reply__title { text-align: center; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
+@media (min-width: 640px) { .doctor-reply__title { font-size: 30px; } }
+
+.doctor-reply__card { margin-top: 32px; }
+.doctor-reply__header { display: flex; align-items: center; gap: 16px; }
+.doctor-reply__avatar { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: var(--color-navy); font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--color-gold-glow); flex-shrink: 0; }
+.doctor-reply__name { margin: 0; font-weight: 600; color: var(--color-navy); }
+.doctor-reply__specialty { margin: 2px 0 0; font-size: 14px; color: var(--color-slate); }
+.doctor-reply__check { margin-left: auto; color: rgba(14,107,71,0.6); flex-shrink: 0; }
+
+.doctor-reply__player {
+  margin-top: 24px; width: 100%; display: flex; align-items: center; gap: 16px;
+  border-radius: var(--radius-lg); background: var(--color-mist); border: none; cursor: pointer;
+  padding: 16px; text-align: left;
+}
+.doctor-reply__play-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--color-navy); color: var(--color-gold-glow); flex-shrink: 0; }
+.doctor-reply__play-icon { transform: translateX(1px); }
+.doctor-reply__player-wave { flex: 1; }
+.doctor-reply__player-time { margin-top: 8px; display: block; font-family: var(--font-mono); font-size: 12px; color: var(--color-slate); }
+
+.doctor-reply__progress-track { margin-top: 8px; height: 4px; width: 100%; overflow: hidden; border-radius: var(--radius-full); background: rgba(14,107,71,0.1); }
+.doctor-reply__progress-fill { height: 100%; border-radius: var(--radius-full); background: var(--color-gold); transition: width 1s linear; }
+
+.doctor-reply__note { margin-top: 24px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); padding: 16px; }
+.doctor-reply__note-label { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.doctor-reply__note-text { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--color-navy); }
+
+.doctor-reply__actions { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }

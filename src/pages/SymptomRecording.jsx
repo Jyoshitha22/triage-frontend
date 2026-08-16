@@ -1,180 +1,151 @@
-// SymptomRecording.jsx
-// After basic details, the patient records their symptom by voice.
-// If the system needs more info, it asks ONE follow-up question
-// (e.g. "since how many days?") which the patient also answers by voice.
-// Both recordings are captured here and handed off (mock) for triage.
- 
-import { useState, useRef } from "react";
-import NavShell from "../components/NavShell";
-import Card from "../components/Card";
-import Button from "../components/Button";
-import "./SymptomRecording.css";
- 
-function SymptomRecording() {
-  // "stage" moves the screen through: recording the main symptom,
-  // then the follow-up question, then done. Same pattern as a step
-  // tracker — only one stage is ever shown at a time.
-  const [stage, setStage] = useState("symptom"); // "symptom" | "followup" | "done"
- 
-  // ---- Main symptom recording ----
-  const [isRecording, setIsRecording] = useState(false);
-  const [symptomAudioUrl, setSymptomAudioUrl] = useState(null);
- 
-  // ---- Follow-up recording ----
-  const [isRecordingFollowup, setIsRecordingFollowup] = useState(false);
-  const [followupAudioUrl, setFollowupAudioUrl] = useState(null);
- 
-  // Refs hold the actual MediaRecorder + audio data — same approach
-  // as BasicDetails.jsx, kept separate here since there are two
-  // different recordings happening on this one screen.
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
- 
-  // Generic recording starter — works for either the symptom or the
-  // follow-up recording, decided by which "onDone" callback is passed in.
-  const startRecording = async (onDone, setRecordingFlag) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
- 
-      recorder.ondataavailable = (e) => audioChunksRef.current.push(e.data);
- 
-      recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        const url = URL.createObjectURL(blob);
-        onDone(url); // saves the URL into whichever state was passed in
-      };
- 
-      recorder.start();
-      setRecordingFlag(true);
-    } catch (err) {
-      alert("Couldn't access the microphone. Please allow mic permission and try again.");
-      console.error(err);
-    }
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Mic, Square, Volume2 } from 'lucide-react';
+import NavShell from '../components/NavShell';
+import Card from '../components/Card';
+import Waveform from '../components/Waveform';
+import './SymptomRecording.css';
+
+const MAIN_TRANSCRIPT = "I've had a headache and mild fever since yesterday evening. It gets worse in the afternoon.";
+const FOLLOWUPS = [
+  { q: 'Since how many days has this been going on?', sample: 'Since yesterday evening, so about a day.' },
+  { q: 'Have you taken any medicine for it?', sample: "I took a paracetamol this morning, but it hasn't helped much." },
+];
+const SEND_DELAY_MS = 2200;
+
+/**
+ * The mic is ~90% of this screen on purpose. Once the main symptom is
+ * captured, follow-up questions appear one at a time and each answer
+ * auto-advances to the next — no button to find and tap in between.
+ */
+export default function SymptomRecording() {
+  const navigate = useNavigate();
+  const [mainStatus, setMainStatus] = useState('idle');
+  const [seconds, setSeconds] = useState(0);
+  const [transcript, setTranscript] = useState('');
+  const [followupIndex, setFollowupIndex] = useState(-1);
+  const [answeredLog, setAnsweredLog] = useState([]);
+  const [sending, setSending] = useState(false);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (mainStatus === 'recording') timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    else clearInterval(timerRef.current);
+    return () => clearInterval(timerRef.current);
+  }, [mainStatus]);
+
+  useEffect(() => {
+    if (mainStatus !== 'typing') return;
+    let i = 0;
+    const t = setInterval(() => {
+      setTranscript(MAIN_TRANSCRIPT.slice(0, i));
+      i++;
+      if (i > MAIN_TRANSCRIPT.length) { clearInterval(t); setMainStatus('done'); setFollowupIndex(0); }
+    }, 18);
+    return () => clearInterval(t);
+  }, [mainStatus]);
+
+  useEffect(() => {
+    if (followupIndex !== FOLLOWUPS.length || mainStatus !== 'done') return;
+    setSending(true);
+    const t = setTimeout(() => navigate('/waiting', { state: { transcript, followUps: answeredLog } }), SEND_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [followupIndex, mainStatus]); // eslint-disable-line
+
+  const toggleMain = () => {
+    if (mainStatus === 'recording') setMainStatus('typing');
+    else { setSeconds(0); setTranscript(''); setMainStatus('recording'); }
   };
- 
-  const stopRecording = (setRecordingFlag) => {
-    mediaRecorderRef.current.stop();
-    setRecordingFlag(false);
-  };
- 
-  // Once the symptom is recorded and confirmed, move to the follow-up stage.
-  const handleContinueToFollowup = () => {
-    setStage("followup");
-  };
- 
-  // Once the follow-up is recorded, this is where — in the real system —
-  // the audio would be sent for transcription + triage classification.
-  // For now, we just log it and mark this screen as done.
-  const handleSubmitAll = () => {
-    console.log("Symptom recording:", symptomAudioUrl);
-    console.log("Follow-up recording:", followupAudioUrl);
-    setStage("done");
-  };
- 
+
+  const restart = () => { setMainStatus('idle'); setTranscript(''); setFollowupIndex(-1); setAnsweredLog([]); setSending(false); };
+
+  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const ss = String(seconds % 60).padStart(2, '0');
+  const inFollowups = mainStatus === 'done' && followupIndex >= 0 && followupIndex < FOLLOWUPS.length;
+
   return (
-    <div>
-      <NavShell pageTitle="Describe Your Symptoms" />
- 
-      <div className="page-container">
- 
-        {/* Stage 1: record the main symptom */}
-        {stage === "symptom" && (
-          <Card title="Tell us what's wrong">
-            <p className="text-small">
-              Tap the mic and describe your symptom, e.g. "I have a headache and fever since yesterday."
-            </p>
- 
-            <div className="voice-controls">
-              {!isRecording && !symptomAudioUrl && (
-                <Button
-                  variant="primary"
-                  onClick={() => startRecording(setSymptomAudioUrl, setIsRecording)}
-                >
-                  🎤 Start Recording
-                </Button>
+    <NavShell step={3} onBack={() => navigate('/basic-details')}>
+      <div className="symptom-recording">
+        <h1 className="symptom-recording__title">
+          {mainStatus === 'idle' || mainStatus === 'recording' ? "Describe what you're feeling" : inFollowups ? 'Just a couple more things' : 'Got it — sending to your doctor'}
+        </h1>
+        {(mainStatus === 'idle' || mainStatus === 'recording') && (
+          <p className="symptom-recording__subtitle">Speak naturally, in your own words.</p>
+        )}
+
+        <Card className="symptom-recording__card">
+          {(mainStatus === 'idle' || mainStatus === 'recording') && (
+            <>
+              <button onClick={toggleMain} className={`symptom-recording__mic ${mainStatus === 'recording' ? 'symptom-recording__mic--active' : ''}`}>
+                {mainStatus === 'recording' ? <Square size={32} className="symptom-recording__mic-icon-stop" /> : <Mic size={36} className="symptom-recording__mic-icon" />}
+              </button>
+              <p className="symptom-recording__timer">{mainStatus === 'recording' ? `${mm}:${ss} · recording` : 'Tap to speak'}</p>
+              <Waveform mode={mainStatus === 'recording' ? 'recording' : 'idle'} className="symptom-recording__wave" />
+            </>
+          )}
+
+          {mainStatus !== 'idle' && mainStatus !== 'recording' && (
+            <div className="symptom-recording__transcript-area">
+              <div className="symptom-recording__transcript"><p>{transcript}</p></div>
+
+              {answeredLog.map((item, idx) => <QABubble key={idx} q={item.q} a={item.a} />)}
+
+              {inFollowups && (
+                <FollowUpQA
+                  key={followupIndex}
+                  question={FOLLOWUPS[followupIndex].q}
+                  sample={FOLLOWUPS[followupIndex].sample}
+                  onDone={(answer) => {
+                    setAnsweredLog((log) => [...log, { q: FOLLOWUPS[followupIndex].q, a: answer }]);
+                    setFollowupIndex((idx) => idx + 1);
+                  }}
+                />
               )}
- 
-              {isRecording && (
-                <Button variant="primary" onClick={() => stopRecording(setIsRecording)}>
-                  ⏹ Stop Recording
-                </Button>
-              )}
- 
-              {symptomAudioUrl && !isRecording && (
-                <div className="playback-row">
-                  <audio controls src={symptomAudioUrl} className="audio-player" />
-                  <Button variant="secondary" onClick={() => setSymptomAudioUrl(null)}>
-                    🔁 Redo
-                  </Button>
+
+              {sending && (
+                <div className="symptom-recording__sending">
+                  <div className="symptom-recording__progress-track"><div className="symptom-recording__progress-fill" /></div>
+                  <button onClick={restart} className="symptom-recording__add-more">Wait, let me add more</button>
                 </div>
               )}
             </div>
- 
-            {symptomAudioUrl && (
-              <Button variant="primary" onClick={handleContinueToFollowup}>
-                Continue
-              </Button>
-            )}
-          </Card>
-        )}
- 
-        {/* Stage 2: one follow-up question */}
-        {stage === "followup" && (
-          <Card title="One quick follow-up">
-            <p className="text-small">Since how many days have you had this symptom?</p>
- 
-            <div className="voice-controls">
-              {!isRecordingFollowup && !followupAudioUrl && (
-                <Button
-                  variant="primary"
-                  onClick={() => startRecording(setFollowupAudioUrl, setIsRecordingFollowup)}
-                >
-                  🎤 Start Recording
-                </Button>
-              )}
- 
-              {isRecordingFollowup && (
-                <Button variant="primary" onClick={() => stopRecording(setIsRecordingFollowup)}>
-                  ⏹ Stop Recording
-                </Button>
-              )}
- 
-              {followupAudioUrl && !isRecordingFollowup && (
-                <div className="playback-row">
-                  <audio controls src={followupAudioUrl} className="audio-player" />
-                  <Button variant="secondary" onClick={() => setFollowupAudioUrl(null)}>
-                    🔁 Redo
-                  </Button>
-                </div>
-              )}
-            </div>
- 
-            {followupAudioUrl && (
-              <Button variant="primary" onClick={handleSubmitAll}>
-                Submit
-              </Button>
-            )}
-          </Card>
-        )}
- 
-        {/* Stage 3: confirmation — in the real app, this is where the
-            screen would move on to TriageResult once the backend
-            responds with a classification */}
-        {stage === "done" && (
-          <Card title="Got it!">
-            <p>
-              Your symptoms have been recorded. We're figuring out the best
-              doctor for you — this usually takes a moment.
-            </p>
-          </Card>
-        )}
- 
+          )}
+        </Card>
       </div>
+    </NavShell>
+  );
+}
+
+function QABubble({ q, a }) {
+  return (
+    <div className="qa-bubble">
+      <p className="qa-bubble__q"><Volume2 size={14} /> {q}</p>
+      <p className="qa-bubble__a">{a}</p>
     </div>
   );
 }
- 
-export default SymptomRecording;
+
+function FollowUpQA({ question, sample, onDone }) {
+  const [stage, setStage] = useState('idle');
+  const [answer, setAnswer] = useState('');
+
+  useEffect(() => {
+    if (stage !== 'typing') return;
+    let i = 0;
+    const t = setInterval(() => {
+      setAnswer(sample.slice(0, i));
+      i++;
+      if (i > sample.length) { clearInterval(t); setTimeout(() => onDone(sample), 700); }
+    }, 16);
+    return () => clearInterval(t);
+  }, [stage]); // eslint-disable-line
+
+  return (
+    <div className="followup">
+      <p className="followup__q"><Volume2 size={16} className="followup__q-icon" /> {question}</p>
+      {stage === 'idle' && <button onClick={() => setStage('recording')} className="followup__mic"><Mic size={16} /></button>}
+      {stage === 'recording' && <button onClick={() => setStage('typing')} className="followup__mic followup__mic--active"><Square size={16} /></button>}
+      {stage === 'typing' && <p className="followup__answer">{answer}</p>}
+    </div>
+  );
+}

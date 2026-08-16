@@ -1,0 +1,57 @@
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 40px;
+  width: 100%;
+}
+
+.waveform__bar {
+  width: 3px;
+  border-radius: var(--radius-full);
+  background: var(--color-slate-200);
+}
+.waveform__bar--recording {
+  background: linear-gradient(to top, var(--color-navy), var(--color-gold));
+  animation: waveform-pulse 1s ease-in-out infinite;
+}
+.waveform__bar--playback {
+  background: linear-gradient(to top, var(--color-navy), var(--color-gold-glow));
+}
+
+@keyframes waveform-pulse {
+  0%, 100% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+}
+
+.waveform--pulse {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: rgba(14, 107, 71, 0.05);
+}
+.waveform__pulse-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--color-slate-200);
+  transform: translateY(-50%);
+}
+.waveform__pulse-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-gold);
+  box-shadow: 0 0 12px 2px rgba(16, 185, 129, 0.5);
+  transform: translateY(-50%);
+  animation: waveform-travel 2.2s linear infinite;
+}
+
+@keyframes waveform-travel {
+  from { left: -8%; }
+  to { left: 108%; }
+}

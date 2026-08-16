@@ -1,119 +1,59 @@
-import { useState } from "react";
-import NavShell from "../components/NavShell";
-import Card from "../components/Card";
-import Button from "../components/Button";
-import "./HospitalRegistration.css";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Building2, ArrowRight } from 'lucide-react';
+import HospitalShell from '../components/HospitalShell';
+import Card from '../components/Card';
+import Button from '../components/Button';
+import './HospitalRegistration.css';
 
-function HospitalRegistration() {
-  const [hospitalName, setHospitalName] = useState("");
-  const [loginId, setLoginId] = useState("");
-
-  const [specialists, setSpecialists] = useState([
-    { name: "", specialty: "", experience: "" },
-  ]);
-
-  const handleSpecialistChange = (index, field, value) => {
-    const updated = [...specialists];
-    updated[index][field] = value;
-    setSpecialists(updated);
-  };
-
-  const addSpecialist = () => {
-    setSpecialists([...specialists, { name: "", specialty: "", experience: "" }]);
-  };
-
-  const removeSpecialist = (index) => {
-    setSpecialists(specialists.filter((_, i) => i !== index));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Hospital submitted:", { hospitalName, loginId, specialists });
-    alert("Hospital registered (mock) — check the browser console for the data.");
-  };
-
+/**
+ * Admin setup, done once — unlike the patient forms, it's fine to show
+ * the full set of fields at once here.
+ */
+export default function HospitalRegistration() {
+  const navigate = useNavigate();
   return (
-    <div>
-      <NavShell pageTitle="Hospital Registration" />
+    <HospitalShell title="Hospital setup">
+      <div className="hospital-registration">
+        <div className="hospital-registration__header">
+          <span className="hospital-registration__icon-badge"><Building2 size={20} /></span>
+          <div>
+            <h1 className="hospital-registration__title">Hospital details</h1>
+            <p className="hospital-registration__lede">Tell us about your facility.</p>
+          </div>
+        </div>
 
-      <div className="page-container">
-        <form onSubmit={handleSubmit}>
+        <Card className="hospital-registration__card">
+          <div className="hospital-registration__grid">
+            <Field label="Hospital name" placeholder="Sunrise Multi-Specialty Hospital" span2 />
+            <Field label="Registration ID" placeholder="HOSP-2024-00458" />
+            <Field label="Contact number" placeholder="080 4567 8900" />
+            <Field label="City" placeholder="Hyderabad" />
+            <Field label="State" placeholder="Telangana" />
+            <div className="hospital-registration__span2">
+              <FieldLabel>Address</FieldLabel>
+              <textarea rows={3} placeholder="Street, area, PIN code" className="hospital-registration__textarea" />
+            </div>
+          </div>
 
-          <Card title="Hospital Details">
-            <label className="form-label">Hospital Name</label>
-            <input
-              type="text"
-              className="form-input"
-              value={hospitalName}
-              onChange={(e) => setHospitalName(e.target.value)}
-              placeholder="e.g. City Care Hospital"
-              required
-            />
-
-            <label className="form-label">Login (Mobile Number or Email)</label>
-            <input
-              type="text"
-              className="form-input"
-              value={loginId}
-              onChange={(e) => setLoginId(e.target.value)}
-              placeholder="e.g. 9876543210 or admin@hospital.com"
-              required
-            />
-          </Card>
-
-          <Card title="Specialists">
-            {specialists.map((specialist, index) => (
-              <div className="specialist-row" key={index}>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Doctor Name"
-                  value={specialist.name}
-                  onChange={(e) => handleSpecialistChange(index, "name", e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Specialty (e.g. Cardiology)"
-                  value={specialist.specialty}
-                  onChange={(e) => handleSpecialistChange(index, "specialty", e.target.value)}
-                  required
-                />
-                <input
-                  type="number"
-                  className="form-input form-input-small"
-                  placeholder="Yrs Exp"
-                  value={specialist.experience}
-                  onChange={(e) => handleSpecialistChange(index, "experience", e.target.value)}
-                  required
-                />
-
-                {specialists.length > 1 && (
-                  <button
-                    type="button"
-                    className="remove-btn"
-                    onClick={() => removeSpecialist(index)}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            ))}
-
-            <Button variant="secondary" onClick={addSpecialist}>
-              + Add Another Specialist
-            </Button>
-          </Card>
-
-          <Button type="submit" variant="primary">
-            Register Hospital
-          </Button>
-
-        </form>
+          <div className="hospital-registration__footer">
+            <Button onClick={() => navigate('/hospital/specialists')} icon={ArrowRight}>Continue to specialist details</Button>
+          </div>
+        </Card>
       </div>
-    </div>
+    </HospitalShell>
   );
 }
 
-export default HospitalRegistration;
+function FieldLabel({ children }) {
+  return <label className="hospital-registration__field-label">{children}</label>;
+}
+
+function Field({ label, span2, ...props }) {
+  return (
+    <div className={span2 ? 'hospital-registration__span2' : ''}>
+      <FieldLabel>{label}</FieldLabel>
+      <input {...props} className="hospital-registration__input" />
+    </div>
+  );
+}

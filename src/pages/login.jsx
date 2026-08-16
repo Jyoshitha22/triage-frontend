@@ -1,118 +1,91 @@
-// Login.jsx
-// The very first screen a patient sees. They enter their mobile number,
-// get a (mock) OTP, and enter it to "log in". No real SMS is sent yet —
-// this is a frontend-only mock so the flow can be demoed and later
-// connected to a real backend.
- 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import NavShell from "../components/NavShell";
-import Card from "../components/Card";
-import Button from "../components/Button";
-import "./login.css";
- 
-function Login() {
-      const navigate = useNavigate();
-  // "step" controls which part of the screen shows: entering the phone
-  // number first, then the OTP box after. Using a single string instead
-  // of two booleans (like showPhone/showOtp) keeps it simple — there's
-  // only ever one step active at a time.
-  const [step, setStep] = useState("phone"); // "phone" or "otp"
- 
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  // Runs when "Send OTP" is clicked.
-  const handleSendOtp = (e) => {
-    e.preventDefault(); // stop the form from refreshing the page
- 
-    // Basic check: mobile numbers should be 10 digits. This is not
-    // full validation, just a simple guard so the form isn't submitted empty.
-    if (phone.length !== 10) {
-      alert("Please enter a valid 10-digit mobile number.");
-      return;
-    }
- 
-    // Mock: pretend an OTP was sent. In a real app, this is where
-    // we'd call the backend API to actually send an SMS.
-    console.log("Mock OTP sent to:", phone);
-    setStep("otp"); // move to the OTP entry screen
-  };
- 
-  // Runs when "Verify OTP" is clicked.
-  const handleVerifyOtp = (e) => {
-    e.preventDefault();
- 
-    // Mock verification: for now, any 6-digit number is "correct".
-    // Later, this checks against the real OTP sent by the backend.
-    if (otp.length !== 6) {
-      alert("Please enter the 6-digit OTP.");
-      return;
-    }
-    navigate("/basic-details");
-  };
- 
-  // Lets the user request a new OTP without retyping their phone number.
-  const handleResend = () => {
-    console.log("Mock OTP resent to:", phone);
-    alert("OTP resent (mock).");
-  };
- 
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Phone, ShieldCheck, Volume2, Keyboard, Mic } from 'lucide-react';
+import Waveform from '../components/Waveform';
+import VoiceField from '../components/VoiceField';
+import './login.css';
+
+/**
+ * Two small steps — phone, then the OTP that arrives by SMS — each
+ * answerable by typing or by voice. First-time only: once a patient is
+ * recognized, this screen is skipped on their next visit.
+ */
+export default function Login() {
+  const navigate = useNavigate();
+  const [stage, setStage] = useState('phone'); // phone | otp
+  const [inputMode, setInputMode] = useState('type'); // type | voice
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+
+  const prompt = stage === 'phone' ? 'Please tell us your mobile number.' : 'Please tell us the OTP you received.';
+
+  const submitPhone = () => phone && setStage('otp');
+  const submitOtp = () => otp && navigate('/basic-details', { state: { phone, otp } });
+
   return (
-    <div>
-      <NavShell pageTitle="Patient Login" />
- 
-      <div className="page-container">
-        <Card title={step === "phone" ? "Enter Mobile Number" : "Enter OTP"}>
- 
-          {/* Only show the phone number form while step is "phone" */}
-          {step === "phone" && (
-            <form onSubmit={handleSendOtp}>
-              <label className="form-label">Mobile Number</label>
-              <input
-                type="tel"                       // "tel" shows a number-friendly keyboard on mobile
-                className="form-input"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="e.g. 9876543210"
-                maxLength={10}                    // stops the user typing more than 10 digits
-                required
-              />
-              <Button type="submit" variant="primary">
-                Send OTP
-              </Button>
-            </form>
+    <div className="login">
+      <div className="login__panel">
+        <div className="login__hero">
+          <span className="login__blob login__blob--gold" />
+          <span className="login__blob login__blob--glow" />
+
+          <div className="login__hero-copy">
+            <span className="login__eyebrow">Voice-first triage</span>
+            <h1 className="login__headline">Tell us what's wrong.<br />We'll listen.</h1>
+            <p className="login__subcopy">Speak in your own words. A doctor reviews what you share and replies with guidance.</p>
+          </div>
+
+          <div className="login__hero-mic">
+            <span className="login__mic-badge"><Mic size={32} /></span>
+            <div className="login__hero-wave"><Waveform mode="idle" /></div>
+          </div>
+        </div>
+
+        <div className="login__form">
+          <div className="login__form-header">
+            <h2 className="login__title">Welcome</h2>
+            <button onClick={() => setInputMode((m) => (m === 'type' ? 'voice' : 'type'))} className="login__mode-toggle">
+              {inputMode === 'type' ? (<><Mic size={14} /> Use voice instead</>) : (<><Keyboard size={14} /> Type instead</>)}
+            </button>
+          </div>
+
+          {inputMode === 'voice' && (
+            <div className="login__prompt">
+              <Volume2 size={16} className="login__prompt-icon" />
+              <p>{prompt}</p>
+            </div>
           )}
- 
-          {/* Only show the OTP form once step is "otp" */}
-          {step === "otp" && (
-            <form onSubmit={handleVerifyOtp}>
-              <p className="text-small">OTP sent to {phone}</p>
- 
-              <label className="form-label">Enter 6-digit OTP</label>
+
+          <label className="login__label">{stage === 'phone' ? 'Phone number' : `OTP sent to ${phone}`}</label>
+
+          {inputMode === 'voice' ? (
+            stage === 'phone' ? (
+              <VoiceField value={phone} onChange={setPhone} onCaptured={submitPhone} placeholder="98765 43210" type="tel" simulatedValue="98765 43210" />
+            ) : (
+              <VoiceField value={otp} onChange={setOtp} onCaptured={submitOtp} placeholder="4-digit code" type="tel" simulatedValue="4821" />
+            )
+          ) : (
+            <div className="login__input-wrap">
+              <Phone size={16} className="login__input-icon" />
               <input
-                type="text"
-                className="form-input"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                placeholder="e.g. 123456"
-                maxLength={6}
-                required
+                type="tel"
+                value={stage === 'phone' ? phone : otp}
+                onChange={(e) => (stage === 'phone' ? setPhone(e.target.value) : setOtp(e.target.value))}
+                placeholder={stage === 'phone' ? '98765 43210' : '4-digit code'}
+                className="login__input"
               />
-              <Button type="submit" variant="primary">
-                Verify OTP
-              </Button>
- 
-              {/* type="button" so clicking this does NOT submit the form */}
-              <button type="button" className="link-btn" onClick={handleResend}>
-                Resend OTP
-              </button>
-            </form>
+            </div>
           )}
- 
-        </Card>
+
+          {inputMode === 'type' && (
+            <button onClick={stage === 'phone' ? submitPhone : submitOtp} disabled={stage === 'phone' ? !phone : !otp} className="login__submit">
+              {stage === 'phone' ? 'Send OTP' : 'Verify & continue'}
+            </button>
+          )}
+
+          <div className="login__security"><ShieldCheck size={16} /> Your details are stored securely and shared only with your doctor.</div>
+        </div>
       </div>
     </div>
   );
 }
- 
-export default Login;

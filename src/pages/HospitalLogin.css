@@ -1,0 +1,27 @@
+.hospital-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--color-mist); padding: 40px 20px; font-family: var(--font-body); }
+.hospital-login__panel { width: 100%; max-width: 768px; display: grid; grid-template-columns: 1fr; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-hero); }
+@media (min-width: 640px) { .hospital-login__panel { grid-template-columns: 1fr 1fr; } }
+
+.hospital-login__hero { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; background: var(--color-midnight); color: var(--color-mist); padding: 40px 32px; }
+.hospital-login__blob { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; }
+.hospital-login__blob--gold { top: -64px; right: -64px; width: 256px; height: 256px; background: rgba(16,185,129,0.2); }
+.hospital-login__blob--glow { bottom: -96px; left: -64px; width: 256px; height: 256px; background: rgba(232,251,243,0.1); }
+
+.hospital-login__eyebrow { position: relative; font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: 0.2em; color: rgba(232,251,243,0.8); }
+.hospital-login__headline { position: relative; font-family: var(--font-display); font-size: 32px; font-weight: 600; line-height: 1.1; margin-top: 16px; color: var(--color-mist); }
+.hospital-login__subcopy { position: relative; margin-top: 16px; max-width: 280px; font-size: 14px; color: rgba(243,251,247,0.7); }
+
+.hospital-login__hero-mic { position: relative; margin-top: 40px; display: flex; flex-direction: column; align-items: center; }
+.hospital-login__mic-badge { display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: var(--color-gold-glow); }
+.hospital-login__hero-wave { margin-top: 24px; width: 100%; opacity: 0.7; }
+
+.hospital-login__form { display: flex; flex-direction: column; justify-content: center; background: var(--color-white); padding: 40px 32px; }
+.hospital-login__title { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); margin: 0; }
+.hospital-login__lede { margin: 4px 0 0; font-size: 14px; color: var(--color-slate); }
+.hospital-login__label { margin-top: 24px; display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.hospital-login__input-wrap { margin-top: 8px; display: flex; align-items: center; gap: 8px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15); background: var(--color-mist); padding: 12px 16px; }
+.hospital-login__input-wrap:focus-within { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+.hospital-login__input-icon { color: var(--color-slate); flex-shrink: 0; }
+.hospital-login__input { width: 100%; border: none; outline: none; background: transparent; font-size: 14px; color: var(--color-navy); font-family: var(--font-body); }
+.hospital-login__submit { margin-top: 24px; width: 100%; }
+.hospital-login__security { margin-top: 24px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-slate); }

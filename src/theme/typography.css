@@ -1,29 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  /* Colors — keep in sync with theme/color.js */
+  --color-navy: #0E6B47;
+  --color-midnight: #052419;
+  --color-gold: #10B981;
+  --color-gold-glow: #E8FBF3;
+  --color-mist: #F3FBF7;
+  --color-slate: #5C6B64;
+  --color-slate-200: #DCE7E1;
+  --color-white: #FFFFFF;
+
+  /* Urgency colors (hospital patient list) — distinct from brand green */
+  --color-urgent: #EF4444;
+  --color-urgent-bg: #FEF2F2;
+  --color-medium: #F59E0B;
+  --color-medium-bg: #FFFBEB;
+  --color-low: #10B981;
+  --color-low-bg: #ECFDF5;
+
+  /* Fonts */
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Radius */
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 20px 60px -24px rgba(5, 36, 25, 0.28);
+  --shadow-button: 0 8px 24px -8px rgba(14, 107, 71, 0.55);
+  --shadow-hero: 0 30px 80px -30px rgba(5, 36, 25, 0.35);
 }
 
 body {
-  font-family: 'Inter', sans-serif;
-  color: #1A1A1A;
-  background-color: #F2F2F2;
-  line-height: 1.5;
+  margin: 0;
+  background-color: var(--color-mist);
+  font-family: var(--font-body);
+  color: var(--color-navy);
+  -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3 {
-  font-family: 'Poppins', sans-serif;
-  font-weight: 700;
-  color: #1F3864;
+  font-family: var(--font-display);
+  margin: 0;
+  color: var(--color-navy);
 }
 
-h1 { font-size: 28px; }
-h2 { font-size: 22px; }
-h3 { font-size: 18px; }
-
-.text-small {
-  font-size: 13px;
-  color: #6B7280;
+* {
+  box-sizing: border-box;
 }

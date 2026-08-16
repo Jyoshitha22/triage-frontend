@@ -1,15 +1,27 @@
-import "./Button.css";
+import React from 'react';
+import { Loader2 } from 'lucide-react';
+import './Button.css';
 
-function Button({ children, onClick, variant = "primary", type = "button" }) {
+export default function Button({
+  children,
+  variant = 'primary',
+  loading = false,
+  icon: Icon,
+  className = '',
+  ...props
+}) {
   return (
     <button
-      type={type}
-      className={`btn btn-${variant}`}
-      onClick={onClick}
+      className={`btn btn--${variant} ${className}`}
+      disabled={loading || props.disabled}
+      {...props}
     >
+      {loading ? (
+        <Loader2 className="btn__icon btn__icon--spin" size={16} />
+      ) : Icon ? (
+        <Icon className="btn__icon" size={16} />
+      ) : null}
       {children}
     </button>
   );
 }
-
-export default Button;
