@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
@@ -7,12 +7,22 @@ import Button from '../components/Button';
 import Waveform from '../components/Waveform';
 import './DoctorDashboard.css';
 
-export default function DoctorDashboard({ doctorName = 'Dr. Ananya Rao', waitingCount = 6, repliedToday = 14 }) {
+export default function DoctorDashboard({ waitingCount = 6, repliedToday = 14 }) {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  // The signed-in doctor's own name isn't collected anywhere yet (login
+  // only takes email/password) — fall back to the first name on the
+  // roster if one was passed in, otherwise the placeholder used
+  // elsewhere in the mock data.
+  const doctorName = state?.roster?.[0]?.name || 'Dr. Ananya Rao';
+  const hospitalName = state?.hospital?.name;
+
   return (
     <HospitalShell title="Dashboard" doctorName={doctorName} onLogout={() => navigate('/hospital')}>
       <h1 className="doctor-dashboard__title">Good to see you, {doctorName.replace('Dr. ', '')}</h1>
-      <p className="doctor-dashboard__lede">Here's what's waiting for you today.</p>
+      <p className="doctor-dashboard__lede">
+        {hospitalName ? `${hospitalName} — here's what's waiting for you today.` : "Here's what's waiting for you today."}
+      </p>
 
       <div className="doctor-dashboard__stats">
         <Card className="doctor-dashboard__stat-card">

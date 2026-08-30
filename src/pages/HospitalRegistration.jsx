@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, ArrowRight } from 'lucide-react';
+import { Building2, ArrowRight, AlertCircle } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { isRequired, isValidLandlineOrPhone } from '../utils/validators';
 import './HospitalRegistration.css';
+
+const FIELDS = [
+  { key: 'name', label: 'Hospital name', placeholder: 'Sunrise Multi-Specialty Hospital', span2: true, validate: isRequired, error: "Enter your hospital's name." },
+  { key: 'registrationId', label: 'Registration ID', placeholder: 'HOSP-2024-00458', validate: isRequired, error: 'Enter your registration ID.' },
+  { key: 'contact', label: 'Contact number', placeholder: '080 4567 8900', validate: isValidLandlineOrPhone, error: 'Enter a valid contact number (8–12 digits).' },
+  { key: 'city', label: 'City', placeholder: 'Hyderabad', validate: isRequired, error: 'Enter a city.' },
+  { key: 'state', label: 'State', placeholder: 'Telangana', validate: isRequired, error: 'Enter a state.' },
+];
 
 /**
  * Admin setup, done once — unlike the patient forms, it's fine to show
@@ -12,6 +21,19 @@ import './HospitalRegistration.css';
  */
 export default function HospitalRegistration() {
   const navigate = useNavigate();
+  const [values, setValues] = useState({});
+  const [address, setAddress] = useState('');
+  const [attempted, setAttempted] = useState(false);
+
+  const set = (key, v) => setValues((prev) => ({ ...prev, [key]: v }));
+  const errors = FIELDS.filter((f) => !f.validate(values[f.key] || ''));
+  const formValid = errors.length === 0 && isRequired(address);
+
+  const submit = () => {
+    setAttempted(true);
+    if (formValid) navigate('/hospital/specialists', { state: { hospital: { ...values, address } } });
+  };
+
   return (
     <HospitalShell title="Hospital setup">
       <div className="hospital-registration">
@@ -25,19 +47,37 @@ export default function HospitalRegistration() {
 
         <Card className="hospital-registration__card">
           <div className="hospital-registration__grid">
-            <Field label="Hospital name" placeholder="Sunrise Multi-Specialty Hospital" span2 />
-            <Field label="Registration ID" placeholder="HOSP-2024-00458" />
-            <Field label="Contact number" placeholder="080 4567 8900" />
-            <Field label="City" placeholder="Hyderabad" />
-            <Field label="State" placeholder="Telangana" />
+            {FIELDS.map((f) => {
+              const value = values[f.key] || '';
+              const showError = attempted && !f.validate(value);
+              return (
+                <div key={f.key} className={f.span2 ? 'hospital-registration__span2' : ''}>
+                  <FieldLabel>{f.label}</FieldLabel>
+                  <input
+                    value={value}
+                    onChange={(e) => set(f.key, e.target.value)}
+                    placeholder={f.placeholder}
+                    className="hospital-registration__input"
+                  />
+                  {showError && <p className="field-error"><AlertCircle size={12} /> {f.error}</p>}
+                </div>
+              );
+            })}
             <div className="hospital-registration__span2">
               <FieldLabel>Address</FieldLabel>
-              <textarea rows={3} placeholder="Street, area, PIN code" className="hospital-registration__textarea" />
+              <textarea
+                rows={3}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="Street, area, PIN code"
+                className="hospital-registration__textarea"
+              />
+              {attempted && !isRequired(address) && <p className="field-error"><AlertCircle size={12} /> Enter the hospital's address.</p>}
             </div>
           </div>
 
           <div className="hospital-registration__footer">
-            <Button onClick={() => navigate('/hospital/specialists')} icon={ArrowRight}>Continue to specialist details</Button>
+            <Button onClick={submit} icon={ArrowRight}>Continue to specialist details</Button>
           </div>
         </Card>
       </div>
@@ -47,13 +87,4 @@ export default function HospitalRegistration() {
 
 function FieldLabel({ children }) {
   return <label className="hospital-registration__field-label">{children}</label>;
-}
-
-function Field({ label, span2, ...props }) {
-  return (
-    <div className={span2 ? 'hospital-registration__span2' : ''}>
-      <FieldLabel>{label}</FieldLabel>
-      <input {...props} className="hospital-registration__input" />
-    </div>
-  );
 }

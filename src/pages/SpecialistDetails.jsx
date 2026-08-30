@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Plus, X, ArrowRight } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Stethoscope, Plus, X, ArrowRight, AlertCircle } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { isValidName, isValidExperienceYears } from '../utils/validators';
 import './SpecialistDetails.css';
 
 const SPECIALTIES = ['General Physician', 'Cardiologist', 'Dermatologist', 'Pediatrician', 'Gynecologist', 'Dentist', 'Orthopedic', 'Neurologist'];
@@ -15,11 +16,18 @@ const SPECIALTIES = ['General Physician', 'Cardiologist', 'Dermatologist', 'Pedi
  */
 export default function SpecialistDetails() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [roster, setRoster] = useState([{ id: 1, name: 'Dr. Ananya Rao', specialty: 'General Physician', experience: 8 }]);
   const [draft, setDraft] = useState({ name: '', specialty: SPECIALTIES[0], experience: '' });
+  const [error, setError] = useState(null);
+
+  const nameValid = isValidName(draft.name);
+  const experienceValid = isValidExperienceYears(draft.experience);
 
   const addSpecialist = () => {
-    if (!draft.name || !draft.experience) return;
+    if (!nameValid) { setError('Enter a valid doctor name (letters only).'); return; }
+    if (!experienceValid) { setError('Enter valid years of experience (0–60).'); return; }
+    setError(null);
     setRoster((r) => [...r, { id: Date.now(), ...draft, experience: Number(draft.experience) }]);
     setDraft({ name: '', specialty: SPECIALTIES[0], experience: '' });
   };
@@ -61,6 +69,7 @@ export default function SpecialistDetails() {
             </div>
             <button onClick={addSpecialist} className="specialist-details__add-btn"><Plus size={16} /> Add</button>
           </div>
+          {error && <p className="field-error"><AlertCircle size={12} /> {error}</p>}
 
           <div className="specialist-details__roster">
             {roster.map((d) => (
@@ -78,7 +87,7 @@ export default function SpecialistDetails() {
 
           <div className="specialist-details__footer">
             <Button variant="ghost" onClick={() => navigate('/hospital/registration')}>Back</Button>
-            <Button onClick={() => navigate('/hospital/dashboard', { state: { roster } })} disabled={roster.length === 0} icon={ArrowRight}>Go to dashboard</Button>
+            <Button onClick={() => navigate('/hospital/dashboard', { state: { roster, hospital: state?.hospital } })} disabled={roster.length === 0} icon={ArrowRight}>Go to dashboard</Button>
           </div>
         </Card>
       </div>

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, ShieldCheck, Volume2, Keyboard, Mic } from 'lucide-react';
+import { Phone, ShieldCheck, Volume2, Keyboard, Mic, AlertCircle } from 'lucide-react';
 import Waveform from '../components/Waveform';
 import VoiceField from '../components/VoiceField';
 import LanguagePicker from '../components/LanguagePicker';
 import { useLanguage } from '../context/LanguageContext';
 import useAutoAdvance from '../hooks/useAutoAdvance';
+import { isValidPhone, isValidOtp } from '../utils/validators';
 import './login.css';
 
 /**
@@ -23,9 +24,15 @@ export default function Login() {
   const [otp, setOtp] = useState('');
 
   const promptKey = stage === 'phone' ? 'loginPromptPhone' : 'loginPromptOtp';
+  const phoneValid = isValidPhone(phone);
+  const otpValid = isValidOtp(otp);
+  // Only show an error once there's something typed that's actually wrong —
+  // never on an empty, untouched field.
+  const showPhoneError = phone.length > 0 && !phoneValid;
+  const showOtpError = otp.length > 0 && !otpValid;
 
-  const submitPhone = () => phone && setStage('otp');
-  const submitOtp = () => otp && navigate('/basic-details', { state: { phone, otp } });
+  const submitPhone = () => phoneValid && setStage('otp');
+  const submitOtp = () => otpValid && navigate('/basic-details', { state: { phone, otp } });
 
   // Speak the current question aloud whenever it changes (or voice mode
   // is switched on) — this is the "ask him" part: the patient hears the
@@ -34,15 +41,16 @@ export default function Login() {
     if (inputMode === 'voice') speakPrompt(promptKey);
   }, [inputMode, promptKey, bcp47]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Typed answers auto-advance a beat after the patient stops typing, so
-  // nobody has to hunt for a button — same as voice already does.
-  useAutoAdvance(phone, inputMode === 'type' && stage === 'phone' && !!phone, submitPhone, { delay: 1300 });
-  useAutoAdvance(otp, inputMode === 'type' && stage === 'otp' && otp.length >= 4, submitOtp, { delay: 900 });
+  // Typed answers auto-advance a beat after the patient stops typing —
+  // but only once what they've typed actually passes validation, so a
+  // half-typed or wrong-length number never silently jumps forward.
+  useAutoAdvance(phone, inputMode === 'type' && stage === 'phone' && phoneValid, submitPhone, { delay: 1300 });
+  useAutoAdvance(otp, inputMode === 'type' && stage === 'otp' && otpValid, submitOtp, { delay: 900 });
 
   const handleKeyDown = (e) => {
     if (e.key !== 'Enter') return;
-    if (stage === 'phone' && phone) submitPhone();
-    if (stage === 'otp' && otp) submitOtp();
+    if (stage === 'phone' && phoneValid) submitPhone();
+    if (stage === 'otp' && otpValid) submitOtp();
   };
 
   return (
@@ -104,8 +112,16 @@ export default function Login() {
             </div>
           )}
 
+          {((stage === 'phone' && showPhoneError) || (stage === 'otp' && showOtpError)) && (
+            <p className="field-error"><AlertCircle size={12} /> {t(stage === 'phone' ? 'errorPhone' : 'errorOtp')}</p>
+          )}
+
           {inputMode === 'type' && (
-            <button onClick={stage === 'phone' ? submitPhone : submitOtp} disabled={stage === 'phone' ? !phone : !otp} className="login__submit">
+            <button
+              onClick={stage === 'phone' ? submitPhone : submitOtp}
+              disabled={stage === 'phone' ? !phoneValid : !otpValid}
+              className="login__submit"
+            >
               {stage === 'phone' ? t('sendOtp') : t('verifyContinue')}
             </button>
           )}

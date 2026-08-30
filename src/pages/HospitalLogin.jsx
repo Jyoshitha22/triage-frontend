@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, ShieldCheck, Stethoscope } from 'lucide-react';
+import { Mail, Lock, ShieldCheck, Stethoscope, AlertCircle } from 'lucide-react';
 import Waveform from '../components/Waveform';
 import Button from '../components/Button';
+import { isValidEmailOrPhone, isValidPassword } from '../utils/validators';
 import './HospitalLogin.css';
 
 /**
@@ -13,6 +14,13 @@ export default function HospitalLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  const identifierValid = isValidEmailOrPhone(email);
+  const passwordValid = isValidPassword(password);
+  const formValid = identifierValid && passwordValid;
+
+  const submit = () => formValid && navigate('/hospital/registration');
+  const handleKeyDown = (e) => e.key === 'Enter' && submit();
 
   return (
     <div className="hospital-login">
@@ -40,16 +48,37 @@ export default function HospitalLogin() {
           <label className="hospital-login__label">Work email or mobile number</label>
           <div className="hospital-login__input-wrap">
             <Mail size={16} className="hospital-login__input-icon" />
-            <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="doctor@hospital.org or 98765 43210" className="hospital-login__input" />
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="doctor@hospital.org or 98765 43210"
+              className="hospital-login__input"
+            />
           </div>
+          {email.length > 0 && !identifierValid && (
+            <p className="field-error"><AlertCircle size={12} /> Enter a valid email or 10-digit mobile number.</p>
+          )}
 
           <label className="hospital-login__label" style={{ marginTop: 16 }}>Password</label>
           <div className="hospital-login__input-wrap">
             <Lock size={16} className="hospital-login__input-icon" />
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="hospital-login__input" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="••••••••"
+              className="hospital-login__input"
+            />
           </div>
+          {password.length > 0 && !passwordValid && (
+            <p className="field-error"><AlertCircle size={12} /> Password must be at least 6 characters.</p>
+          )}
 
-          <Button className="hospital-login__submit" onClick={() => navigate('/hospital/registration')} disabled={!email || !password}>Log in</Button>
+          <Button className="hospital-login__submit" onClick={submit} disabled={!formValid}>
+            Log in
+          </Button>
 
           <div className="hospital-login__security"><ShieldCheck size={16} /> First-time setup only — your details are saved for next time.</div>
         </div>
