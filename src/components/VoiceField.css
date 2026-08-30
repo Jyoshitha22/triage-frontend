@@ -1,5 +1,6 @@
 .voice-field {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   border-radius: var(--radius-lg);
@@ -42,4 +43,21 @@
   color: var(--color-navy);
   transform: scale(1.1);
   box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.15);
+  animation: voice-field-mic-pulse 1.4s ease-in-out infinite;
 }
+@keyframes voice-field-mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.15); }
+  50% { box-shadow: 0 0 0 14px rgba(16, 185, 129, 0.08); }
+}
+
+.voice-field__hint {
+  width: 100%;
+  margin: 6px 0 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-slate);
+}
+.voice-field__hint svg { flex-shrink: 0; margin-top: 1px; color: var(--color-medium); }

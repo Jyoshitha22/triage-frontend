@@ -1,0 +1,41 @@
+.record-reply__back { display: flex; align-items: center; gap: 4px; border: none; background: none; cursor: pointer; font-size: 14px; color: var(--color-slate); }
+.record-reply__back:hover { color: var(--color-navy); }
+
+.record-reply { margin: 16px auto 0; width: 100%; max-width: 576px; }
+
+.record-reply__patient-header { display: flex; align-items: center; gap: 16px; }
+.record-reply__avatar { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--color-navy); font-family: var(--font-display); font-weight: 600; color: var(--color-gold-glow); flex-shrink: 0; }
+.record-reply__patient-name { margin: 0; font-weight: 600; color: var(--color-navy); }
+.record-reply__patient-meta { margin: 0; font-size: 14px; color: var(--color-slate); }
+
+.record-reply__player { margin-top: 20px; width: 100%; display: flex; align-items: center; gap: 16px; border-radius: var(--radius-lg); background: var(--color-mist); border: none; cursor: pointer; padding: 16px; text-align: left; }
+.record-reply__play-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--color-navy); color: var(--color-gold-glow); flex-shrink: 0; }
+.record-reply__play-icon { transform: translateX(1px); }
+.record-reply__player-wave { flex: 1; }
+.record-reply__player-time { font-family: var(--font-mono); font-size: 12px; color: var(--color-slate); }
+
+.record-reply__transcript { margin-top: 12px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); padding: 16px; }
+.record-reply__transcript p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-navy); }
+
+.record-reply__reply-card { margin-top: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.record-reply__reply-label { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+
+.record-reply__sent { display: flex; flex-direction: column; align-items: center; padding: 24px 0; }
+.record-reply__sent-icon { color: var(--color-gold); }
+.record-reply__sent-title { margin: 12px 0 0; font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--color-navy); }
+.record-reply__sent-sub { margin: 4px 0 0; font-size: 14px; color: var(--color-slate); }
+
+.record-reply__mic { margin-top: 12px; display: flex; align-items: center; justify-content: center; width: 96px; height: 96px; border-radius: 50%; border: none; cursor: pointer; background: var(--color-navy); box-shadow: 0 10px 30px -8px rgba(14,107,71,0.5); transition: all 0.3s; }
+.record-reply__mic--active { background: var(--color-gold); box-shadow: 0 0 0 10px rgba(16,185,129,0.15); }
+.record-reply__mic-icon { color: var(--color-gold-glow); }
+.record-reply__mic-icon-stop { color: white; fill: white; }
+.record-reply__timer { margin-top: 12px; font-family: var(--font-mono); font-size: 14px; color: var(--color-slate); }
+.record-reply__wave { margin-top: 16px; }
+
+.record-reply__reply-text { margin-top: 16px; width: 100%; text-align: left; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); background: var(--color-mist); padding: 16px; }
+.record-reply__reply-text p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-navy); }
+
+.record-reply__tags { margin-top: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.record-reply__tag { display: inline-flex; align-items: center; gap: 6px; border-radius: var(--radius-full); border: 1px solid rgba(14,107,71,0.15); background: transparent; padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--color-slate); cursor: pointer; }
+.record-reply__tag--active { border-color: var(--color-navy); background: var(--color-navy); color: var(--color-gold-glow); }
+.record-reply__send { margin-top: 24px; width: 100%; }

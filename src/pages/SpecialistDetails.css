@@ -1,0 +1,39 @@
+.specialist-details { margin: 0 auto; width: 100%; max-width: 672px; }
+.specialist-details__header { display: flex; align-items: center; gap: 12px; }
+.specialist-details__icon-badge { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(14,107,71,0.1); color: var(--color-navy); flex-shrink: 0; }
+.specialist-details__title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
+.specialist-details__lede { margin: 2px 0 0; font-size: 14px; color: var(--color-slate); }
+
+.specialist-details__counts { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+.specialist-details__count-chip { border-radius: var(--radius-full); background: rgba(14,107,71,0.05); padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--color-navy); }
+
+.specialist-details__card { margin-top: 24px; }
+.specialist-details__form-grid { display: grid; grid-template-columns: 1fr; gap: 16px; align-items: end; }
+@media (min-width: 640px) { .specialist-details__form-grid { grid-template-columns: 1.4fr 1fr 0.8fr auto; } }
+
+.specialist-details__field-label { margin-bottom: 8px; display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.specialist-details__input {
+  width: 100%; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15);
+  background: var(--color-mist); padding: 12px 16px; font-size: 14px; color: var(--color-navy);
+  font-family: var(--font-body); outline: none;
+}
+.specialist-details__input:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+
+.specialist-details__add-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px;
+  border-radius: var(--radius-lg); border: none; cursor: pointer;
+  background: var(--color-navy); color: var(--color-gold-glow); padding: 0 16px; font-size: 14px; font-weight: 600;
+}
+
+.specialist-details__roster { margin-top: 24px; }
+.specialist-details__roster-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(14,107,71,0.05); }
+.specialist-details__roster-row:last-child { border-bottom: none; }
+.specialist-details__avatar { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--color-navy); font-family: var(--font-display); font-size: 14px; font-weight: 600; color: var(--color-gold-glow); flex-shrink: 0; }
+.specialist-details__roster-info { min-width: 0; flex: 1; }
+.specialist-details__roster-name { margin: 0; font-weight: 500; color: var(--color-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.specialist-details__roster-meta { margin: 0; font-size: 14px; color: var(--color-slate); }
+.specialist-details__remove { border: none; background: none; cursor: pointer; color: var(--color-slate); }
+.specialist-details__remove:hover { color: var(--color-navy); }
+.specialist-details__empty { padding: 16px 0; text-align: center; font-size: 14px; color: var(--color-slate); }
+
+.specialist-details__footer { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }

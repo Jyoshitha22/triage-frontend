@@ -1,27 +1,34 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Calendar, MapPin, Phone, FileText, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import NavShell from '../components/NavShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import VoiceField from '../components/VoiceField';
+import { useLanguage } from '../context/LanguageContext';
+import useAutoAdvance from '../hooks/useAutoAdvance';
 import './BasicDetails.css';
 
+// labelKey looks up the translated question text; genderKeys map each chip
+// to its own translated label. conditions is left out of auto-advance
+// (see useAutoAdvance below) since it's free-form and optional.
 const FIELDS = [
-  { key: 'name', label: "What's your name?", type: 'text', placeholder: 'Full name', voice: true, sample: 'Jyoshitha Reddy' },
-  { key: 'age', label: 'How old are you?', type: 'number', placeholder: 'Age', voice: true, sample: '24' },
-  { key: 'gender', label: 'Gender', type: 'chips', options: ['Female', 'Male', 'Other'] },
-  { key: 'location', label: 'Which city are you in?', type: 'text', placeholder: 'City', voice: true, sample: 'Hyderabad' },
-  { key: 'contact', label: 'A number we can reach you on', type: 'tel', placeholder: '98765 43210', voice: true, sample: '98765 43210' },
-  { key: 'conditions', label: 'Any existing conditions?', type: 'textarea', placeholder: 'Diabetes, asthma…', optional: true },
+  { key: 'name', labelKey: 'fieldName', type: 'text', placeholder: 'Full name', voice: true },
+  { key: 'age', labelKey: 'fieldAge', type: 'number', placeholder: 'Age', voice: true },
+  { key: 'gender', labelKey: 'fieldGender', type: 'chips', optionKeys: ['genderFemale', 'genderMale', 'genderOther'] },
+  { key: 'location', labelKey: 'fieldLocation', type: 'text', placeholder: 'City', voice: true },
+  { key: 'contact', labelKey: 'fieldContact', type: 'tel', placeholder: '98765 43210', voice: true },
+  { key: 'conditions', labelKey: 'fieldConditions', type: 'textarea', placeholder: 'Diabetes, asthma…', optional: true },
 ];
 
 /**
  * One question per screen, answerable by typing or by tapping the mic
- * and speaking. Voice answers auto-advance to the next question.
+ * and speaking. Voice answers auto-advance to the next question; typed
+ * answers now auto-advance too, a beat after the patient stops typing.
  */
 export default function BasicDetails() {
   const navigate = useNavigate();
+  const { t, speakPrompt } = useLanguage();
   const [i, setI] = useState(0);
   const [values, setValues] = useState({});
   const inputRef = useRef(null);
@@ -29,27 +36,36 @@ export default function BasicDetails() {
 
   useEffect(() => { inputRef.current?.focus(); }, [i]);
 
+  // Ask the question aloud every time it changes, in the patient's
+  // chosen language.
+  useEffect(() => { speakPrompt(field.labelKey); }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const set = (v) => setValues((prev) => ({ ...prev, [field.key]: v }));
   const next = () => (i === FIELDS.length - 1 ? navigate('/symptoms', { state: values }) : setI(i + 1));
   const back = () => (i === 0 ? navigate('/') : setI(i - 1));
   const canContinue = field.optional || (values[field.key] && String(values[field.key]).trim() !== '');
 
+  // Plain typed fields (not the free-text conditions box) auto-advance a
+  // beat after the patient stops typing — no button needed.
+  const autoAdvanceEnabled = field.type !== 'chips' && field.type !== 'textarea';
+  useAutoAdvance(values[field.key], autoAdvanceEnabled && !!canContinue, next, { delay: 1300, enabled: autoAdvanceEnabled });
+
   return (
     <NavShell step={2} onBack={back}>
       <div className="basic-details">
         <span className="basic-details__count">{i + 1} of {FIELDS.length}</span>
-        <h1 className="basic-details__question">{field.label}</h1>
+        <h1 className="basic-details__question">{t(field.labelKey)}</h1>
 
         <Card className="basic-details__card">
           {field.type === 'chips' ? (
             <div className="basic-details__chips">
-              {field.options.map((opt) => (
+              {field.optionKeys.map((optKey) => (
                 <button
-                  key={opt}
-                  onClick={() => { set(opt); setTimeout(next, 350); }}
-                  className={`basic-details__chip ${values.gender === opt ? 'basic-details__chip--active' : ''}`}
+                  key={optKey}
+                  onClick={() => { set(optKey); setTimeout(next, 350); }}
+                  className={`basic-details__chip ${values.gender === optKey ? 'basic-details__chip--active' : ''}`}
                 >
-                  {opt}
+                  {t(optKey)}
                 </button>
               ))}
             </div>
@@ -63,7 +79,7 @@ export default function BasicDetails() {
               className="basic-details__textarea"
             />
           ) : field.voice ? (
-            <VoiceField value={values[field.key] || ''} onChange={set} onCaptured={next} placeholder={field.placeholder} type={field.type} simulatedValue={field.sample} />
+            <VoiceField value={values[field.key] || ''} onChange={set} onCaptured={next} placeholder={field.placeholder} type={field.type} />
           ) : (
             <input
               ref={inputRef}
@@ -79,7 +95,7 @@ export default function BasicDetails() {
 
         {field.type !== 'chips' && (
           <Button className="basic-details__next" onClick={next} disabled={!canContinue} icon={ArrowRight}>
-            {field.optional && !values[field.key] ? 'Skip' : i === FIELDS.length - 1 ? 'Continue to symptoms' : 'Next'}
+            {field.optional && !values[field.key] ? t('skip') : i === FIELDS.length - 1 ? t('continueToSymptoms') : t('next')}
           </Button>
         )}
       </div>

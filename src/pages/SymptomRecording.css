@@ -16,7 +16,28 @@
 .symptom-recording__mic-icon-stop { color: white; fill: white; }
 
 .symptom-recording__timer { margin-top: 16px; font-family: var(--font-mono); font-size: 14px; color: var(--color-slate); }
-.symptom-recording__wave { margin-top: 24px; }
+.symptom-recording__wave { margin-top: 24px; width: 100%; }
+
+.symptom-recording__live-caption {
+  margin-top: 20px;
+  width: 100%;
+  min-height: 22px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-navy);
+  opacity: 0.75;
+}
+
+.symptom-recording__hint {
+  margin-top: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-slate);
+}
+.symptom-recording__hint svg { flex-shrink: 0; margin-top: 1px; color: var(--color-medium); }
 
 .symptom-recording__transcript-area { width: 100%; text-align: left; }
 .symptom-recording__transcript { border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); background: var(--color-mist); padding: 16px; }
@@ -43,3 +64,4 @@
 }
 .followup__mic--active { background: var(--color-gold); color: var(--color-navy); box-shadow: 0 0 0 8px rgba(16,185,129,0.15); }
 .followup__answer { margin-top: 8px; font-size: 14px; color: var(--color-navy); }
+.followup__answer--live { opacity: 0.7; }

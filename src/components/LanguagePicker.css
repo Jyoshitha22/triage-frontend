@@ -1,0 +1,39 @@
+.language-picker {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.language-picker__chip {
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(4px);
+  color: var(--color-mist);
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.language-picker__chip:hover { border-color: rgba(255, 255, 255, 0.5); }
+.language-picker__chip--active {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-midnight);
+}
+
+/* Variant used on light backgrounds (e.g. inside a white form panel) */
+.language-picker--on-light .language-picker__chip {
+  border-color: rgba(14, 107, 71, 0.15);
+  background: transparent;
+  color: var(--color-slate);
+}
+.language-picker--on-light .language-picker__chip:hover { border-color: rgba(14, 107, 71, 0.4); }
+.language-picker--on-light .language-picker__chip--active {
+  background: var(--color-navy);
+  border-color: var(--color-navy);
+  color: var(--color-gold-glow);
+}

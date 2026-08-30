@@ -18,6 +18,8 @@
 .waiting__step-label { color: rgba(92,107,100,0.7); }
 
 .waiting__note { margin-top: 24px; font-size: 12px; color: var(--color-slate); }
+
+/* DEV ONLY — see comment in WaitingForDoctor.jsx */
 .waiting__dev-skip {
   margin-top: 16px;
   border: 1px dashed var(--color-slate-200);
