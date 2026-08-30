@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ShieldCheck, Stethoscope, AlertCircle } from 'lucide-react';
 import Waveform from '../components/Waveform';

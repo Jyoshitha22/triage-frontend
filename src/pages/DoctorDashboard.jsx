@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';

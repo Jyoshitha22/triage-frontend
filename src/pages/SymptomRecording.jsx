@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, Square, Volume2, AlertCircle } from 'lucide-react';
 import NavShell from '../components/NavShell';
