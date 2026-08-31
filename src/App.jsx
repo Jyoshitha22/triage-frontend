@@ -7,9 +7,14 @@ import WaitingForDoctor from "./pages/WaitingForDoctor";
 import DoctorReply from "./pages/DoctorReply";
 import HospitalLogin from "./pages/HospitalLogin";
 import HospitalRegistration from "./pages/HospitalRegistration";
+import SpecialistDetails from "./pages/SpecialistDetails";
+import DoctorDashboard from "./pages/DoctorDashboard";
+import PatientList from "./pages/PatientList";
+import RecordReply from "./pages/RecordReply";
 import { LanguageProvider } from "./context/LanguageContext";
 
 import "./theme/typography.css";
+import "./App.css";
 
 function App() {
   return (
@@ -23,12 +28,13 @@ function App() {
           <Route path="/waiting" element={<WaitingForDoctor />} />
           <Route path="/reply" element={<DoctorReply />} />
 
-          {/* Hospital side — 2 of 6 added so far.
-              Add the rest here as you build them:
-              /hospital/specialists, /hospital/dashboard,
-              /hospital/patients, /hospital/reply */}
+          {/* Hospital side — all 6 pages wired up */}
           <Route path="/hospital" element={<HospitalLogin />} />
           <Route path="/hospital/registration" element={<HospitalRegistration />} />
+          <Route path="/hospital/specialists" element={<SpecialistDetails />} />
+          <Route path="/hospital/dashboard" element={<DoctorDashboard />} />
+          <Route path="/hospital/patients" element={<PatientList />} />
+          <Route path="/hospital/reply" element={<RecordReply />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

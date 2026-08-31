@@ -1,3 +1,5 @@
+/* Dev-only mode switch — remove once real routing (or HospitalFlow)
+   replaces the toggle in App.jsx. Keep whatever else was already here. */
 .app-mode-switch {
   position: fixed;
   top: 12px;
@@ -25,3 +27,16 @@
   background: var(--color-navy);
   color: var(--color-gold-glow);
 }
+
+/* Shared inline validation message — used under any input across the
+   patient and hospital forms (see src/utils/validators.js). */
+.field-error {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #C0362C;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.field-error svg { flex-shrink: 0; margin-top: 1px; }
