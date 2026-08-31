@@ -116,3 +116,4 @@ export default function BasicDetails() {
     </NavShell>
   );
 }
+//basic details ended

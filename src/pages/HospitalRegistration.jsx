@@ -15,10 +15,6 @@ const FIELDS = [
   { key: 'state', label: 'State', placeholder: 'Telangana', validate: isRequired, error: 'Enter a state.' },
 ];
 
-/**
- * Admin setup, done once — unlike the patient forms, it's fine to show
- * the full set of fields at once here.
- */
 export default function HospitalRegistration() {
   const navigate = useNavigate();
   const [values, setValues] = useState({});

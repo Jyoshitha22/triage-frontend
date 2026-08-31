@@ -20,6 +20,7 @@
   background: var(--color-mist); padding: 16px; font-size: 16px; color: var(--color-navy);
   font-family: var(--font-body); outline: none;
 }
+
 .basic-details__input { text-align: center; font-size: 18px; }
 .basic-details__textarea:focus, .basic-details__input:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
 .basic-details__textarea::placeholder, .basic-details__input::placeholder { color: rgba(92,107,100,0.5); }
