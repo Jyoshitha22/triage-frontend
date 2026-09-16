@@ -1,3 +1,19 @@
+/**
+ * All patient-facing text, per language, in one place.
+ *
+ * NOTE ON TRANSLATION QUALITY: these are starter translations meant to get
+ * the multilingual flow working end-to-end. They have NOT been reviewed by
+ * a native speaker or a medical-language specialist. Because this is a
+ * healthcare app, please get the Telugu/Hindi/Tamil strings checked by a
+ * native speaker (ideally someone with clinical-language experience)
+ * before this goes anywhere near real patients — a mistranslated prompt
+ * here is a bigger deal than in a typical app.
+ *
+ * How to add a language: add its code to LANGUAGES below, then add a
+ * matching key to every entry in STRINGS. Anything left untranslated
+ * automatically falls back to English (see t() in LanguageContext.jsx).
+ */
+
 export const LANGUAGES = [
   { code: "en", label: "English", nativeLabel: "English", bcp47: "en-IN" },
   { code: "te", label: "Telugu", nativeLabel: "తెలుగు", bcp47: "te-IN" },
@@ -50,6 +66,24 @@ export const STRINGS = {
     te: "మీకు వచ్చిన OTP చెప్పండి.",
     hi: "आपको मिला OTP बताएं।",
     ta: "உங்களுக்கு வந்த OTP-ஐ சொல்லுங்கள்.",
+  },
+  loginPromptConfirmPhone: {
+    en: "Please say or type your mobile number again to confirm it.",
+    te: "నిర్ధారించడానికి దయచేసి మీ మొబైల్ నంబర్‌ను మళ్ళీ చెప్పండి లేదా టైప్ చేయండి.",
+    hi: "पुष्टि के लिए कृपया अपना मोबाइल नंबर फिर से बताएं या टाइप करें।",
+    ta: "உறுதிப்படுத்த உங்கள் மொபைல் எண்ணை மீண்டும் சொல்லுங்கள் அல்லது தட்டச்சு செய்யுங்கள்.",
+  },
+  confirmPhoneTitle: {
+    en: "Confirm your number",
+    te: "మీ నంబర్‌ను నిర్ధారించండి",
+    hi: "अपना नंबर पुष्टि करें",
+    ta: "உங்கள் எண்ணை உறுதிப்படுத்தவும்",
+  },
+  confirmPhoneLabel: {
+    en: "Retype mobile number",
+    te: "మొబైల్ నంబర్‌ను మళ్ళీ టైప్ చేయండి",
+    hi: "मोबाइल नंबर फिर से टाइप करें",
+    ta: "மொபைல் எண்ணை மீண்டும் தட்டச்சு செய்யவும்",
   },
   phoneLabel: {
     en: "Phone number",
@@ -232,6 +266,12 @@ export const STRINGS = {
     hi: "सही 10 अंकों का मोबाइल नंबर डालें।",
     ta: "சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்.",
   },
+  errorPhoneMismatch: {
+    en: "This doesn't match the number you entered before.",
+    te: "ఇది మీరు ముందు నమోదు చేసిన నంబర్‌తో సరిపోలడం లేదు.",
+    hi: "यह आपके पहले डाले गए नंबर से मेल नहीं खाता।",
+    ta: "இது நீங்கள் முன்பு உள்ளிட்ட எண்ணுடன் பொருந்தவில்லை.",
+  },
   errorLandlineOrPhone: {
     en: "Enter a valid contact number (8–12 digits).",
     te: "సరైన సంప్రదింపు నంబర్ నమోదు చేయండి (8–12 అంకెలు).",
@@ -279,6 +319,177 @@ export const STRINGS = {
     te: "సరైన అనుభవ సంవత్సరాలు నమోదు చేయండి (0–60).",
     hi: "सही अनुभव के वर्ष डालें (0–60)।",
     ta: "சரியான அனுபவ ஆண்டுகளை உள்ளிடவும் (0–60).",
+  },
+
+  // ---- Brand ----
+  appName: { en: "Triage", te: "Triage", hi: "Triage", ta: "Triage" },
+
+  // ---- Language welcome screen (the very first screen) ----
+  welcomeToApp: {
+    en: "Welcome to Triage",
+    te: "Triage కి స్వాగతం",
+    hi: "Triage में आपका स्वागत है",
+    ta: "Triage-க்கு வரவேற்கிறோம்",
+  },
+  chooseLanguageVoiceHint: {
+    en: "You can also speak to choose your language",
+    te: "మీ భాషను ఎంచుకోవడానికి మాట్లాడవచ్చు కూడా",
+    hi: "आप अपनी भाषा चुनने के लिए बोल भी सकते हैं",
+    ta: "உங்கள் மொழியைத் தேர்ந்தெடுக்க பேசவும் முடியும்",
+  },
+
+  // ---- OTP screen redesign ----
+  verifyMobileTitle: {
+    en: "Verify your mobile number",
+    te: "మీ మొబైల్ నంబర్‌ను ధృవీకరించండి",
+    hi: "अपना मोबाइल नंबर सत्यापित करें",
+    ta: "உங்கள் மொபைல் எண்ணைச் சரிபார்க்கவும்",
+  },
+  otpSubtitle: {
+    en: "Enter the 4-digit code sent to your mobile.",
+    te: "మీ మొబైల్‌కు పంపిన 4 అంకెల కోడ్‌ను నమోదు చేయండి.",
+    hi: "आपके मोबाइल पर भेजा गया 4 अंकों का कोड डालें।",
+    ta: "உங்கள் மொபைலுக்கு அனுப்பப்பட்ட 4 இலக்க குறியீட்டை உள்ளிடவும்.",
+  },
+  didntReceiveCode: {
+    en: "Didn't receive the code?",
+    te: "కోడ్ రాలేదా?",
+    hi: "कोड नहीं मिला?",
+    ta: "குறியீடு வரவில்லையா?",
+  },
+  resendOtp: {
+    en: "Resend OTP",
+    te: "OTP మళ్ళీ పంపండి",
+    hi: "OTP फिर भेजें",
+    ta: "OTP-ஐ மீண்டும் அனுப்பவும்",
+  },
+  resendOtpIn: {
+    en: "Resend OTP in",
+    te: "OTP మళ్ళీ పంపడానికి",
+    hi: "OTP दोबारा भेजने में",
+    ta: "OTP மீண்டும் அனுப்ப",
+  },
+  changePhoneNumber: {
+    en: "Change phone number",
+    te: "ఫోన్ నంబర్ మార్చండి",
+    hi: "फ़ोन नंबर बदलें",
+    ta: "தொலைபேசி எண்ணை மாற்றவும்",
+  },
+
+  // ---- Basic details supporting lines ----
+  typeOrSpeakHint: {
+    en: "You can type it or tap the microphone to say it.",
+    te: "మీరు దీన్ని టైప్ చేయవచ్చు లేదా చెప్పడానికి మైక్రోఫోన్ నొక్కవచ్చు.",
+    hi: "आप इसे टाइप कर सकते हैं या बोलने के लिए माइक्रोफ़ोन दबा सकते हैं।",
+    ta: "நீங்கள் இதைத் தட்டச்சு செய்யலாம் அல்லது சொல்ல மைக்ரோஃபோனைத் தட்டலாம்.",
+  },
+  typeOrSpeakOrSkipHint: {
+    en: "Type it, say it, or just skip if none.",
+    te: "టైప్ చేయండి, చెప్పండి, లేదా ఏమీ లేకపోతే దాటవేయండి.",
+    hi: "टाइप करें, बोलें, या कुछ न हो तो छोड़ दें।",
+    ta: "தட்டச்சு செய்யவும், சொல்லவும், இல்லையெனில் தவிர்க்கவும்.",
+  },
+  fieldAllergies: {
+    en: "Any allergies we should know about?",
+    te: "మేము తెలుసుకోవాల్సిన అలర్జీలు ఏవైనా ఉన్నాయా?",
+    hi: "क्या हमें किसी एलर्जी के बारे में पता होना चाहिए?",
+    ta: "நாங்கள் தெரிந்துகொள்ள வேண்டிய ஒவ்வாமைகள் ஏதேனும் உள்ளதா?",
+  },
+
+  // ---- Waiting screen redesign ----
+  waitingTitle: {
+    en: "A doctor is reviewing your symptoms",
+    te: "వైద్యుడు మీ లక్షణాలను పరిశీలిస్తున్నారు",
+    hi: "एक डॉक्टर आपके लक्षणों की समीक्षा कर रहे हैं",
+    ta: "ஒரு மருத்துவர் உங்கள் அறிகுறிகளை பரிசீலிக்கிறார்",
+  },
+  waitingSubtitle: {
+    en: "Your information has been received. Please wait while a doctor reviews it.",
+    te: "మీ సమాచారం అందింది. వైద్యుడు దాన్ని పరిశీలించే వరకు వేచి ఉండండి.",
+    hi: "आपकी जानकारी मिल गई है। कृपया डॉक्टर के समीक्षा करने तक प्रतीक्षा करें।",
+    ta: "உங்கள் தகவல் பெறப்பட்டது. மருத்துவர் பரிசீலிக்கும் வரை காத்திருக்கவும்.",
+  },
+  stepSymptomsReceived: {
+    en: "Symptoms received",
+    te: "లక్షణాలు అందాయి",
+    hi: "लक्षण प्राप्त हुए",
+    ta: "அறிகுறிகள் பெறப்பட்டன",
+  },
+  stepSymptomsReceivedDesc: {
+    en: "Your symptoms were successfully submitted.",
+    te: "మీ లక్షణాలు విజయవంతంగా సమర్పించబడ్డాయి.",
+    hi: "आपके लक्षण सफलतापूर्वक भेज दिए गए।",
+    ta: "உங்கள் அறிகுறிகள் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டன.",
+  },
+  stepDoctorReviewing: {
+    en: "Doctor reviewing",
+    te: "వైద్యుడు పరిశీలిస్తున్నారు",
+    hi: "डॉक्टर समीक्षा कर रहे हैं",
+    ta: "மருத்துவர் பரிசீலிக்கிறார்",
+  },
+  stepDoctorReviewingDesc: {
+    en: "A doctor is reviewing your information.",
+    te: "వైద్యుడు మీ సమాచారాన్ని పరిశీలిస్తున్నారు.",
+    hi: "एक डॉक्टर आपकी जानकारी की समीक्षा कर रहे हैं।",
+    ta: "ஒரு மருத்துவர் உங்கள் தகவலை பரிசீலிக்கிறார்.",
+  },
+  stepDoctorReply: {
+    en: "Doctor's reply",
+    te: "వైద్యుడి సమాధానం",
+    hi: "डॉक्टर का जवाब",
+    ta: "மருத்துவரின் பதில்",
+  },
+  stepDoctorReplyDesc: {
+    en: "You'll be notified when the response is ready.",
+    te: "సమాధానం సిద్ధమైనప్పుడు మీకు తెలియజేయబడుతుంది.",
+    hi: "जवाब तैयार होते ही आपको सूचित किया जाएगा।",
+    ta: "பதில் தயாரானதும் உங்களுக்குத் தெரிவிக்கப்படும்.",
+  },
+  waitingNote: {
+    en: "You can safely leave this page. We'll notify you when your doctor replies.",
+    te: "మీరు ఈ పేజీని సురక్షితంగా వదిలేయవచ్చు. మీ వైద్యుడు సమాధానం ఇచ్చినప్పుడు మేము తెలియజేస్తాము.",
+    hi: "आप इस पेज को सुरक्षित रूप से छोड़ सकते हैं। डॉक्टर के जवाब देने पर हम आपको सूचित करेंगे।",
+    ta: "இந்தப் பக்கத்தை பாதுகாப்பாக விட்டுவிடலாம். மருத்துவர் பதிலளிக்கும்போது உங்களுக்குத் தெரிவிப்போம்.",
+  },
+  saveNote: { en: "Save note", te: "నోట్ సేవ్ చేయండి", hi: "नोट सेव करें", ta: "குறிப்பைச் சேமிக்கவும்" },
+  savedNote: { en: "Saved", te: "సేవ్ చేయబడింది", hi: "सेव हो गया", ta: "சேமிக்கப்பட்டது" },
+  backToHome: {
+    en: "Back to home",
+    te: "హోమ్‌కు తిరిగి వెళ్ళండి",
+    hi: "होम पर वापस जाएं",
+    ta: "முகப்புக்குத் திரும்பு",
+  },
+
+  // ---- Doctor reply screen ----
+  doctorRepliedTitle: {
+    en: "Your doctor has replied",
+    te: "మీ వైద్యుడు సమాధానం ఇచ్చారు",
+    hi: "आपके डॉक्टर ने जवाब दिया है",
+    ta: "உங்கள் மருத்துவர் பதிலளித்துள்ளார்",
+  },
+  doctorsNote: {
+    en: "Doctor's note",
+    te: "వైద్యుడి నోట్",
+    hi: "डॉक्टर का नोट",
+    ta: "மருத்துவரின் குறிப்பு",
+  },
+  playReply: {
+    en: "Play doctor's reply",
+    te: "వైద్యుడి సమాధానం వినండి",
+    hi: "डॉक्टर का जवाब सुनें",
+    ta: "மருத்துவரின் பதிலைக் கேளுங்கள்",
+  },
+  playingReply: {
+    en: "Playing…",
+    te: "ప్లే అవుతోంది…",
+    hi: "चल रहा है…",
+    ta: "இயங்குகிறது…",
+  },
+  translationNotice: {
+    en: "Shown in English — spoken translation isn't available yet.",
+    te: "ఇంగ్లీష్‌లో చూపబడింది — వాయిస్ అనువాదం ఇంకా అందుబాటులో లేదు.",
+    hi: "अंग्रेज़ी में दिखाया गया है — बोली जाने वाली अनुवाद अभी उपलब्ध नहीं है।",
+    ta: "ஆங்கிலத்தில் காட்டப்படுகிறது — பேசும் மொழிபெயர்ப்பு இன்னும் கிடைக்கவில்லை.",
   },
 };
 

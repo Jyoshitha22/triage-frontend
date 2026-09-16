@@ -1,4 +1,16 @@
 import { useCallback, useEffect, useRef } from "react";
+
+/**
+ * Speaks prompts aloud using the browser's built-in text-to-speech
+ * (speechSynthesis). This is what makes the app "ask" the patient a
+ * question in their chosen language, instead of only showing text.
+ *
+ * Voice availability for Telugu/Hindi/Tamil depends on the device — most
+ * modern Android/Chrome installs have at least Hindi; Telugu and Tamil
+ * voice packs are less universal. When no matching voice is installed,
+ * the browser falls back to its default voice but still reads the text
+ * (pronunciation will be rougher) — it never hard-fails.
+ */
 export default function useSpeechSynthesis() {
   const voicesRef = useRef([]);
 

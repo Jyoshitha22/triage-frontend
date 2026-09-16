@@ -1,3 +1,7 @@
+/* Design tokens: colors, fonts, spacing/radius/shadow scale.
+   Import this once, globally, in index.css:  @import './theme/typography.css';
+   Every component .css file below reads these via var(--token-name). */
+
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap');
 
 :root {
@@ -6,9 +10,10 @@
   --color-midnight: #052419;
   --color-gold: #10B981;
   --color-gold-glow: #E8FBF3;
-  --color-mist: #F3FBF7;
-  --color-slate: #5C6B64;
-  --color-slate-200: #DCE7E1;
+  --color-mist: #DCF3E7;
+  --color-mist-soft: #EDF9F2;
+  --color-slate: #4A5C53;
+  --color-slate-200: #C3E2D2;
   --color-white: #FFFFFF;
 
   /* Urgency colors (hospital patient list) — distinct from brand green */
