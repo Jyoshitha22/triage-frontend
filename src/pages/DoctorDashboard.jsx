@@ -1,50 +1,74 @@
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Users, CheckCircle2, Clock, ArrowRight } from 'lucide-react';
+import  { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Users, CheckCircle2, AlertTriangle, Settings } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
-import Button from '../components/Button';
-import Waveform from '../components/Waveform';
+import session from '../utils/session';
+import { INITIAL_PATIENTS } from '../utils/sampleData';
 import './DoctorDashboard.css';
 
-export default function DoctorDashboard({ waitingCount = 6, repliedToday = 14 }) {
+export default function DoctorDashboard() {
   const navigate = useNavigate();
-  const { state } = useLocation();
-  // The signed-in doctor's own name isn't collected anywhere yet (login
-  // only takes email/password) — fall back to the first name on the
-  // roster if one was passed in, otherwise the placeholder used
-  // elsewhere in the mock data.
-  const doctorName = state?.roster?.[0]?.name || 'Dr. Ananya Rao';
-  const hospitalName = state?.hospital?.name;
+  const doctor = session.getCurrentDoctor();
+
+  // No doctor identified yet on this device (or the hospital hasn't
+  // logged in at all) — send them to pick who they are first.
+  useEffect(() => {
+    if (!session.getHospital()) { navigate('/hospital', { replace: true }); return; }
+    if (!doctor) navigate('/hospital/who-are-you', { replace: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const allPatients = session.getPatients(INITIAL_PATIENTS);
+  const repliedToday = session.getRepliedToday([]);
+
+  // A specialist only sees patients matched to their own specialty —
+  // plus anyone whose matching specialist isn't available, which falls
+  // through to any doctor on duty (same rule PatientList uses).
+  const myPatients = doctor
+    ? allPatients.filter((p) => p.specialty === doctor.specialty || !p.doctorAvailable)
+    : allPatients;
+  const urgentCount = myPatients.filter((p) => p.urgency === 'emergency').length;
+
+  const logout = () => { session.clearCurrentDoctor(); session.clearHospital(); navigate('/hospital'); };
+
+  if (!doctor) return null; // redirecting, see effect above
 
   return (
-    <HospitalShell title="Dashboard" doctorName={doctorName} onLogout={() => navigate('/hospital')}>
-      <h1 className="doctor-dashboard__title">Good to see you, {doctorName.replace('Dr. ', '')}</h1>
-      <p className="doctor-dashboard__lede">
-        {hospitalName ? `${hospitalName} — here's what's waiting for you today.` : "Here's what's waiting for you today."}
-      </p>
+    <HospitalShell title="Hospital Portal" doctorName={doctor.name} onLogout={logout}>
+      <h1 className="doctor-dashboard__title">Good to see you, {doctor.name.replace('Dr. ', '')}</h1>
+      <p className="doctor-dashboard__lede">{doctor.specialty} — here's what's waiting for you today.</p>
 
       <div className="doctor-dashboard__stats">
-        <Card className="doctor-dashboard__stat-card">
+        <button onClick={() => navigate('/hospital/patients')} className="doctor-dashboard__stat-card">
           <span className="doctor-dashboard__stat-icon doctor-dashboard__stat-icon--gold"><Users size={20} /></span>
           <div>
-            <p className="doctor-dashboard__stat-number">{waitingCount}</p>
-            <p className="doctor-dashboard__stat-label">patients waiting</p>
+            <p className="doctor-dashboard__stat-number">{myPatients.length}</p>
+            <p className="doctor-dashboard__stat-label">waiting</p>
           </div>
-        </Card>
-        <Card className="doctor-dashboard__stat-card">
+        </button>
+        <div className="doctor-dashboard__stat-card doctor-dashboard__stat-card--static">
+          <span className="doctor-dashboard__stat-icon doctor-dashboard__stat-icon--urgent"><AlertTriangle size={20} /></span>
+          <div>
+            <p className="doctor-dashboard__stat-number">{urgentCount}</p>
+            <p className="doctor-dashboard__stat-label">urgent</p>
+          </div>
+        </div>
+        <button onClick={() => navigate('/hospital/replied')} className="doctor-dashboard__stat-card">
           <span className="doctor-dashboard__stat-icon doctor-dashboard__stat-icon--navy"><CheckCircle2 size={20} /></span>
           <div>
-            <p className="doctor-dashboard__stat-number">{repliedToday}</p>
+            <p className="doctor-dashboard__stat-number">{repliedToday.length}</p>
             <p className="doctor-dashboard__stat-label">replied today</p>
           </div>
-        </Card>
+        </button>
       </div>
 
-      <Card className="doctor-dashboard__wait-card">
-        <div className="doctor-dashboard__wait-row"><Clock size={16} /> Longest wait right now: 11 minutes</div>
-        <Waveform mode="pulse" className="doctor-dashboard__wave" />
-        <Button className="doctor-dashboard__cta" onClick={() => navigate('/hospital/patients')} icon={ArrowRight}>View patient queue</Button>
+      <Card className="doctor-dashboard__hint-card">
+        <p>Tap <strong>waiting</strong> to review and reply to patients. Tap <strong>replied today</strong> to see what you've already sent.</p>
       </Card>
+
+      <button onClick={() => navigate('/hospital/specialists')} className="doctor-dashboard__manage-link">
+        <Settings size={14} /> Manage specialists (new doctor joined or left)
+      </button>
     </HospitalShell>
   );
 }

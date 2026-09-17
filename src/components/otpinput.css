@@ -1,0 +1,25 @@
+.otp-input { display: flex; gap: 12px; justify-content: flex-start; }
+.otp-input__box {
+  width: 52px;
+  height: 60px;
+  border-radius: var(--radius-lg);
+  border: 2px solid rgba(14, 107, 71, 0.15);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-navy);
+  background: white;
+  transition: border-color 0.15s;
+}
+.otp-input__box:focus {
+  outline: none;
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+.otp-input__box:disabled { opacity: 0.5; background: var(--color-mist); }
+
+@media (max-width: 380px) {
+  .otp-input { gap: 8px; }
+  .otp-input__box { width: 44px; height: 52px; font-size: 20px; }
+}

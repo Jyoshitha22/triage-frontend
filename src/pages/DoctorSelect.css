@@ -1,0 +1,24 @@
+.doctor-select__title { font-family: var(--font-display); font-size: 26px; font-weight: 600; color: var(--color-navy); margin: 0; }
+.doctor-select__lede { margin: 6px 0 0; font-size: 15px; color: var(--color-slate); }
+
+.doctor-select__grid { margin-top: 28px; display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 520px) { .doctor-select__grid { grid-template-columns: 1fr 1fr; } }
+
+.doctor-select__card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); background: white;
+  box-shadow: 0 12px 32px -22px rgba(5,36,25,0.3); padding: 20px; text-align: left; cursor: pointer;
+  transition: all 0.2s;
+}
+.doctor-select__card:hover { border-color: var(--color-gold); transform: translateY(-2px); }
+.doctor-select__icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 50%; background: rgba(16,185,129,0.12); color: var(--color-navy);
+}
+.doctor-select__name { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--color-navy); }
+.doctor-select__specialty { font-size: 13px; color: var(--color-slate); }
+
+.doctor-select__setup-link {
+  margin-top: 12px; display: flex; align-items: center; gap: 6px;
+  border: none; background: none; padding: 0; color: var(--color-gold); font-weight: 600; font-size: 14px; cursor: pointer;
+}

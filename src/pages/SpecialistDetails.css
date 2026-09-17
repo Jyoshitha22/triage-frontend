@@ -34,6 +34,19 @@
 .specialist-details__roster-meta { margin: 0; font-size: 14px; color: var(--color-slate); }
 .specialist-details__remove { border: none; background: none; cursor: pointer; color: var(--color-slate); }
 .specialist-details__remove:hover { color: var(--color-navy); }
+.specialist-details__edit-btn { border: none; background: none; cursor: pointer; color: var(--color-slate); }
+.specialist-details__edit-btn:hover { color: var(--color-gold); }
+
+.specialist-details__roster-row--editing { gap: 8px; flex-wrap: wrap; }
+.specialist-details__edit-input {
+  flex: 1; min-width: 100px; border-radius: var(--radius-md); border: 1px solid rgba(14,107,71,0.2);
+  background: var(--color-mist); padding: 8px 10px; font-size: 13px; color: var(--color-navy); font-family: inherit;
+}
+.specialist-details__edit-input--num { flex: 0 0 70px; min-width: 0; }
+.specialist-details__save-edit {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--color-gold); color: var(--color-navy); cursor: pointer;
+}
 .specialist-details__empty { padding: 16px 0; text-align: center; font-size: 14px; color: var(--color-slate); }
 
 .specialist-details__footer { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
