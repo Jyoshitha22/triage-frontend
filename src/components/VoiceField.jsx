@@ -1,4 +1,4 @@
-import React from "react";
+
 import { Mic, AlertCircle } from "lucide-react";
 import useSpeechRecognition from "../hooks/useSpeechRecognition";
 import { useLanguage } from "../context/LanguageContext";

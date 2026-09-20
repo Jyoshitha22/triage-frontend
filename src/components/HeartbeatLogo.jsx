@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 /**
  * Brand mark: a heart with an ECG/heartbeat line running through its

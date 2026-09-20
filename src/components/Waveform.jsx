@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+
 import './Waveform.css';
 
 /**
@@ -7,10 +7,10 @@ import './Waveform.css';
  * reviewing) -> playback (resolved reply).
  */
 export default function Waveform({ mode = 'idle', bars = 28, className = '' }) {
-  const heights = useMemo(
-    () => Array.from({ length: bars }, () => 20 + Math.round(Math.random() * 80)),
-    [bars]
-  );
+  const heights = Array.from({ length: bars }, (_, i) => {
+  const value = ((i * 37) % 81) + 20;
+  return value;
+});
 
   if (mode === 'pulse') {
     return (
@@ -36,3 +36,6 @@ export default function Waveform({ mode = 'idle', bars = 28, className = '' }) {
     </div>
   );
 }
+
+
+
