@@ -1,7 +1,23 @@
 .symptom-recording { width: 100%; max-width: 512px; }
+.symptom-recording__header-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; }
 .symptom-recording__title { text-align: center; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
 @media (min-width: 640px) { .symptom-recording__title { font-size: 30px; } }
+.symptom-recording__mode-toggle {
+  display: flex; align-items: center; gap: 6px;
+  border-radius: var(--radius-full); border: 1px solid rgba(14,107,71,0.15);
+  background: transparent; padding: 6px 12px; font-size: 12px; font-weight: 500;
+  color: var(--color-slate); cursor: pointer;
+}
+.symptom-recording__mode-toggle:hover { border-color: rgba(14,107,71,0.4); }
 .symptom-recording__subtitle { margin-top: 8px; text-align: center; font-size: 14px; color: var(--color-slate); }
+
+.symptom-recording__textarea {
+  width: 100%; min-height: 140px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15);
+  background: var(--color-mist); padding: 16px; font-size: 16px; color: var(--color-navy);
+  font-family: var(--font-body); outline: none; text-align: left; resize: vertical;
+}
+.symptom-recording__textarea:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+.symptom-recording__textarea::placeholder { color: rgba(92,107,100,0.5); }
 
 .symptom-recording__card { margin-top: 32px; display: flex; flex-direction: column; align-items: center; text-align: center; }
 
@@ -55,8 +71,20 @@
 .qa-bubble__a { margin: 4px 0 0; font-size: 14px; color: var(--color-navy); }
 
 .followup { margin-top: 16px; border-radius: var(--radius-lg); background: rgba(16,185,129,0.1); padding: 16px; }
+.followup__header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .followup__q { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 14px; font-weight: 500; color: var(--color-navy); }
 .followup__q-icon { margin-top: 2px; flex-shrink: 0; color: var(--color-gold); }
+.followup__mode-toggle {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(14,107,71,0.15);
+  background: white; color: var(--color-slate); cursor: pointer;
+}
+.followup__input {
+  margin-top: 12px; width: 100%; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15);
+  background: white; padding: 12px 14px; font-size: 14px; color: var(--color-navy);
+  font-family: var(--font-body); outline: none;
+}
+.followup__input:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
 .followup__mic {
   margin-top: 12px; display: flex; align-items: center; justify-content: center;
   width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
