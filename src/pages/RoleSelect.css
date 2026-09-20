@@ -1,0 +1,35 @@
+.role-select {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-midnight);
+  padding: 24px;
+  font-family: var(--font-body);
+}
+
+.role-select__panel { width: 100%; max-width: 460px; text-align: center; color: var(--color-mist); }
+.role-select__logo { color: var(--color-gold-glow); }
+.role-select__title { margin: 16px 0 4px; font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--color-mist); }
+.role-select__subtitle { margin: 0; font-size: 16px; opacity: 0.8; }
+
+.role-select__grid { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 380px) { .role-select__grid { grid-template-columns: 1fr; } }
+
+.role-select__card {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 32px 16px; border-radius: var(--radius-xl);
+  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
+  cursor: pointer; transition: all 0.2s;
+}
+.role-select__card:hover, .role-select__card:active {
+  border-color: var(--color-gold); background: rgba(16,185,129,0.15); transform: translateY(-2px);
+}
+.role-select__icon {
+  display: flex; align-items: center; justify-content: center;
+  width: 96px; height: 96px; border-radius: 50%;
+}
+.role-select__icon--patient { background: rgba(16,185,129,0.18); color: var(--color-gold-glow); }
+.role-select__icon--doctor { background: rgba(16,185,129,0.18); color: var(--color-gold-glow); }
+.role-select__label { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--color-mist); }

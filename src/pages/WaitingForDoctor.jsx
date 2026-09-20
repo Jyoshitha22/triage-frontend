@@ -4,12 +4,13 @@ import { Stethoscope, CheckCircle2, Circle } from 'lucide-react';
 import NavShell from '../components/NavShell';
 import Card from '../components/Card';
 import Waveform from '../components/Waveform';
+import { useLanguage } from '../context/LanguageContext';
 import './WaitingForDoctor.css';
 
 const STEPS = [
-  { label: 'Symptoms received', done: true },
-  { label: 'Doctor reviewing', active: true },
-  { label: "You'll be notified" },
+  { labelKey: 'stepSymptomsReceived', descKey: 'stepSymptomsReceivedDesc', done: true },
+  { labelKey: 'stepDoctorReviewing', descKey: 'stepDoctorReviewingDesc', active: true },
+  { labelKey: 'stepDoctorReply', descKey: 'stepDoctorReplyDesc' },
 ];
 
 /**
@@ -18,6 +19,7 @@ const STEPS = [
  */
 export default function WaitingForDoctor() {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [eta, setEta] = useState(360); // seconds — replace with real ETA from backend
 
   useEffect(() => {
@@ -31,7 +33,8 @@ export default function WaitingForDoctor() {
   return (
     <NavShell step={4}>
       <div className="waiting">
-        <h1 className="waiting__title">A doctor is reviewing what you shared</h1>
+        <h1 className="waiting__title">{t('waitingTitle')}</h1>
+        <p className="waiting__subtitle">{t('waitingSubtitle')}</p>
 
         <Card className="waiting__card">
           <div className="waiting__icon-badge"><Stethoscope size={28} /></div>
@@ -41,15 +44,18 @@ export default function WaitingForDoctor() {
 
           <ul className="waiting__steps">
             {STEPS.map((s) => (
-              <li key={s.label} className="waiting__step">
-                {s.done ? <CheckCircle2 size={16} className="waiting__step-icon waiting__step-icon--done" /> : <Circle size={16} className={`waiting__step-icon ${s.active ? 'waiting__step-icon--active' : ''}`} />}
-                <span className={s.done ? 'waiting__step-label--done' : s.active ? 'waiting__step-label--active' : 'waiting__step-label'}>{s.label}</span>
+              <li key={s.labelKey} className="waiting__step">
+                {s.done ? <CheckCircle2 size={18} className="waiting__step-icon waiting__step-icon--done" /> : <Circle size={18} className={`waiting__step-icon ${s.active ? 'waiting__step-icon--active' : ''}`} />}
+                <div>
+                  <p className={s.done ? 'waiting__step-label--done' : s.active ? 'waiting__step-label--active' : 'waiting__step-label'}>{t(s.labelKey)}</p>
+                  <p className="waiting__step-desc">{t(s.descKey)}</p>
+                </div>
               </li>
             ))}
           </ul>
         </Card>
 
-        <p className="waiting__note">You can close this and come back anytime — we'll notify you the moment your doctor replies.</p>
+        <p className="waiting__note">{t('waitingNote')}</p>
 
         {/* DEV ONLY — stand-in for the real backend event that fires when
             the doctor's reply is saved (poll or subscribe, then navigate

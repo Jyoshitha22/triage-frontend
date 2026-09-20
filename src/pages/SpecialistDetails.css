@@ -24,7 +24,7 @@
   border-radius: var(--radius-lg); border: none; cursor: pointer;
   background: var(--color-navy); color: var(--color-gold-glow); padding: 0 16px; font-size: 14px; font-weight: 600;
 }
-
+ 
 .specialist-details__roster { margin-top: 24px; }
 .specialist-details__roster-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(14,107,71,0.05); }
 .specialist-details__roster-row:last-child { border-bottom: none; }
@@ -32,7 +32,18 @@
 .specialist-details__roster-info { min-width: 0; flex: 1; }
 .specialist-details__roster-name { margin: 0; font-weight: 500; color: var(--color-navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .specialist-details__roster-meta { margin: 0; font-size: 14px; color: var(--color-slate); }
-.specialist-details__remove { border: none; background: none; cursor: pointer; color: var(--color-slate); }
+.specialist-details__remove { border: none; background: none; cursor: pointer; color: var(--color-slate);
+.specialist-details__remove { 
+  border: none; 
+  background: none; 
+  cursor: pointer; 
+  color: var(--color-slate);
+  transition: color 0.2s ease;
+}
+
+.specialist-details__remove:hover { 
+  color: var(--color-navy); 
+} }
 .specialist-details__remove:hover { color: var(--color-navy); }
 .specialist-details__empty { padding: 16px 0; text-align: center; font-size: 14px; color: var(--color-slate); }
 

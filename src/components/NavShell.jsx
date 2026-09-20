@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { AudioLines, ChevronLeft } from 'lucide-react';
 import ProgressDots from './ProgressDots';
 import './NavShell.css';
