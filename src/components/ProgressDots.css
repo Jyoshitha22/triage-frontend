@@ -23,7 +23,7 @@
 .progress-dots__circle--done { background: var(--color-navy); color: var(--color-gold-glow); }
 .progress-dots__circle--current { background: var(--color-gold); color: var(--color-navy); }
 
-.progress-dots__label { font-size: 11px; font-weight: 500; color: rgba(92, 107, 100, 0.7); }
+.progress-dots__label { font-size: 13px; font-weight: 500; color: rgba(74, 92, 83, 0.85); }
 .progress-dots__label--current { color: var(--color-navy); }
 
 .progress-dots__line { width: 32px; height: 1px; margin: 0 8px; background: var(--color-slate-200); }

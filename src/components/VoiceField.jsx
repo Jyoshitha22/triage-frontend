@@ -1,4 +1,4 @@
-
+import React from "react";
 import { Mic, AlertCircle } from "lucide-react";
 import useSpeechRecognition from "../hooks/useSpeechRecognition";
 import { useLanguage } from "../context/LanguageContext";
@@ -25,7 +25,8 @@ export default function VoiceField({
   const { bcp47, t } = useLanguage();
   const { supported, listening, interimTranscript, error, start, stop } = useSpeechRecognition({
     lang: bcp47,
-    continuous: false,
+    continuous: true,
+    silenceTimeoutMs: 2200,
   });
 
   const handleMicTap = () => {

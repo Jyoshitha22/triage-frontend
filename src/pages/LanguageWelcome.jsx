@@ -27,7 +27,7 @@ export default function LanguageWelcome() {
 
   const choose = (code) => {
     setLanguage(code);
-    setTimeout(() => { speakPrompt('chooseLanguage'); navigate('/login'); }, 700);
+    setTimeout(() => { speakPrompt('chooseLanguage'); navigate('/basic-details'); }, 700);
   };
 
   const listenForLanguage = () => {

@@ -28,3 +28,6 @@
 .hospital-login__submit { margin-top: 24px; width: 100%; }
 .hospital-login__password-hint { margin: 6px 0 0; font-size: 12px; color: var(--color-slate); }
 .hospital-login__security { margin-top: 24px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-slate); }
+
+
+

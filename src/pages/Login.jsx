@@ -10,7 +10,7 @@ import { useLanguage } from '../context/LanguageContext';
 import useAutoAdvance from '../hooks/useAutoAdvance';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import { isValidPhone, isValidOtp } from '../utils/validators';
-import './login.css';
+import './Login.css';
 
 const RESEND_SECONDS = 30;
 

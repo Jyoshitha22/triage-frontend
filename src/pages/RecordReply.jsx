@@ -1,103 +1,104 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Mic, Square, Play, Pause, Pill, ScanLine, MessageCircle, Send, CheckCircle2 } from 'lucide-react';
+import { ChevronLeft, Volume2, Pill, ClipboardList, MessageSquare, Mic, Square, Send, CheckCircle2, Info } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import Waveform from '../components/Waveform';
+import session from '../utils/session';
+import { INITIAL_PATIENTS } from '../utils/sampleData';
+import { LANGUAGES } from '../context/strings';
+import useSpeechRecognition from '../hooks/useSpeechRecognition';
+import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
 import './RecordReply.css';
 
-const TAGS = [
-  { key: 'medication', label: 'Medication', icon: Pill },
-  { key: 'tests', label: 'Tests / scans', icon: ScanLine },
-  { key: 'advice', label: 'General advice', icon: MessageCircle },
+const FIELDS = [
+  { key: 'medicines', label: 'Medicines', icon: Pill, placeholder: 'e.g. Paracetamol 500mg, twice a day for 3 days' },
+  { key: 'tests', label: 'Tests', icon: ClipboardList, placeholder: 'e.g. CBC, chest X-ray — optional' },
+  { key: 'advice', label: 'Advice', icon: MessageSquare, placeholder: 'e.g. Rest, stay hydrated, come back if fever crosses 102°F' },
 ];
-const SAMPLE_REPLY = 'This sounds like a mild viral fever. Rest, stay hydrated, and take paracetamol if needed. Come back if it crosses 102°F or lasts more than 3 days.';
 
 /**
- * Doctor listens to the patient's recording, then records a reply the
- * same way the patient recorded their symptoms. Sending removes the
- * patient from the queue.
+ * Doctor listens to the patient's symptom transcript, then fills in
+ * three separate fields — medicines, tests, advice — each answerable
+ * by typing or by voice. Sending moves the patient from "waiting" into
+ * "replied today" (both lists live in session.js).
  */
 export default function RecordReply() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const doctor = session.getCurrentDoctor();
   const patient = state?.patient;
-  const patients = state?.patients || [];
 
+  const { speak } = useSpeechSynthesis();
   const [playing, setPlaying] = useState(false);
-  const [listenProgress, setListenProgress] = useState(0);
-  const listenDuration = 24;
-
-  const [tags, setTags] = useState([]);
-  const [status, setStatus] = useState('idle');
-  const [seconds, setSeconds] = useState(0);
-  const [replyText, setReplyText] = useState('');
+  const [reply, setReply] = useState({ medicines: '', tests: '', advice: '' });
   const [sent, setSent] = useState(false);
-  const timerRef = useRef(null);
 
-  useEffect(() => {
-    if (!playing) return;
-    const t = setInterval(() => setListenProgress((p) => (p >= listenDuration ? (setPlaying(false), 0) : p + 1)), 1000);
-    return () => clearInterval(t);
-  }, [playing]);
+  const patientLangCode = patient?.preferredLanguage || 'en';
+  const patientLang = LANGUAGES.find((l) => l.code === patientLangCode) || LANGUAGES[0];
+  const needsTranslationNotice = patientLangCode !== 'en';
 
-  useEffect(() => {
-    if (status === 'recording') timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    else clearInterval(timerRef.current);
-    return () => clearInterval(timerRef.current);
-  }, [status]);
-
-  useEffect(() => {
-    if (status !== 'done' || replyText) return;
-    let i = 0;
-    const t = setInterval(() => {
-      setReplyText(SAMPLE_REPLY.slice(0, i));
-      i++;
-      if (i > SAMPLE_REPLY.length) clearInterval(t);
-    }, 12);
-    return () => clearInterval(t);
-  }, [status]); // eslint-disable-line
-
-  const toggleTag = (key) => setTags((t) => (t.includes(key) ? t.filter((k) => k !== key) : [...t, key]));
-  const toggleRecording = () => {
-    if (status === 'recording') setStatus('done');
-    else { setSeconds(0); setReplyText(''); setStatus('recording'); }
+  const playPatientRecording = () => {
+    if (playing) return;
+    setPlaying(true);
+    speak(patient?.snippet || '', 'en-IN');
+    const estimatedMs = ((patient?.snippet || '').split(' ').length / 2.5) * 1000 + 400;
+    setTimeout(() => setPlaying(false), estimatedMs);
   };
+
+  const set = (key, v) => setReply((r) => ({ ...r, [key]: v }));
+  const canSend = reply.medicines.trim() || reply.advice.trim();
+
   const send = () => {
+    if (!canSend) return;
     setSent(true);
     setTimeout(() => {
-      const updated = patients.filter((p) => p.id !== patient?.id);
-      navigate('/hospital/patients', { state: { patients: updated } });
-    }, 1400);
+      const allPatients = session.getPatients(INITIAL_PATIENTS);
+      const updatedWaiting = allPatients.filter((p) => p.id !== patient?.id);
+      const repliedPatient = { ...patient, reply, repliedBy: doctor?.name };
+      const updatedReplied = [repliedPatient, ...session.getRepliedToday([])];
+      session.savePatients(updatedWaiting);
+      session.saveRepliedToday(updatedReplied);
+      navigate('/hospital/dashboard');
+    }, 1200);
   };
 
-  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-  const ss = String(seconds % 60).padStart(2, '0');
-  const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  if (!patient) {
+    return (
+      <HospitalShell title="Hospital Portal" doctorName={doctor?.name}>
+        <p>No patient selected.</p>
+        <button onClick={() => navigate('/hospital/patients')} className="record-reply__back"><ChevronLeft size={16} /> Back to queue</button>
+      </HospitalShell>
+    );
+  }
 
   return (
-    <HospitalShell title="Reply to patient">
-      <button onClick={() => navigate('/hospital/patients', { state: { patients } })} className="record-reply__back"><ChevronLeft size={16} /> Back to queue</button>
+    <HospitalShell title="Reply to patient" doctorName={doctor?.name}>
+      <button onClick={() => navigate('/hospital/patients')} className="record-reply__back"><ChevronLeft size={16} /> Back to queue</button>
 
       <div className="record-reply">
         <Card>
           <div className="record-reply__patient-header">
-            <div className="record-reply__avatar">{(patient?.name || 'Rahul Verma').split(' ').map((n) => n[0]).slice(0, 2).join('')}</div>
+            <div className="record-reply__avatar">{patient.name.split(' ').map((n) => n[0]).slice(0, 2).join('')}</div>
             <div>
-              <p className="record-reply__patient-name">{patient?.name || 'Rahul Verma'}</p>
-              <p className="record-reply__patient-meta">{patient?.age || 29} · {patient?.gender || 'Male'} · {patient?.specialty || 'General Physician'}</p>
+              <p className="record-reply__patient-name">{patient.name}</p>
+              <p className="record-reply__patient-meta">{patient.age} · {patient.gender} · {patient.specialty}</p>
             </div>
           </div>
 
-          <button onClick={() => setPlaying((p) => !p)} className="record-reply__player">
-            <span className="record-reply__play-btn">{playing ? <Pause size={16} /> : <Play size={16} className="record-reply__play-icon" />}</span>
-            <span className="record-reply__player-wave"><Waveform mode="playback" bars={20} /></span>
-            <span className="record-reply__player-time">{fmt(listenProgress)} / {fmt(listenDuration)}</span>
+          <button onClick={playPatientRecording} className="record-reply__player">
+            <span className="record-reply__play-btn"><Volume2 size={16} /></span>
+            <span className="record-reply__player-label">{playing ? 'Playing…' : "Play patient's symptoms"}</span>
           </button>
           <div className="record-reply__transcript">
-            <p>{patient?.snippet || "I've had a headache and mild fever since yesterday evening. Since yesterday evening, so about a day. I took a paracetamol this morning, but it hasn't helped much."}</p>
+            <p>{patient.snippet}</p>
           </div>
+
+          {needsTranslationNotice && (
+            <p className="record-reply__lang-notice">
+              <Info size={12} /> This patient's preferred language is {patientLang.nativeLabel}. If you reply in English, they'll hear it read in English — automatic translation isn't available yet. Replying in {patientLang.nativeLabel} needs no translation.
+            </p>
+          )}
         </Card>
 
         <Card className="record-reply__reply-card">
@@ -107,31 +108,51 @@ export default function RecordReply() {
             <div className="record-reply__sent">
               <CheckCircle2 size={40} className="record-reply__sent-icon" />
               <p className="record-reply__sent-title">Reply sent</p>
-              <p className="record-reply__sent-sub">Removing this patient from your queue…</p>
+              <p className="record-reply__sent-sub">Moving this patient to Replied Today…</p>
             </div>
           ) : (
             <>
-              <button onClick={toggleRecording} className={`record-reply__mic ${status === 'recording' ? 'record-reply__mic--active' : ''}`}>
-                {status === 'recording' ? <Square size={28} className="record-reply__mic-icon-stop" /> : <Mic size={32} className="record-reply__mic-icon" />}
-              </button>
-              <p className="record-reply__timer">{status === 'recording' ? `${mm}:${ss} · recording` : status === 'done' ? `${mm}:${ss} recorded` : 'Tap to speak your reply'}</p>
-              <Waveform mode={status === 'recording' ? 'recording' : status === 'done' ? 'playback' : 'idle'} className="record-reply__wave" />
+              {FIELDS.map((f) => (
+                <ReplyField key={f.key} field={f} value={reply[f.key]} onChange={(v) => set(f.key, v)} />
+              ))}
 
-              {status === 'done' && <div className="record-reply__reply-text"><p>{replyText}</p></div>}
-
-              <div className="record-reply__tags">
-                {TAGS.map(({ key, label, icon: Icon }) => (
-                  <button key={key} onClick={() => toggleTag(key)} className={`record-reply__tag ${tags.includes(key) ? 'record-reply__tag--active' : ''}`}>
-                    <Icon size={14} /> {label}
-                  </button>
-                ))}
-              </div>
-
-              <Button className="record-reply__send" onClick={send} disabled={status !== 'done'} icon={Send}>Send reply</Button>
+              <Button className="record-reply__send" onClick={send} disabled={!canSend} icon={Send}>Send reply</Button>
+              <p className="record-reply__send-hint">Medicines or advice is required — tests are optional.</p>
             </>
           )}
         </Card>
       </div>
     </HospitalShell>
+  );
+}
+
+function ReplyField({ field, value, onChange }) {
+  const { supported, listening, interimTranscript, start, stop } = useSpeechRecognition({ lang: 'en-IN', continuous: true, silenceTimeoutMs: 2500 });
+  const Icon = field.icon;
+
+  const toggleMic = () => {
+    if (listening) { stop(); return; }
+    start((finalText) => { if (finalText) onChange((value ? value + ' ' : '') + finalText); });
+  };
+
+  return (
+    <div className="reply-field">
+      <p className="reply-field__label"><Icon size={14} /> {field.label}</p>
+      <div className="reply-field__box">
+        <textarea
+          rows={2}
+          value={listening ? [value, interimTranscript].filter(Boolean).join(' ') : value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          disabled={listening}
+          className="reply-field__textarea"
+        />
+        {supported && (
+          <button onClick={toggleMic} className={`reply-field__mic ${listening ? 'reply-field__mic--active' : ''}`}>
+            {listening ? <Square size={13} /> : <Mic size={13} />}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }

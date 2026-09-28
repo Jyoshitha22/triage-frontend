@@ -1,35 +1,57 @@
-import  { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Pause, CheckCircle2, Bookmark } from 'lucide-react';
+import { Play, Pause, CheckCircle2, Bookmark, ArrowRight, Info, Pill, ClipboardList, MessageSquare } from 'lucide-react';
 import NavShell from '../components/NavShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import Waveform from '../components/Waveform';
+import { useLanguage } from '../context/LanguageContext';
+import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
 import './DoctorReply.css';
+
+// Standing in for the real reply, which — once a backend exists — would
+// be fetched using this patient's own session/request ID. Structured to
+// match exactly what RecordReply.jsx now actually produces: medicines,
+// tests, advice, each optionally filled in.
+const SAMPLE_REPLY = {
+  medicines: 'Paracetamol 500mg, twice a day for 3 days.',
+  tests: '',
+  advice: "This sounds like a mild viral fever. Rest, stay hydrated, and come back if the fever crosses 102°F or lasts more than 3 days.",
+};
 
 export default function DoctorReply() {
   const navigate = useNavigate();
+  const { language, t } = useLanguage();
+  const { speak, cancel } = useSpeechSynthesis();
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const duration = 42; // seconds — replace with real audio duration
+  const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
-    if (!playing) return;
-    const t = setInterval(() => {
-      setProgress((p) => {
-        if (p >= duration) { setPlaying(false); return 0; }
-        return p + 1;
-      });
-    }, 1000);
-    return () => clearInterval(t);
-  }, [playing]);
+  const sections = [
+    { key: 'medicines', label: 'Medicines', icon: Pill },
+    { key: 'tests', label: 'Tests', icon: ClipboardList },
+    { key: 'advice', label: 'Advice', icon: MessageSquare },
+  ].filter((s) => SAMPLE_REPLY[s.key]);
 
-  const fmt = (s) => `${String(Math.floor(s / 60)).padStart(1, '0')}:${String(s % 60).padStart(2, '0')}`;
+  // The doctor's note is written in English — reading it aloud with an
+  // English voice keeps it understandable. Real translation into the
+  // patient's language would need a backend translation service; that's
+  // not wired up yet, so the notice below is shown instead of silently
+  // guessing. UI chrome around it (labels, buttons) still follows the
+  // patient's chosen language.
+  const playReply = () => {
+    if (playing) { cancel(); setPlaying(false); return; }
+    setPlaying(true);
+    const fullText = sections.map((s) => `${s.label}. ${SAMPLE_REPLY[s.key]}`).join(' ');
+    speak(fullText, 'en-IN');
+    const estimatedMs = (fullText.split(' ').length / 2.5) * 1000 + 500;
+    setTimeout(() => setPlaying(false), estimatedMs);
+  };
+
+  const saveNote = () => setSaved(true);
 
   return (
     <NavShell step={5}>
       <div className="doctor-reply">
-        <h1 className="doctor-reply__title">Your doctor has replied</h1>
+        <h1 className="doctor-reply__title">{t('doctorRepliedTitle')}</h1>
 
         <Card className="doctor-reply__card">
           <div className="doctor-reply__header">
@@ -41,26 +63,32 @@ export default function DoctorReply() {
             <CheckCircle2 size={20} className="doctor-reply__check" />
           </div>
 
-          <button onClick={() => setPlaying((p) => !p)} className="doctor-reply__player">
+          <button onClick={playReply} className="doctor-reply__player">
             <span className="doctor-reply__play-btn">{playing ? <Pause size={20} /> : <Play size={20} className="doctor-reply__play-icon" />}</span>
-            <span className="doctor-reply__player-wave">
-              <Waveform mode="playback" />
-              <span className="doctor-reply__player-time">{fmt(progress)} / {fmt(duration)}</span>
-            </span>
+            <span className="doctor-reply__player-label">{playing ? t('playingReply') : t('playReply')}</span>
           </button>
-          <div className="doctor-reply__progress-track"><div className="doctor-reply__progress-fill" style={{ width: `${(progress / duration) * 100}%` }} /></div>
+
+          {language !== 'en' && (
+            <p className="doctor-reply__translation-notice"><Info size={12} /> {t('translationNotice')}</p>
+          )}
 
           <div className="doctor-reply__note">
-            <p className="doctor-reply__note-label">Doctor's note</p>
-            <p className="doctor-reply__note-text">
-              This sounds like a mild viral fever. Rest, stay hydrated, and take paracetamol if needed.
-              Come back if the fever crosses 102°F or lasts more than 3 days.
-            </p>
+            {sections.map((s) => {
+              const Icon = s.icon;
+              return (
+                <div key={s.key} className="doctor-reply__note-section">
+                  <p className="doctor-reply__note-label"><Icon size={12} /> {s.label}</p>
+                  <p className="doctor-reply__note-text">{SAMPLE_REPLY[s.key]}</p>
+                </div>
+              );
+            })}
           </div>
 
           <div className="doctor-reply__actions">
-            <Button variant="ghost" icon={Bookmark}>Save note</Button>
-            <Button onClick={() => navigate('/')}>Done</Button>
+            <button onClick={saveNote} disabled={saved} className={`doctor-reply__save ${saved ? 'doctor-reply__save--saved' : ''}`}>
+              {saved ? <><CheckCircle2 size={16} /> {t('savedNote')}</> : <><Bookmark size={16} /> {t('saveNote')}</>}
+            </button>
+            <Button onClick={() => navigate('/')} icon={ArrowRight}>{t('backToHome')}</Button>
           </div>
         </Card>
       </div>

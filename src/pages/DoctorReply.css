@@ -16,14 +16,26 @@
 }
 .doctor-reply__play-btn { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--color-navy); color: var(--color-gold-glow); flex-shrink: 0; }
 .doctor-reply__play-icon { transform: translateX(1px); }
-.doctor-reply__player-wave { flex: 1; }
-.doctor-reply__player-time { margin-top: 8px; display: block; font-family: var(--font-mono); font-size: 12px; color: var(--color-slate); }
+.doctor-reply__player-label { font-size: 14px; font-weight: 500; color: var(--color-navy); }
 
-.doctor-reply__progress-track { margin-top: 8px; height: 4px; width: 100%; overflow: hidden; border-radius: var(--radius-full); background: rgba(14,107,71,0.1); }
-.doctor-reply__progress-fill { height: 100%; border-radius: var(--radius-full); background: var(--color-gold); transition: width 1s linear; }
+.doctor-reply__translation-notice {
+  margin-top: 10px; display: flex; align-items: flex-start; gap: 6px;
+  font-size: 12px; line-height: 1.4; color: var(--color-slate);
+}
+.doctor-reply__translation-notice svg { flex-shrink: 0; margin-top: 1px; }
 
-.doctor-reply__note { margin-top: 24px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); padding: 16px; }
-.doctor-reply__note-label { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.doctor-reply__note { margin-top: 24px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.doctor-reply__note-section:not(:first-child) { padding-top: 14px; border-top: 1px solid rgba(14,107,71,0.08); }
+.doctor-reply__note-label { margin: 0; display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
 .doctor-reply__note-text { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--color-navy); }
 
-.doctor-reply__actions { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; }
+.doctor-reply__actions { margin-top: 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+.doctor-reply__save {
+  display: flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(14,107,71,0.2); background: transparent; border-radius: var(--radius-full);
+  padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--color-navy); cursor: pointer;
+  transition: all 0.2s;
+}
+.doctor-reply__save:hover { border-color: var(--color-gold); background: rgba(16,185,129,0.08); }
+.doctor-reply__save--saved { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.1); color: var(--color-gold); cursor: default; }
