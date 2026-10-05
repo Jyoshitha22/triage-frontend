@@ -1,4 +1,21 @@
 .specialist-details { margin: 0 auto; width: 100%; max-width: 672px; }
+.specialist-details__back {
+  display: flex; align-items: center; gap: 4px; margin-bottom: 12px;
+  border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
+}
+.specialist-details__back:hover { color: var(--color-navy); }
+.specialist-details__span2 { grid-column: 1 / -1; }
+.specialist-details__lang-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.specialist-details__lang-chip {
+  border-radius: var(--radius-full); border: 1px solid rgba(14,107,71,0.2); background: transparent;
+  padding: 7px 14px; font-size: 12px; font-weight: 600; color: var(--color-navy); cursor: pointer;
+}
+.specialist-details__lang-chip--active { background: var(--color-navy); border-color: var(--color-navy); color: var(--color-gold-glow); }
+.specialist-details__power {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(14,107,71,0.15); background: white; color: rgba(74,92,83,0.4); cursor: pointer;
+}
+.specialist-details__power--on { color: var(--color-gold); border-color: var(--color-gold); background: rgba(16,185,129,0.08); }
 .specialist-details__header { display: flex; align-items: center; gap: 12px; }
 .specialist-details__icon-badge { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(14,107,71,0.1); color: var(--color-navy); flex-shrink: 0; }
 .specialist-details__title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }

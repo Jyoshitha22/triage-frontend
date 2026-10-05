@@ -22,12 +22,24 @@
 .doctor-dashboard__stat-number { margin: 0; font-family: var(--font-mono); font-size: 30px; font-weight: 600; color: var(--color-navy); }
 .doctor-dashboard__stat-label { margin: 0; font-size: 14px; color: var(--color-slate); }
 
-.doctor-dashboard__hint-card { margin-top: 20px; }
-.doctor-dashboard__hint-card p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-slate); }
-.doctor-dashboard__hint-card strong { color: var(--color-navy); }
-
-.doctor-dashboard__manage-link {
-  margin-top: 16px; display: flex; align-items: center; gap: 6px;
-  border: none; background: none; padding: 0; color: var(--color-slate); font-size: 13px; cursor: pointer;
+.doctor-dashboard__preview-card { margin-top: 20px; }
+.doctor-dashboard__preview-title { margin: 0 0 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-slate); }
+.doctor-dashboard__preview-empty { margin: 0; font-size: 14px; color: var(--color-slate); }
+.doctor-dashboard__preview-row {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  border: none; background: none; padding: 10px 0; border-bottom: 1px solid rgba(14,107,71,0.06); cursor: pointer; font-family: inherit;
 }
-.doctor-dashboard__manage-link:hover { color: var(--color-navy); }
+.doctor-dashboard__preview-row:last-of-type { border-bottom: none; }
+.doctor-dashboard__preview-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.doctor-dashboard__preview-name { font-size: 14px; font-weight: 600; color: var(--color-navy); flex-shrink: 0; }
+.doctor-dashboard__preview-symptom { font-size: 13px; color: var(--color-slate); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doctor-dashboard__preview-more {
+  margin-top: 12px; display: flex; align-items: center; gap: 6px;
+  border: none; background: none; padding: 0; color: var(--color-gold); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+
+.doctor-dashboard__logout {
+  margin-top: 20px; display: flex; align-items: center; gap: 6px;
+  border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
+}
+.doctor-dashboard__logout:hover { color: var(--color-navy); }

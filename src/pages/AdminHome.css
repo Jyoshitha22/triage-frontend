@@ -1,0 +1,42 @@
+.admin-home { width: 100%; max-width: 640px; }
+
+.admin-home__header { display: flex; align-items: center; gap: 14px; }
+.admin-home__icon-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 50%; background: rgba(16,185,129,0.12); color: var(--color-navy); flex-shrink: 0;
+}
+.admin-home__title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
+@media (min-width: 640px) { .admin-home__title { font-size: 28px; } }
+.admin-home__lede { margin: 4px 0 0; font-size: 14px; color: var(--color-slate); }
+
+.admin-home__id-card { margin-top: 28px; }
+.admin-home__id-label { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.admin-home__id-row { margin-top: 10px; display: flex; align-items: center; gap: 12px; }
+.admin-home__id-value {
+  font-family: var(--font-mono); font-size: 28px; font-weight: 700; color: var(--color-navy);
+  background: var(--color-mist); border-radius: var(--radius-md); padding: 8px 18px;
+}
+.admin-home__copy-btn {
+  display: flex; align-items: center; gap: 6px; border: 1px solid rgba(14,107,71,0.2); background: transparent;
+  border-radius: var(--radius-full); padding: 8px 14px; font-size: 13px; font-weight: 600; color: var(--color-navy); cursor: pointer;
+}
+.admin-home__copy-btn:hover { border-color: var(--color-gold); background: rgba(16,185,129,0.08); }
+.admin-home__id-hint { margin: 12px 0 0; font-size: 13px; color: var(--color-slate); line-height: 1.5; }
+
+.admin-home__actions { margin-top: 24px; display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 560px) { .admin-home__actions { grid-template-columns: 1fr 1fr; } }
+.admin-home__action-card {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  border-radius: var(--radius-xl); border: 1px solid rgba(14,107,71,0.08); background: white;
+  box-shadow: var(--shadow-card); padding: 22px; text-align: left; cursor: pointer;
+  color: var(--color-navy); font-family: inherit; font-size: 15px; font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.admin-home__action-card:hover { transform: translateY(-2px); box-shadow: 0 24px 60px -24px rgba(5,36,25,0.35); }
+.admin-home__action-sub { font-size: 12px; font-weight: 400; color: var(--color-slate); }
+
+.admin-home__logout {
+  margin-top: 28px; display: flex; align-items: center; gap: 6px;
+  border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
+}
+.admin-home__logout:hover { color: var(--color-navy); }
