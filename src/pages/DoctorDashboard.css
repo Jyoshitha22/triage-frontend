@@ -35,11 +35,13 @@
 .doctor-dashboard__preview-symptom { font-size: 13px; color: var(--color-slate); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doctor-dashboard__preview-more {
   margin-top: 12px; display: flex; align-items: center; gap: 6px;
-  border: none; background: none; padding: 0; color: var(--color-gold); font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; background: none; padding: 0; color: #3697eb; font-size: 13px; font-weight: 600; cursor: pointer;
 }
+.doctor-dashboard__preview-more:hover { color: #247fcf; }
 
 .doctor-dashboard__logout {
-  margin-top: 20px; display: flex; align-items: center; gap: 6px;
-  border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
+  width: fit-content; margin: 20px 0 0 auto; display: flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(54,151,235,0.16); border-radius: 10px; background: #edf6ff; padding: 9px 13px;
+  color: #247fcf; font-size: 14px; font-weight: 700; cursor: pointer;
 }
-.doctor-dashboard__logout:hover { color: var(--color-navy); }
+.doctor-dashboard__logout:hover { background: #dceeff; color: #1769ad; }

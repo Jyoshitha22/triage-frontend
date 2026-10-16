@@ -17,7 +17,17 @@ const KEYS = {
   admin: 'triage.session.admin',
   doctor: 'triage.session.doctor',
   activeSymptomId: 'triage.session.activeSymptomId',
+  pending: 'triage.session.pending',
+  symptomQueue: 'triage.session.symptomQueue',
+  patientRegistry: 'triage.patientRegistry',
 };
+
+const DEFAULT_PATIENTS = [
+  { symptom_id: 's-101', patient_name: 'Sneha Iyer', patient_age: 34, patient_gender: 'Female', symptom_text: 'Sharp pain in the lower right abdomen since this morning.', urgency: 'emergency', department: 'General Physician', status: 'waiting', replies: [], created_at: new Date(Date.now() - 9 * 60000).toISOString() },
+  { symptom_id: 's-102', patient_name: 'Rahul Verma', patient_age: 29, patient_gender: 'Male', symptom_text: "I've had a headache and mild fever since yesterday evening.", urgency: 'medium', department: 'General Physician', status: 'waiting', replies: [], created_at: new Date(Date.now() - 4 * 60000).toISOString() },
+  { symptom_id: 's-103', patient_name: 'Kavya Reddy', patient_age: 41, patient_gender: 'Female', symptom_text: 'Chest tightness and shortness of breath while climbing stairs.', urgency: 'emergency', department: 'Cardiologist', status: 'waiting', replies: [], created_at: new Date(Date.now() - 2 * 60000).toISOString() },
+  { symptom_id: 's-104', patient_name: 'Arjun Nair', patient_age: 6, patient_gender: 'Male', symptom_text: 'Persistent cough and sore throat for two days.', urgency: 'low', department: 'General Physician', status: 'waiting', replies: [], created_at: new Date(Date.now() - 15 * 60000).toISOString() },
+];
 
 function read(key, fallback) {
   try {
@@ -39,6 +49,18 @@ export const session = {
   getPatient: () => read(KEYS.patient, null),
   savePatient: (data) => write(KEYS.patient, { ...data, savedAt: Date.now() }),
   clearPatient: () => remove(KEYS.patient),
+  getRegisteredPatientByEmail: (email) => {
+    const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (!normalizedEmail) return null;
+    return read(KEYS.patientRegistry, []).find((patient) => patient.email === normalizedEmail) || null;
+  },
+  registerPatient: (data) => {
+    const normalizedEmail = String(data.email || '').trim().toLowerCase();
+    const registered = { ...data, email: normalizedEmail, registeredAt: Date.now() };
+    const patients = read(KEYS.patientRegistry, []).filter((patient) => patient.email !== normalizedEmail);
+    write(KEYS.patientRegistry, [...patients, registered]);
+    return registered;
+  },
 
   // ---- Hospital admin ----
   getAdmin: () => read(KEYS.admin, null),
@@ -50,12 +72,66 @@ export const session = {
   saveDoctor: (data) => write(KEYS.doctor, data),
   clearDoctor: () => remove(KEYS.doctor),
 
-  // ---- The one symptom record the patient is currently waiting on —
-  // this is what makes "leave and come back" work: on return, the app
-  // checks this ID's status instead of re-asking Basic Details/Symptoms.
+  // ---- Active symptom pointer ----
   getActiveSymptomId: () => read(KEYS.activeSymptomId, null),
   saveActiveSymptomId: (id) => write(KEYS.activeSymptomId, id),
   clearActiveSymptomId: () => remove(KEYS.activeSymptomId),
+    // ---- The symptoms the patient just sent + when the wait ends, so a
+  // refresh continues where they were ----
+  getPending: () => read(KEYS.pending, null),
+  savePending: (data) => write(KEYS.pending, data),
+  clearPending: () => remove(KEYS.pending),
+
+  // ---- Symptom queue management for frontend end-to-end operation ----
+  getAllRecords: () => {
+    const stored = read(KEYS.symptomQueue, null);
+    if (!stored) {
+      write(KEYS.symptomQueue, DEFAULT_PATIENTS);
+      return DEFAULT_PATIENTS;
+    }
+    return stored;
+  },
+  getWaitingRecords: () => {
+    const all = session.getAllRecords();
+    return all.filter((r) => r.status === 'waiting');
+  },
+  getRepliedRecords: (doctorId) => {
+    const all = session.getAllRecords();
+    return all.filter((r) => r.status === 'replied' && (!doctorId || r.doctorId === doctorId || !r.doctorId));
+  },
+  getSymptomRecord: (id) => {
+    const all = session.getAllRecords();
+    return all.find((r) => String(r.symptom_id) === String(id)) || null;
+  },
+  addSymptomRecord: (record) => {
+    const all = session.getAllRecords();
+    const updated = [record, ...all];
+    write(KEYS.symptomQueue, updated);
+    session.saveActiveSymptomId(record.symptom_id);
+    return record;
+  },
+  addDoctorReply: (symptomId, parts, doctorId) => {
+    const all = session.getAllRecords();
+    const updated = all.map((r) => {
+      if (String(r.symptom_id) === String(symptomId)) {
+        return {
+          ...r,
+          status: 'replied',
+          doctorId: doctorId || r.doctorId,
+          replied_at: new Date().toISOString(),
+          replies: parts.map((p, idx) => ({
+            response_id: `resp-${idx}-${Date.now()}`,
+            response_type: p.response_type,
+            response_text: p.response_text,
+            original_text: p.response_text,
+          })),
+        };
+      }
+      return r;
+    });
+    write(KEYS.symptomQueue, updated);
+    return updated.find((r) => String(r.symptom_id) === String(symptomId));
+  },
 };
 
 export default session;

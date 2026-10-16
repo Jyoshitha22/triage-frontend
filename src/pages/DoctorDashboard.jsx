@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, CheckCircle2, AlertTriangle, LogOut, ArrowRight } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
@@ -20,19 +20,26 @@ export default function DoctorDashboard() {
   useEffect(() => {
     if (!doctor) { navigate('/hospital/doctor', { replace: true }); return; }
     Promise.all([
-      api.get(`/symptom-records?status=waiting&doctor_id=${doctor.doctor_id}`),
-      api.get(`/doctors/${doctor.doctor_id}/replied`),
-    ]).then(([q, replied]) => { setWaiting(q); setRepliedCount(replied.length); }).finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+      api.get(`/symptom-records?status=waiting&doctor_id=${doctor.doctor_id}`).catch(() => session.getWaitingRecords()),
+      api.get(`/doctors/${doctor.doctor_id}/replied`).catch(() => session.getRepliedRecords(doctor.doctor_id)),
+    ])
+      .then(([q, replied]) => { setWaiting(q || []); setRepliedCount((replied || []).length); })
+      .catch(() => {
+        setWaiting(session.getWaitingRecords());
+        setRepliedCount(session.getRepliedRecords(doctor.doctor_id).length);
+      })
+      .finally(() => setLoading(false));
+  }, [doctor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const urgentCount = waiting.filter((p) => p.urgency === 'emergency').length;
   const logout = () => { session.clearDoctor(); navigate('/hospital'); };
 
   if (!doctor) return null;
+  const doctorName = doctor.name.trim().replace(/^dr\.?\s*/i, '') || doctor.name;
 
   return (
-    <HospitalShell title="Hospital Portal" doctorName={doctor.name} onLogout={logout}>
-      <h1 className="doctor-dashboard__title">Good to see you, {doctor.name.replace('Dr. ', '')}</h1>
+    <HospitalShell showDoctorArtwork>
+      <h1 className="doctor-dashboard__title">Good to see you, Dr. {doctorName}</h1>
       <p className="doctor-dashboard__lede">{doctor.department} · {doctor.experience_years} yrs experience — here's what's waiting for you today.</p>
 
       <div className="doctor-dashboard__stats">

@@ -7,19 +7,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *
  * Browser support: Chrome, Edge, and Safari (16.4+) support this. Firefox
  * currently does not. When unsupported, `supported` is false — callers
- * should fall back to the typed input in that case (VoiceField already
- * does this).
+ * should fall back to the typed input in that case.
  *
  * @param {string} lang - BCP-47 language tag, e.g. "en-IN", "te-IN".
  * @param {boolean} continuous - keep listening across pauses vs. stop
  *   after one short answer (phone, OTP, name, etc).
  * @param {number|null} silenceTimeoutMs - when set, automatically stops
- *   listening after this many ms with no new speech detected — this is
- *   what lets a longer, continuous recording (like describing a
- *   symptom) end on its own once the patient stops talking, instead of
- *   requiring a manual "stop" tap. Only meaningful when continuous is
- *   true; leave null to require an explicit stop() call.
+ *   listening after this many ms of quiet AFTER the person has started
+ *   speaking. Before they say anything, it waits longer (at least 8 s)
+ *   so they have time to start talking.
  */
+const FIRST_WORD_WAIT_MS = 8000;
+
 export default function useSpeechRecognition({ lang = "en-IN", continuous = false, silenceTimeoutMs = null } = {}) {
   const [supported] = useState(
     () => typeof window !== "undefined" && !!(window.SpeechRecognition || window.webkitSpeechRecognition)
@@ -43,21 +42,34 @@ export default function useSpeechRecognition({ lang = "en-IN", continuous = fals
     silenceTimerRef.current = null;
   };
 
-  const armSilenceTimer = useCallback(() => {
+  const armSilenceTimer = useCallback((ms) => {
     if (!silenceTimeoutMs) return;
     clearSilenceTimer();
     silenceTimerRef.current = setTimeout(() => {
       recognitionRef.current?.stop();
-    }, silenceTimeoutMs);
+    }, ms ?? silenceTimeoutMs);
   }, [silenceTimeoutMs]);
 
   const start = useCallback(
-    (onFinalResult) => {
+    async (onFinalResult) => {
       if (!supported) {
         setError("unsupported");
         return;
       }
       setError(null);
+
+      // Ask for the microphone first, so the browser shows its permission
+      // prompt (or tells us it is blocked) before we start listening.
+      try {
+        if (navigator.mediaDevices?.getUserMedia) {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      } catch {
+        setError("not-allowed");
+        return;
+      }
+
       onFinalRef.current = onFinalResult;
       finalTranscriptRef.current = "";
       setInterimTranscript("");
@@ -89,6 +101,7 @@ export default function useSpeechRecognition({ lang = "en-IN", continuous = fals
       };
 
       recognition.onend = () => {
+        if (recognitionRef.current !== recognition) return; // an older session ending
         clearSilenceTimer();
         setListening(false);
         setInterimTranscript("");
@@ -99,14 +112,13 @@ export default function useSpeechRecognition({ lang = "en-IN", continuous = fals
       try {
         recognition.start();
         setListening(true);
-        // Start the silence clock immediately too, in case the patient
-        // never says anything at all.
-        armSilenceTimer();
+        // Give the person time to START talking before the quiet-clock runs.
+        if (silenceTimeoutMs) armSilenceTimer(Math.max(silenceTimeoutMs, FIRST_WORD_WAIT_MS));
       } catch {
         setError("start-failed");
       }
     },
-    [supported, lang, continuous, armSilenceTimer]
+    [supported, lang, continuous, silenceTimeoutMs, armSilenceTimer]
   );
 
   const stop = useCallback(() => {

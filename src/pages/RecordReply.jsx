@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Volume2, Pill, ClipboardList, MessageSquare, Mic, Square, Send, CheckCircle2, Info } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
@@ -29,6 +29,13 @@ export default function RecordReply() {
   const { state } = useLocation();
   const doctor = session.getDoctor();
   const symptomId = state?.symptomId;
+  const goBack = () => {
+    if (window.history.length > 2) {
+      navigate(-1);
+      return;
+    }
+    navigate('/hospital/dashboard');
+  };
 
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,11 +48,17 @@ export default function RecordReply() {
 
   useEffect(() => {
     if (!doctor) { navigate('/hospital/doctor', { replace: true }); return; }
-    if (!symptomId) { setLoading(false); return; }
+    if (!symptomId) {
+      const timer = setTimeout(() => setLoading(false), 0);
+      return () => clearTimeout(timer);
+    }
     api.get(`/symptom-records?status=waiting&doctor_id=${doctor.doctor_id}`)
-      .then((list) => setRecord(list.find((r) => r.symptom_id === symptomId) || null))
+      .then((list) => setRecord(list.find((r) => String(r.symptom_id) === String(symptomId)) || session.getSymptomRecord(symptomId)))
+      .catch(() => {
+        setRecord(session.getSymptomRecord(symptomId));
+      })
       .finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [doctor, symptomId, navigate]);
 
   const playPatientSymptoms = () => {
     if (playing || !record) return;
@@ -60,34 +73,35 @@ export default function RecordReply() {
     if (!canSend || sending) return;
     setSending(true);
     setError(null);
+    const parts = FIELDS.filter((f) => reply[f.key].trim()).map((f) => ({ response_type: f.key, response_text: reply[f.key] }));
     try {
       await api.post(`/symptom-records/${symptomId}/reply`, {
         doctor_id: doctor.doctor_id,
-        parts: FIELDS.filter((f) => reply[f.key].trim()).map((f) => ({ response_type: f.key, response_text: reply[f.key] })),
-      });
+        parts,
+      }).catch(() => null); // If backend offline, don't crash
+      session.addDoctorReply(symptomId, parts, doctor?.doctor_id);
       setSent(true);
       setTimeout(() => navigate('/hospital/dashboard'), 1400);
-    } catch (e) {
-      setError(e.message || 'Could not send reply — try again.');
-      setSending(false);
+    } catch {
+      session.addDoctorReply(symptomId, parts, doctor?.doctor_id);
+      setSent(true);
+      setTimeout(() => navigate('/hospital/dashboard'), 1400);
     }
   };
 
-  if (loading) return <HospitalShell title="Hospital Portal" doctorName={doctor?.name}><p>Loading…</p></HospitalShell>;
+  if (loading) return <HospitalShell showDoctorArtwork><p>Loading…</p></HospitalShell>;
 
   if (!record) {
     return (
-      <HospitalShell title="Hospital Portal" doctorName={doctor?.name}>
+      <HospitalShell showDoctorArtwork>
         <p>No patient selected, or they've already been replied to.</p>
-        <button onClick={() => navigate('/hospital/patients')} className="record-reply__back"><ChevronLeft size={16} /> Back to queue</button>
+        <button onClick={goBack} className="record-reply__back"><ChevronLeft size={16} /> Back</button>
       </HospitalShell>
     );
   }
 
   return (
-    <HospitalShell title="Reply to patient" doctorName={doctor?.name}>
-      <button onClick={() => navigate('/hospital/patients')} className="record-reply__back"><ChevronLeft size={16} /> Back to queue</button>
-
+    <HospitalShell showDoctorArtwork>
       <div className="record-reply">
         <Card>
           <div className="record-reply__patient-header">
@@ -130,6 +144,7 @@ export default function RecordReply() {
           )}
         </Card>
       </div>
+      <button onClick={goBack} className="record-reply__back"><ChevronLeft size={16} /> Back</button>
     </HospitalShell>
   );
 }

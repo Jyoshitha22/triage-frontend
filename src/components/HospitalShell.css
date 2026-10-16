@@ -1,7 +1,7 @@
 .hospital-shell {
   position: relative;
-  min-height: 100vh;
-  overflow: hidden;
+  min-height: calc(100vh - 96px);
+  min-height: calc(100dvh - 96px);
   background: var(--color-mist);
   font-family: var(--font-body);
 }
@@ -16,16 +16,15 @@
   top: 0;
   z-index: 10;
   border-bottom: 1px solid rgba(14, 107, 71, 0.06);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
+  background: transparent;
 }
 .hospital-shell__header-row {
-  max-width: 1024px;
+  max-width: 1400px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: 8px 20px;
 }
 .hospital-shell__brand { display: flex; align-items: center; gap: 8px; }
 .hospital-shell__brand-icon {
@@ -34,24 +33,60 @@
   background: var(--color-navy); color: var(--color-gold-glow);
 }
 .hospital-shell__brand-name { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--color-navy); }
-.hospital-shell__title { margin-left: 8px; font-size: 14px; color: var(--color-slate); display: none; }
-@media (min-width: 640px) { .hospital-shell__title { display: inline; } }
+.hospital-shell__title { margin-left: 8px; font-size: 13px; color: var(--color-slate); }
 
 .hospital-shell__actions { display: flex; align-items: center; gap: 12px; }
 .hospital-shell__doctor { font-size: 14px; color: var(--color-slate); display: none; }
 @media (min-width: 640px) { .hospital-shell__doctor { display: inline; } }
 .hospital-shell__logout {
-  display: flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px; border-radius: 50%; border: none;
-  background: transparent; color: rgba(14, 107, 71, 0.6); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  min-height: 38px; border-radius: 12px; border: 1px solid rgba(54, 151, 235, 0.14);
+  padding: 0 12px; background: #edf6ff; color: #247fcf; font: 700 13px var(--font-body); cursor: pointer;
 }
-.hospital-shell__logout:hover { background: rgba(14, 107, 71, 0.05); color: var(--color-navy); }
+.hospital-shell__logout:hover { background: #dceeff; color: #1769ad; }
 
 .hospital-shell__main {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: 1024px;
   margin: 0 auto;
-  padding: 32px 20px;
+  padding: 24px 20px 32px;
 }
 @media (min-width: 640px) { .hospital-shell__main { padding: 48px 20px; } }
+.hospital-shell__main--compact { padding-top: 8px; }
+@media (min-width: 640px) { .hospital-shell__main--compact { padding-top: 8px; } }
+.hospital-shell__main--wide { max-width: 1400px; }
+.hospital-shell__main--with-art {
+  box-sizing: border-box;
+  max-width: 1400px;
+  padding-left: clamp(360px, 37vw, 540px);
+}
+.hospital-shell__main--with-art-right {
+  padding-right: clamp(360px, 37vw, 540px);
+  padding-left: 20px;
+}
+@media (min-width: 640px) {
+  .hospital-shell__main { padding-top: 20px; }
+  .hospital-shell__main--compact { padding-top: 8px; }
+}
+@media (max-width: 1000px) {
+  .hospital-shell__main--with-art { padding-left: clamp(280px, 32vw, 400px); }
+  .hospital-shell__main--with-art-right { padding-right: clamp(280px, 32vw, 400px); }
+}
+@media (max-width: 760px) {
+  .hospital-shell__main--with-art { padding-left: 20px; }
+  .hospital-shell__main--with-art-right { padding-right: 20px; }
+}
+
+.hospital-shell .btn--primary {
+  background: #3697eb;
+  color: #ffffff;
+  box-shadow: 0 8px 20px -10px rgba(54, 151, 235, 0.8);
+}
+.hospital-shell .btn--primary:hover { background: #247fcf; }
+.hospital-shell .hospital-registration__lang-chip--active,
+.hospital-shell .specialist-details__lang-chip--active {
+  background: #3697eb;
+  border-color: #3697eb;
+  color: #ffffff;
+}

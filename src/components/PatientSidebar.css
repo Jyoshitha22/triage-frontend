@@ -1,0 +1,65 @@
+/* Left panel for every patient page (psb = patient sidebar). */
+.psb {
+  --pd-ink: #0f4a3a;
+  --pd-title: #12614a;
+  --pd-muted: #6f9a8b;
+  --pd-green: #1e785e;
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-self: start; gap: 10px; padding-top: 28px;
+  font-family: var(--font-body);
+}
+.psb__item {
+  display: flex; align-items: center; gap: 22px; width: 100%; padding: 14px 18px;
+  border: none; border-radius: 18px; background: none; color: var(--pd-ink);
+  font-family: inherit; font-size: clamp(17px, 1.5vw, 22px); font-weight: 500; text-align: left; cursor: pointer;
+}
+.psb__item > svg:first-child { color: var(--pd-title); flex: none; }
+.psb__item > span { flex: 1; display: flex; flex-direction: column; line-height: 1.2; }
+.psb__item small { margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--pd-muted); }
+.psb__item:hover { background: #e6f4ec; }
+.psb__item--active { background: #d9efe4; font-weight: 700; }
+.psb__chev { flex: none; margin-left: auto; color: var(--pd-title); transition: transform 0.2s; }
+.psb__chev.is-open { transform: rotate(180deg); }
+
+.psb__langs {
+  list-style: none; margin: -2px 0 4px 18px; padding: 6px;
+  border-radius: 16px; background: #fff; box-shadow: 0 14px 30px -16px rgba(20, 90, 60, 0.45);
+}
+.psb__langs button {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 10px 12px;
+  border: none; border-radius: 10px; background: none; color: var(--pd-ink);
+  font-family: inherit; font-size: 16px; font-weight: 600; text-align: left; cursor: pointer;
+}
+.psb__langs button em { font-style: normal; font-weight: 400; color: var(--pd-muted); }
+.psb__langs button:hover, .psb__langs button.is-active { background: #e8f6ee; }
+.psb__langs button svg { color: var(--pd-green); }
+
+/* ---- help popup ---- */
+.psb-modal { --pd-ink: #0f4a3a; --pd-title: #12614a; --pd-green: #1e785e; position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 20px; font-family: var(--font-body); }
+.psb-modal__backdrop { position: absolute; inset: 0; border: none; background: rgba(10, 50, 35, 0.4); cursor: default; }
+.psb-modal__box { position: relative; width: min(100%, 620px); max-height: min(90vh, 760px); overflow-y: auto; padding: 40px 38px 34px; border-radius: 24px; background: #fff; box-shadow: 0 30px 70px -20px rgba(10, 60, 40, 0.5); }
+.psb-modal__close { position: absolute; top: 14px; right: 14px; display: flex; width: 34px; height: 34px; align-items: center; justify-content: center; border: none; border-radius: 50%; background: #e6f4ec; color: var(--pd-ink); cursor: pointer; }
+.psb-modal__title { margin: 0 0 20px; font-family: var(--font-body); font-size: 32px; font-weight: 800; color: var(--pd-title); }
+.psb-modal__steps { margin: 0; padding-left: 26px; font-size: 19px; line-height: 1.65; color: var(--pd-ink); }
+.psb-modal__steps li + li { margin-top: 12px; }
+.psb-modal__warn { margin: 24px 0 0; padding: 18px 20px; border-radius: 14px; background: #fdecea; color: #8f2924; font-size: 18px; font-weight: 700; line-height: 1.5; }
+.psb-modal__warn p { margin: 0; }
+.psb-modal__emergency-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.psb-modal__emergency-links a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 18px; border: 1px solid #e6aaa5; border-radius: 12px; background: #fff; color: #8f2924; font-size: 18px; font-weight: 800; text-decoration: none; }
+.psb-modal__emergency-links a:hover { background: #fff7f6; }
+.psb-modal__ok { width: 100%; height: 54px; margin-top: 22px; border: none; border-radius: 999px; background: var(--pd-green); color: #fff; font-family: inherit; font-size: 18px; font-weight: 700; cursor: pointer; }
+
+@media (max-width: 520px) {
+  .psb-modal__box { padding: 30px 22px 24px; }
+  .psb-modal__title { font-size: 27px; }
+  .psb-modal__steps { font-size: 17px; }
+  .psb-modal__warn { font-size: 16px; }
+  .psb-modal__emergency-links a { font-size: 16px; }
+}
+
+@media (max-width: 800px) {
+  .psb { gap: 6px; padding: 4px 14px 12px; }
+  .psb__item { gap: 12px; padding: 10px 14px; font-size: 16px; }
+  .psb__item > svg:first-child { width: 22px; height: 22px; }
+  .psb__langs { margin-left: 0; }
+}

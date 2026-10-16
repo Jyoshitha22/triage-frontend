@@ -1,82 +1,123 @@
+/* ------------------------------------------------------------------
+   Patient shell — same layout as the Patient details page:
+   [ left panel | centered page | space for the doctor ]
+   On desktop the whole thing fits one screen, so nothing needs scrolling.
+   ------------------------------------------------------------------ */
 .nav-shell {
   position: relative;
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
   background: var(--color-mist);
   font-family: var(--font-body);
+  min-height: calc(100vh - 96px);
+  min-height: calc(100dvh - 96px);
+}
+@media (min-width: 801px) {
+  .nav-shell { height: calc(100vh - 96px); height: calc(100dvh - 96px); overflow: hidden; }
 }
 
-.nav-shell__bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.nav-shell__blob { position: absolute; width: 384px; height: 384px; border-radius: 50%; filter: blur(80px); }
-.nav-shell__blob--gold { top: -128px; right: -96px; background: rgba(16, 185, 129, 0.1); }
-.nav-shell__blob--navy { bottom: -160px; left: -96px; background: rgba(14, 107, 71, 0.1); }
+/* the doctor on the right */
+.nav-shell__deco { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.nav-shell__girl {
+  position: absolute; right: clamp(8px, 1.5vw, 28px); bottom: 0;
+  height: clamp(300px, 66vh, 780px); width: auto; max-width: clamp(180px, 22vw, 340px);
+  object-fit: contain; object-position: bottom right;
+}
 
-.nav-shell__header {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  border-bottom: 1px solid rgba(14, 107, 71, 0.06);
-  background: rgba(243, 251, 247, 0.8);
-  backdrop-filter: blur(8px);
+.nav-shell__layout {
+  position: relative; z-index: 1; flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: clamp(190px, 17.5vw, 270px) minmax(0, 1fr) clamp(190px, 17.5vw, 270px);
+  grid-template-rows: minmax(0, 1fr);
+  padding: 6px 0 14px clamp(10px, 1.6vw, 24px);
 }
-.nav-shell__header-row {
-  max-width: 768px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-}
-.nav-shell__side { display: flex; align-items: center; width: 80px; }
-.nav-shell__side--end { justify-content: flex-end; }
+.nav-shell__content { grid-column: 2; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+/* back button + progress dots */
+.nav-shell__top { position: relative; display: flex; align-items: center; justify-content: center; min-height: 40px; padding: 4px 0 6px; }
 .nav-shell__back {
-  margin-left: -8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
-  color: rgba(14, 107, 71, 0.6);
-  cursor: pointer;
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%; border: none;
+  background: transparent; color: rgba(14, 107, 71, 0.6); cursor: pointer;
 }
 .nav-shell__back:hover { background: rgba(14, 107, 71, 0.05); color: var(--color-navy); }
 
-.nav-shell__brand { display: flex; align-items: center; gap: 8px; }
-.nav-shell__brand-icon {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%;
-  background: var(--color-navy); color: var(--color-gold-glow);
-}
-.nav-shell__brand-name { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--color-navy); }
-.nav-shell__step-mobile { font-family: var(--font-mono); font-size: 12px; color: var(--color-slate); display: none; }
-@media (max-width: 639px) { .nav-shell__step-mobile { display: inline; } }
-
-.nav-shell__progress {
-  display: none;
-  max-width: 768px;
-  margin: 0 auto;
-  justify-content: center;
-  padding: 0 20px 16px;
-}
-@media (min-width: 640px) { .nav-shell__progress { display: flex; } }
-
+/* the page, centered in what is left */
 .nav-shell__main {
-  position: relative;
-  z-index: 1;
-  max-width: 768px;
-  width: 100%;
-  margin: 0 auto;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 28px 20px 48px;
+  flex: 1; min-height: 0; width: 100%;
+  max-width: clamp(560px, 50vw, 720px); margin: 0 auto;
+  display: flex; align-items: center; justify-content: center;
 }
-@media (min-width: 640px) { .nav-shell__main { justify-content: center; padding: 56px 20px; } }
+
+/* ---- every patient page fills the centered area, never scrolls the page ---- */
+.nav-shell .symptom-recording,
+.nav-shell .waiting,
+.nav-shell .doctor-reply {
+  width: 100%; max-width: 100%; max-height: 100%;
+  display: flex; flex-direction: column; min-height: 0;
+}
+.nav-shell .symptom-recording__header-row,
+.nav-shell .symptom-recording__subtitle,
+.nav-shell .waiting__title, .nav-shell .waiting__subtitle,
+.nav-shell .doctor-reply__title { flex: none; }
+
+.nav-shell .symptom-recording__title,
+.nav-shell .waiting__title,
+.nav-shell .doctor-reply__title { margin: 0; font-size: clamp(20px, 3.6vh, 30px); line-height: 1.15; }
+.nav-shell .symptom-recording__subtitle,
+.nav-shell .waiting__subtitle { margin-top: 4px; font-size: clamp(12px, 1.8vh, 14px); }
+
+/* the white card: compact, scrolls inside itself only if it ever has to */
+.nav-shell .symptom-recording__card,
+.nav-shell .waiting__card,
+.nav-shell .doctor-reply__card {
+  flex: 0 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: thin;
+  margin-top: clamp(8px, 2vh, 20px);
+  padding: clamp(12px, 2.4vh, 26px) clamp(16px, 2.4vw, 32px);
+  border-radius: 28px; background: #fbfefc; border-color: rgba(30, 100, 70, 0.08);
+  box-shadow: 0 22px 60px -30px rgba(30, 100, 70, 0.4);
+}
+
+/* -- Symptoms page -- */
+.nav-shell .symptom-recording__mic { width: clamp(64px, 13vh, 104px); height: clamp(64px, 13vh, 104px); flex: none; }
+.nav-shell .symptom-recording__timer { margin-top: clamp(8px, 1.6vh, 16px); }
+.nav-shell .symptom-recording__wave { margin-top: clamp(8px, 2vh, 20px); }
+.nav-shell .symptom-recording__live-caption { margin-top: 10px; }
+.nav-shell .symptom-recording__textarea { min-height: clamp(90px, 18vh, 140px); }
+.nav-shell .qa-bubble { margin-top: 10px; padding: 10px 14px; }
+.nav-shell .followup { margin-top: 10px; padding: 12px 14px; }
+.nav-shell .symptom-recording__transcript { padding: 12px 14px; }
+.nav-shell .symptom-recording__sending { margin-top: 12px; }
+
+/* -- Waiting page -- */
+.nav-shell .waiting__icon-badge { width: clamp(40px, 8vh, 60px); height: clamp(40px, 8vh, 60px); }
+.nav-shell .waiting__wave { margin-top: clamp(8px, 2vh, 20px); }
+.nav-shell .waiting__eta { margin-top: clamp(8px, 2vh, 20px); font-size: clamp(20px, 3.4vh, 26px); }
+.nav-shell .waiting__steps { margin-top: clamp(10px, 2.4vh, 24px); gap: clamp(8px, 1.6vh, 14px); }
+.nav-shell .waiting__note { margin: clamp(8px, 1.6vh, 16px) 0 0; font-size: 12px; flex: none; }
+.nav-shell .waiting__dev-skip { margin-top: 8px; align-self: center; flex: none; }
+@media (max-height: 760px) { .nav-shell .waiting__step-desc { display: none; } }
+@media (max-height: 700px) { .nav-shell .waiting__note { display: none; } .nav-shell .waiting__dev-skip { margin-top: 6px; } }
+
+/* -- Reply page -- */
+.nav-shell .doctor-reply__avatar { width: clamp(40px, 7vh, 56px); height: clamp(40px, 7vh, 56px); }
+.nav-shell .doctor-reply__player { margin-top: clamp(10px, 2vh, 20px); padding: clamp(8px, 1.6vh, 14px) 16px; }
+.nav-shell .doctor-reply__note { margin-top: clamp(10px, 2vh, 20px); padding: clamp(10px, 1.8vh, 16px); gap: 10px; }
+.nav-shell .doctor-reply__actions { margin-top: clamp(10px, 2vh, 20px); }
+
+/* ---- smaller screens: stack, and let the page scroll normally ---- */
+@media (max-width: 1150px) {
+  .nav-shell__girl { display: none; }
+  .nav-shell__layout { grid-template-columns: clamp(170px, 20vw, 230px) minmax(0, 1fr); padding-right: 20px; }
+}
+@media (max-width: 800px) {
+  .nav-shell__layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; padding: 6px 14px 36px; }
+  .nav-shell__content { grid-column: 1; }
+  .nav-shell__main { padding-bottom: 24px; }
+  .nav-shell .symptom-recording__card,
+  .nav-shell .waiting__card,
+  .nav-shell .doctor-reply__card { overflow: visible; }
+  .nav-shell .waiting__step-desc { display: block; }
+}

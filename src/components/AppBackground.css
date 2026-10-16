@@ -1,0 +1,61 @@
+/* The shared background, fixed behind every page. */
+.app-bg {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background: linear-gradient(145deg, #f1faf8 0%, #f2f8fd 48%, #edf8f2 100%);
+}
+.app-bg__waves { position: absolute; z-index: 0; left: 0; right: 0; bottom: 0; width: 100%; height: clamp(360px, 75vh, 820px); }
+.app-bg__leaves { position: absolute; z-index: 1; left: 0; bottom: 21.5%; width: clamp(70px, 10.7vw, 165px); height: auto; }
+.app-bg__ecg {
+  --ecg-w: clamp(150px, 21.5vw, 330px);
+  position: absolute; z-index: 2; right: 0; width: var(--ecg-w); height: auto;
+  bottom: calc(24% - 0.176 * var(--ecg-w));
+}
+@media (max-width: 760px) { .app-bg__ecg { display: none; } }
+
+/* ------------------------------------------------------------------
+   Let the shared background show through on every page.
+   TEMPORARY: when you restyle each page later, delete the matching
+   line here and give that page its own background instead.
+   ------------------------------------------------------------------ */
+.role-select,
+.language-welcome,
+.pd,
+.nav-shell,
+.hospital-shell,
+.hospital-login { background: transparent !important; }
+
+/* Old per-page decorations that would fight the shared background */
+.language-welcome__decor,
+.pd-bg__blob,
+.pd-bg__leaves,
+.nav-shell__bg,
+.hospital-shell__bg .hospital-shell__blob { display: none !important; }
+
+/* ------------------------------------------------------------------
+   ONE SHARED HEADER (AppHeader) replaces every page's own logo/nav.
+   Each page gives up the 96px the shared header takes at the top.
+   ------------------------------------------------------------------ */
+.role-select,
+.language-welcome,
+.pd,
+.nav-shell,
+.hospital-shell,
+.hospital-login,
+.hospital-role {
+  min-height: calc(100vh - 96px) !important;
+  min-height: calc(100dvh - 96px) !important;
+}
+
+.hospital-shell { height: auto; }
+.hospital-login { min-height: calc(100vh - 96px); min-height: calc(100dvh - 96px); }
+.hospital-role { min-height: calc(100vh - 96px); min-height: calc(100dvh - 96px); }
+
+/* Old page headers / logos, switched off (safe even if a page still contains them) */
+.role-select__header,
+.language-welcome__header,
+.pd-header,
+.nav-shell__brand,
+.role-select .brand-logo,
+.language-welcome .brand-logo,
+.pd .brand-logo,
+.nav-shell .brand-logo { display: none !important; }

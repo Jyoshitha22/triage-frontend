@@ -1,3 +1,5 @@
+import { VALID_TLDS } from "./validTlds.js";
+
 /**
  * Plain, dependency-free validators reused across every form in the app.
  * Each one takes the raw field value and returns true/false — pair with
@@ -29,16 +31,73 @@ export function isValidOtp(value) {
   return /^\d{4,6}$/.test(String(value ?? "").trim());
 }
 
-// A handful of domains people (and test data) commonly type that aren't
-// real inboxes anyone can receive mail at. Syntactically these pass a
-// normal email regex, so they're called out separately here.
-const PLACEHOLDER_EMAIL_DOMAINS = ["example.com", "example.org", "example.net", "test.com", "mailinator.com", "yourdomain.com"];
+const COMMON_EMAIL_PROVIDER_DOMAINS = [
+  "gmail.com",
+  "googlemail.com",
+  "yahoo.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "icloud.com",
+  "aol.com",
+  "proton.me",
+  "protonmail.com",
+  "rediffmail.com",
+  "yandex.com",
+];
+
+function isCloseTypo(domain, knownDomain) {
+  if (Math.abs(domain.length - knownDomain.length) > 2) return false;
+
+  let previous = Array.from({ length: knownDomain.length + 1 }, (_, i) => i);
+  for (let row = 1; row <= domain.length; row += 1) {
+    const current = [row];
+    for (let column = 1; column <= knownDomain.length; column += 1) {
+      current[column] = Math.min(
+        current[column - 1] + 1,
+        previous[column] + 1,
+        previous[column - 1] + (domain[row - 1] === knownDomain[column - 1] ? 0 : 1),
+      );
+    }
+    if (Math.min(...current) > 2) return false;
+    previous = current;
+  }
+  return previous[knownDomain.length] <= 2;
+}
 
 export function isValidEmail(value) {
   const trimmed = String(value ?? "").trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return false;
-  const domain = trimmed.split("@")[1]?.toLowerCase();
-  return !PLACEHOLDER_EMAIL_DOMAINS.includes(domain);
+  if (trimmed.length > 254 || !/^[^@\s]+@[^@\s]+$/.test(trimmed)) return false;
+  const [local, rawDomain] = trimmed.split("@");
+  if (
+    local.length > 64 ||
+    !/^[a-z\d.!#$%&'*+/=?^_`{|}~-]+$/i.test(local) ||
+    local.startsWith(".") ||
+    local.endsWith(".") ||
+    local.includes("..")
+  ) return false;
+
+  const domain = rawDomain.toLowerCase();
+  const labels = domain.split(".");
+  if (
+    domain.length > 253 ||
+    labels.length < 2 ||
+    labels.some((label) => (
+      label.length > 63 ||
+      !/^[a-z\d](?:[a-z\d-]*[a-z\d])?$/i.test(label)
+    )) ||
+    labels[labels.length - 1].length < 2 ||
+    !/[a-z]/i.test(labels[labels.length - 1])
+  ) return false;
+  if (!VALID_TLDS.has(labels[labels.length - 1])) return false;
+  if (COMMON_EMAIL_PROVIDER_DOMAINS.some((provider) => {
+    const [providerLabel, providerTld] = provider.split(".");
+    return domain !== provider &&
+      labels[0][0] === providerLabel[0] &&
+      isCloseTypo(labels[0], providerLabel) &&
+      isCloseTypo(labels[labels.length - 1], providerTld);
+  })) return false;
+  return true;
 }
 
 // Hospital staff password: at least 8 characters, one uppercase, one
@@ -59,8 +118,10 @@ export function isValidAge(value) {
 }
 
 // Letters, spaces, and the common name punctuation (O'Brien, Anne-Marie).
+// Letters in ANY language (English, Telugu, Hindi, Tamil…), spaces, and the
+// common name punctuation (O'Brien, Anne-Marie).
 export function isValidName(value) {
-  return /^[A-Za-z][A-Za-z .'-]{1,59}$/.test(String(value ?? "").trim());
+  return /^[\p{L}\p{M}][\p{L}\p{M} .'-]{1,59}$/u.test(String(value ?? "").trim());
 }
 
 export function isValidExperienceYears(value) {

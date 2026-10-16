@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Building2, Users, Copy, Check, LogOut } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
-import Button from '../components/Button';
 import session from '../utils/session';
 import './AdminHome.css';
 
@@ -34,7 +33,7 @@ export default function AdminHome() {
   const logout = () => { session.clearAdmin(); navigate('/hospital'); };
 
   return (
-    <HospitalShell title="Admin">
+    <HospitalShell wide showDoctorArtwork doctorArtworkSide="right">
       <div className="admin-home">
         <div className="admin-home__header">
           <span className="admin-home__icon-badge"><Building2 size={22} /></span>
@@ -50,7 +49,6 @@ export default function AdminHome() {
             <span className="admin-home__id-value">{hospital.hospital_id}</span>
             <button onClick={copyId} className="admin-home__copy-btn">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}</button>
           </div>
-          <p className="admin-home__id-hint">Doctors enter this ID when they register their own account — you don't need to add them yourself.</p>
         </Card>
 
         <div className="admin-home__actions">

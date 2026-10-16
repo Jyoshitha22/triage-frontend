@@ -1,0 +1,13 @@
+.brand-logo { display: flex; align-items: center; gap: 16px; flex: none; }
+.brand-logo__img { display: block; flex: none; width: 72px; height: auto; }
+.brand-logo__name { font-family: var(--font-body); font-size: 36px; font-weight: 800; line-height: 1; letter-spacing: -0.01em; color: #0c2352; }
+.brand-logo__tag { margin-top: 5px; font-size: 16px; color: #6f84ab; }
+.brand-logo--light .brand-logo__name { color: #ffffff; }
+.brand-logo--light .brand-logo__tag { color: rgba(255, 255, 255, 0.76); }
+
+@media (max-width: 760px) {
+	.brand-logo { gap: 12px; }
+	.brand-logo__img { width: 62px; }
+	.brand-logo__name { font-size: 32px; }
+	.brand-logo__tag { font-size: 14px; }
+}

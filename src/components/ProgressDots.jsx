@@ -1,4 +1,3 @@
-import React from 'react';
 import { Check } from 'lucide-react';
 import './ProgressDots.css';
 
@@ -7,26 +6,27 @@ import './ProgressDots.css';
  * position (1 = Login … 5 = Reply). Login has its own screen, so this
  * only renders steps 2–5.
  */
-const LABELS = ['Details', 'Symptoms', 'Waiting', 'Reply'];
+const LABEL_KEYS = ['progressDetails', 'progressSymptoms', 'progressWaiting', 'progressReply'];
+const DEFAULT_LABELS = ['Details', 'Symptoms', 'Waiting', 'Reply'];
 
-export default function ProgressDots({ step }) {
+export default function ProgressDots({ step, t }) {
   const headerStep = step - 1;
 
   return (
     <div className="progress-dots">
-      {LABELS.map((label, i) => {
+      {LABEL_KEYS.map((labelKey, i) => {
         const n = i + 1;
         const done = n < headerStep;
         const current = n === headerStep;
         return (
-          <div key={label} className="progress-dots__item">
+          <div key={labelKey} className="progress-dots__item">
             <div className="progress-dots__node">
               <span className={`progress-dots__circle ${done ? 'progress-dots__circle--done' : current ? 'progress-dots__circle--current' : ''}`}>
                 {done ? <Check size={14} /> : n}
               </span>
-              <span className={`progress-dots__label ${current ? 'progress-dots__label--current' : ''}`}>{label}</span>
+              <span className={`progress-dots__label ${current ? 'progress-dots__label--current' : ''}`}>{t ? t(labelKey) : DEFAULT_LABELS[i]}</span>
             </div>
-            {i < LABELS.length - 1 && (
+            {i < LABEL_KEYS.length - 1 && (
               <span className={`progress-dots__line ${done ? 'progress-dots__line--done' : ''}`} />
             )}
           </div>

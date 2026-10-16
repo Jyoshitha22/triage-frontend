@@ -1,0 +1,64 @@
+.hospital-role {
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; font-family: var(--font-body); color: #0c2352;
+}
+.hospital-role__panel { position: relative; width: 100%; max-width: 920px; text-align: center; }
+.hospital-role__back {
+  position: absolute; top: -4px; left: 0; display: flex; align-items: center; gap: 4px;
+  border: none; background: none; font-family: inherit; font-size: 14px; color: #6f84ab; cursor: pointer;
+}
+.hospital-role__back:hover { color: #0c2352; }
+.hospital-role__back--bottom {
+  position: static; display: flex; align-items: center; gap: 5px;
+  width: fit-content; margin: 18px 0 0 auto; padding: 9px 13px;
+  border: 1px solid rgba(54,151,235,0.24); border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff, #e5f2ff); color: #1769ad;
+  box-shadow: 0 5px 14px rgba(54,151,235,0.14); font-weight: 700;
+  cursor: pointer;
+}
+.hospital-role__back--bottom:hover { background: linear-gradient(135deg, #f7fbff, #d7ebff); color: #12598f; box-shadow: 0 7px 18px rgba(54,151,235,0.22); }
+.hospital-role__back--bottom:focus-visible { outline: 3px solid #3697eb; outline-offset: 3px; }
+.hospital-role__brand { display: flex; justify-content: center; margin-bottom: 20px; }
+.hospital-role__title { margin: 0; font-family: var(--font-body); font-size: clamp(28px, 4vw, 40px); font-weight: 800; color: #0c2352; }
+.hospital-role__subtitle { margin: 8px 0 0; font-size: 17px; color: #6f84ab; }
+
+.hospital-role__choices {
+  width: fit-content;
+  max-width: 100%;
+  margin: clamp(16px, 4.4vh, 52px) auto 0;
+}
+.hospital-role__grid {
+  --card-w: clamp(210px, min(46vh, 40vw), 375px);
+  display: grid;
+  grid-template-columns: repeat(2, var(--card-w));
+  justify-content: center;
+  gap: clamp(16px, 3vw, 46px);
+}
+@media (max-width: 760px) { .hospital-role__grid { grid-template-columns: min(80vw, 320px); } }
+
+.hospital-role__card {
+  width: 100%; aspect-ratio: 375 / 425;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: clamp(12px, 2.2vh, 26px) 20px; border-radius: 26px; border: 1.5px solid #c9f0e2; background: #eefcf7;
+  font-family: inherit; color: #0c2352; text-align: center; cursor: pointer;
+  box-shadow: 0 18px 40px -26px rgba(40, 120, 130, 0.3); transition: transform 0.2s, box-shadow 0.2s;
+}
+.hospital-role__card--doctor { border-color: #bfe0fa; background: #e8f7fe; }
+.hospital-role__card:hover { transform: translateY(-3px); box-shadow: 0 26px 50px -24px rgba(40, 110, 150, 0.4); }
+.hospital-role__card:focus-visible { outline: 3px solid #3697eb; outline-offset: 3px; }
+
+.hospital-role__icon {
+  display: flex; align-items: center; justify-content: center;
+  width: clamp(132px, 22vh, 190px); height: clamp(132px, 22vh, 190px); flex: 0 0 auto; border-radius: 50%; overflow: hidden; background: #d3ebdf; color: #1f7a5e;
+}
+.hospital-role__icon img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.hospital-role__card--doctor .hospital-role__icon { background: transparent; color: #2a6fb0; }
+.hospital-role__card--doctor .hospital-role__icon img { object-fit: cover; }
+.hospital-role__label { margin-top: 8px; font-size: clamp(18px, 3.3vh, 30px); font-weight: 800; }
+.hospital-role__sub { margin-top: 4px; max-width: 250px; font-size: clamp(13px, 2.2vh, 17px); line-height: 1.4; color: #4f7fa8; }
+
+@media (max-width: 760px) {
+  .hospital-role__choices { width: min(80vw, 320px); }
+}
+@media (prefers-reduced-motion: reduce) { .hospital-role__card { transition: none; } }

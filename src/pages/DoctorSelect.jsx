@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, ArrowRight } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
@@ -24,7 +23,7 @@ export default function DoctorSelect() {
 
   if (roster.length === 0) {
     return (
-      <HospitalShell title="Hospital Portal">
+      <HospitalShell showDoctorArtwork>
         <Card>
           <p>No specialists have been added for this hospital yet.</p>
           <button onClick={() => navigate('/hospital/specialists')} className="doctor-select__setup-link">
@@ -36,7 +35,7 @@ export default function DoctorSelect() {
   }
 
   return (
-    <HospitalShell title="Hospital Portal">
+    <HospitalShell showDoctorArtwork>
       <h1 className="doctor-select__title">Who's this?</h1>
       <p className="doctor-select__lede">Pick your name to open your own dashboard.</p>
 

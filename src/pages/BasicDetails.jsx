@@ -1,260 +1,260 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowRight, AlertCircle, Mic, Square } from 'lucide-react';
-import NavShell from '../components/NavShell';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import VoiceField from '../components/VoiceField';
-import Waveform from '../components/Waveform';
+import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  ArrowRight, AlertCircle, Heart, Mail,
+  User, Calendar, Phone, MapPin, Users, Venus, Mars, Mic, Square, PlusCircle,
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import useAutoAdvance from '../hooks/useAutoAdvance';
+import PatientSidebar from '../components/PatientSidebar';
+import ProgressDots from '../components/ProgressDots';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import session from '../utils/session';
-import { isValidName, isValidAge, isValidPhone, isRequired } from '../utils/validators';
+import { isValidName, isValidAge, isValidPhone, isValidEmail, isRequired } from '../utils/validators';
+import girlImg from '../assets/details-girl.png';
 import './BasicDetails.css';
 
-// labelKey looks up the translated question text; hintKey is the small
-// supporting line shown under it. genderKeys map each chip to its own
-// translated label. validate/errorKey drive the inline error message and
-// gate auto-advance/Enter/the Next button — none of those fire until the
-// value actually passes. skipAfterMs auto-advances an untouched optional
-// field once the patient's had a few seconds and said/typed nothing.
-const FIELDS = [
-  { key: 'name', labelKey: 'fieldName', hintKey: 'typeOrSpeakHint', type: 'text', placeholder: 'Full name', voice: true, validate: isValidName, errorKey: 'errorName' },
-  { key: 'age', labelKey: 'fieldAge', hintKey: 'typeOrSpeakHint', type: 'age-stepper', placeholder: 'Age', validate: isValidAge, errorKey: 'errorAge' },
-  { key: 'gender', labelKey: 'fieldGender', type: 'chips', optionKeys: ['genderFemale', 'genderMale', 'genderOther'] },
-  { key: 'location', labelKey: 'fieldLocation', hintKey: 'typeOrSpeakHint', type: 'text', placeholder: 'City', voice: true, validate: isRequired, errorKey: 'errorRequired' },
-  { key: 'contact', labelKey: 'fieldContact', hintKey: 'typeOrSpeakHint', type: 'tel', placeholder: '98765 43210', voice: true, validate: isValidPhone, errorKey: 'errorPhone' },
-  { key: 'allergies', labelKey: 'fieldAllergies', hintKey: 'typeOrSpeakOrSkipHint', type: 'voice-textarea', placeholder: 'Penicillin, peanuts…', optional: true, skipAfterMs: 7000 },
-  { key: 'conditions', labelKey: 'fieldConditions', hintKey: 'typeOrSpeakOrSkipHint', type: 'voice-textarea', placeholder: 'Diabetes, asthma…', optional: true, skipAfterMs: 7000 },
+// Required fields: validator + the translated error message key.
+const RULES = {
+  name: [isValidName, 'errorName'],
+  age: [isValidAge, 'errorAge'],
+  contact: [isValidPhone, 'errorPhone'],
+  email: [isValidEmail, 'errorEmail'],
+  gender: [isRequired, 'errorRequired'],
+  location: [isRequired, 'errorRequired'],
+};
+
+// Short labels above each input (translated for the four app languages).
+const LABELS = {
+  name: { en: 'Name', te: 'పేరు', hi: 'नाम', ta: 'பெயர்' },
+  age: { en: 'Age', te: 'వయస్సు', hi: 'उम्र', ta: 'வயது' },
+  contact: { en: 'Phone number', te: 'ఫోన్ నంబర్', hi: 'फ़ोन नंबर', ta: 'தொலைபேசி எண்' },
+  location: { en: 'City', te: 'నగరం', hi: 'शहर', ta: 'நகரம்' },
+};
+
+const GENDERS = [
+  { key: 'genderFemale', Icon: Venus },
+  { key: 'genderMale', Icon: Mars },
+  { key: 'genderOther', Icon: Users },
 ];
+const ids = { name: 'pd-name', age: 'pd-age', contact: 'pd-phone', email: 'pd-email', gender: 'pd-gender', location: 'pd-city' };
 
-/**
- * One question per screen, answerable by typing or by tapping the mic
- * and speaking. Voice and typed answers both auto-advance a beat after
- * the patient finishes — no button needed either way. The two optional
- * free-text fields (allergies, conditions) auto-skip on their own after
- * a few quiet seconds, since silence there means "nothing to report,"
- * not "still thinking."
- */
-export default function BasicDetails() {
-  const navigate = useNavigate();
-  const { t, bcp47, speakPrompt } = useLanguage();
-  const [i, setI] = useState(0);
-  const [values, setValues] = useState({});
-  const inputRef = useRef(null);
-  const field = FIELDS[i];
-  const rawValue = values[field.key] || '';
+// What to tell the patient when the microphone can't be used.
+const MIC_BLOCKED = 'The microphone is blocked. Click the lock icon next to the web address, allow Microphone, then tap the mic again.';
+const MIC_ERRORS = {
+  'not-allowed': MIC_BLOCKED,
+  'service-not-allowed': MIC_BLOCKED,
+  'audio-capture': 'No microphone was found. Plug one in or check your sound settings.',
+  network: 'Voice typing needs an internet connection. Please check it and try again.',
+  'language-not-supported': 'This browser cannot listen in the chosen language. Try English, or type instead.',
+  'start-failed': 'Could not start the microphone. Please try again.',
+};
 
-  useEffect(() => { inputRef.current?.focus(); }, [i]);
+// Digits spoken in Hindi / Telugu / Tamil script -> 0-9, so age and phone still work.
+const DIGIT_STARTS = [0x0966, 0x0C66, 0x0BE6]; // Devanagari, Telugu, Tamil zero
+const toAsciiDigits = (s) =>
+  s.replace(/[\u0966-\u096F\u0C66-\u0C6F\u0BE6-\u0BEF]/g, (ch) => {
+    const code = ch.charCodeAt(0);
+    const zero = DIGIT_STARTS.find((z) => code >= z && code <= z + 9);
+    return String(code - zero);
+  });
 
-  // Ask the question aloud every time it changes, in the patient's
-  // chosen language.
-  useEffect(() => { speakPrompt(field.labelKey); }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const set = (v) => setValues((prev) => ({ ...prev, [field.key]: v }));
-  const goNext = () => {
-    if (i < FIELDS.length - 1) { setI(i + 1); return; }
-    // First-time setup is genuinely complete now — save it so the next
-    // visit from this device skips login and goes straight to Symptoms.
-    session.savePatient({ ...values });
-    navigate('/symptoms', { state: values });
-  };
-  const back = () => (i === 0 ? navigate('/language') : setI(i - 1));
-
-  const isValid = field.optional || (field.validate ? field.validate(rawValue) : isRequired(rawValue));
-  const showError = !field.optional && rawValue.length > 0 && !isValid;
-  // Everything that could advance the screen — the button, Enter, voice
-  // capture, and auto-advance — all funnel through this one guard.
-  const attemptNext = () => isValid && goNext();
-
-  // Plain typed/voice fields (not chips, not the free-text boxes, which
-  // have their own auto-skip timer below) auto-advance a beat after the
-  // patient stops typing or speaking.
-  const autoAdvanceEnabled = field.type !== 'chips' && field.type !== 'voice-textarea' && field.type !== 'age-stepper';
-  useAutoAdvance(rawValue, autoAdvanceEnabled && isValid, goNext, { delay: 1300, enabled: autoAdvanceEnabled });
-
+/* One labelled row: round icon on the left, label + input on the right. */
+function Row({ icon: Icon, label, htmlFor, error, className = '', children }) {
   return (
-    <NavShell step={2} onBack={back}>
-      <div className="basic-details">
-        <span className="basic-details__count">{i + 1} of {FIELDS.length}</span>
-        <h1 className="basic-details__question">{t(field.labelKey)}</h1>
-        {field.hintKey && <p className="basic-details__hint">{t(field.hintKey)}</p>}
-
-        <Card className="basic-details__card">
-          {field.type === 'chips' ? (
-            <div className="basic-details__chips">
-              {field.optionKeys.map((optKey) => (
-                <button
-                  key={optKey}
-                  onClick={() => { set(optKey); setTimeout(goNext, 350); }}
-                  className={`basic-details__chip ${values.gender === optKey ? 'basic-details__chip--active' : ''}`}
-                >
-                  {t(optKey)}
-                </button>
-              ))}
-            </div>
-          ) : field.type === 'voice-textarea' ? (
-            <VoiceTextarea
-              key={field.key}
-              value={rawValue}
-              onChange={set}
-              onDone={goNext}
-              placeholder={field.placeholder}
-              skipAfterMs={field.skipAfterMs}
-              lang={bcp47}
-            />
-          ) : field.type === 'age-stepper' ? (
-            <AgeStepper
-              value={rawValue}
-              onChange={set}
-              onDone={goNext}
-              isValid={isValid}
-              lang={bcp47}
-            />
-          ) : field.voice ? (
-            <VoiceField value={rawValue} onChange={set} onCaptured={attemptNext} placeholder={field.placeholder} type={field.type} />
-          ) : (
-            <input
-              ref={inputRef}
-              type={field.type}
-              value={rawValue}
-              onChange={(e) => set(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && attemptNext()}
-              placeholder={field.placeholder}
-              className="basic-details__input"
-            />
-          )}
-
-          {showError && (
-            <p className="field-error"><AlertCircle size={12} /> {t(field.errorKey)}</p>
-          )}
-        </Card>
-
-        {field.type !== 'chips' && field.type !== 'voice-textarea' && (
-          <Button className="basic-details__next" onClick={attemptNext} disabled={!isValid} icon={ArrowRight}>
-            {i === FIELDS.length - 1 ? t('continueToSymptoms') : t('next')}
-          </Button>
-        )}
+    <div className={`pd-row ${className}`}>
+      <span className="pd-row__icon"><Icon size={26} strokeWidth={1.8} /></span>
+      <div className="pd-row__body">
+        <label className="pd-row__label" htmlFor={htmlFor}>{label}</label>
+        {children}
+        {error && <p className="pd-error"><AlertCircle size={13} /> {error}</p>}
       </div>
-    </NavShell>
+    </div>
   );
 }
 
-/**
- * Age gets three ways in at once: type a number directly, tap the mic
- * and say it, or click the up/down triangles to step it by one. All
- * three write to the same value, so whichever the patient reaches for
- * first just works.
- */
-function AgeStepper({ value, onChange, onDone, isValid, lang }) {
-  const { supported, listening, start, stop } = useSpeechRecognition({ lang, continuous: true, silenceTimeoutMs: 2200 });
-  const [typed, setTyped] = useState(false);
-  const num = Number(value) || 0;
+/* Text box with a mic button, so the patient can speak instead of typing. */
+function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', inputMode, lang, sanitize, multiline, invalid, readOnly = false }) {
+  const { supported, listening, interimTranscript, error, start, stop } = useSpeechRecognition({ lang, continuous: !!multiline, silenceTimeoutMs: 6000 });
+  const [hint, setHint] = useState('');
+  const clean = (s) => (sanitize ? sanitize(toAsciiDigits(s)) : s);
 
-  useAutoAdvance(value, typed && isValid, onDone, { delay: 1300, enabled: typed });
-
-  const step = (delta) => {
-    setTyped(true);
-    const next = Math.min(120, Math.max(0, num + delta));
-    onChange(String(next));
-  };
-
-  const toggleMic = () => {
+  const toggleMic = async () => {
     if (listening) { stop(); return; }
+    setHint('');
+    // Ask for the microphone first, so the browser shows its permission
+    // prompt (or tells us it is blocked) before we start listening.
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((tr) => tr.stop());
+      }
+    } catch {
+      setHint(MIC_BLOCKED);
+      return;
+    }
     start((finalText) => {
-      const digits = finalText.replace(/\D/g, '');
-      if (digits) { onChange(digits); setTimeout(onDone, 900); }
+      const spoken = clean(finalText || '');
+      if (!spoken) { setHint("I didn't catch anything. Tap the mic and speak clearly."); return; }
+      onChange(multiline && value ? `${value} ${spoken}` : spoken);
     });
   };
 
-  const handleKeyDown = (e) => e.key === 'Enter' && isValid && onDone();
+  const errorText = error && error !== 'aborted' ? (MIC_ERRORS[error] || `Voice input stopped (${error}).`) : '';
+  const message = errorText || hint;
+  const Tag = multiline ? 'textarea' : 'input';
 
   return (
-    <div className="age-stepper">
-      <div className="age-stepper__row">
-        <button type="button" onClick={() => step(-1)} className="age-stepper__btn" aria-label="Decrease age">
-          <svg width="14" height="8" viewBox="0 0 14 8" fill="none"><path d="M1 1L7 7L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
-
-        <input
-          type="text"
-          inputMode="numeric"
-          value={value}
-          onChange={(e) => { setTyped(true); onChange(e.target.value.replace(/\D/g, '').slice(0, 3)); }}
-          onKeyDown={handleKeyDown}
-          placeholder="Age"
-          className="age-stepper__input"
+    <div>
+      <div className={`pd-input ${multiline ? 'pd-input--area' : ''} ${listening ? 'pd-input--live' : ''} ${invalid ? 'pd-input--invalid' : ''}`}>
+        <Tag
+          id={id}
+          type={multiline ? undefined : type}
+          rows={multiline ? 1 : undefined}
+          inputMode={inputMode}
+          value={listening ? (interimTranscript || value) : value}
+          onChange={(e) => onChange(sanitize ? sanitize(e.target.value) : e.target.value)}
+          onBlur={onBlur}
+          readOnly={readOnly}
+          placeholder={listening ? 'Listening… speak now' : placeholder}
+          disabled={listening}
         />
-
-        <button type="button" onClick={() => step(1)} className="age-stepper__btn age-stepper__btn--up" aria-label="Increase age">
-          <svg width="14" height="8" viewBox="0 0 14 8" fill="none"><path d="M1 7L7 1L13 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </button>
+        {supported && (
+          <button type="button" onClick={toggleMic} aria-label="Speak your answer" className={`pd-input__mic ${listening ? 'pd-input__mic--on' : ''}`}>
+            {listening ? <Square size={15} /> : <Mic size={18} />}
+          </button>
+        )}
       </div>
-
-      {supported && (
-        <button type="button" onClick={toggleMic} className={`age-stepper__mic ${listening ? 'age-stepper__mic--active' : ''}`}>
-          {listening ? <Square size={14} /> : <Mic size={14} />}
-        </button>
-      )}
+      {message && <p className="pd-hint"><AlertCircle size={13} /> {message}</p>}
     </div>
   );
 }
 
 /**
- * The two optional free-text fields (allergies, conditions) — type it,
- * speak it, or say nothing at all. If nothing arrives within
- * `skipAfterMs`, it moves on by itself; typing or recording cancels
- * that timer. `key={field.key}` on the parent remounts this fresh for
- * each field, so the timer always starts clean.
+ * Patient details on one page, with the shared left panel (Home, Language
+ * dropdown, Help). Every field can be typed or spoken. Submit checks the
+ * required fields, shows what needs fixing, then saves the details and moves on.
  */
-function VoiceTextarea({ value, onChange, onDone, placeholder, skipAfterMs, lang }) {
-  const { supported, listening, interimTranscript, start, stop } = useSpeechRecognition({ lang, continuous: true, silenceTimeoutMs: 2500 });
-  const skipTimerRef = useRef(null);
-  const [typed, setTyped] = useState(false);
+export default function BasicDetails() {
+  const navigate = useNavigate();
+  const { state } = useLocation();
+  const { t, language, bcp47 } = useLanguage();
+  const [values, setValues] = useState(() => ({ email: state?.email || '' }));
+  const [touched, setTouched] = useState({});
+  const [showMore, setShowMore] = useState(false);
 
-  useEffect(() => {
-    if (!skipAfterMs) return undefined;
-    skipTimerRef.current = setTimeout(onDone, skipAfterMs);
-    return () => clearTimeout(skipTimerRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const voiceOk = typeof window !== 'undefined' && !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  const val = (k) => values[k] || '';
+  const set = (k) => (v) => setValues((p) => ({ ...p, [k]: v }));
+  const blur = (k) => () => setTouched((p) => ({ ...p, [k]: true }));
+  const ok = (k) => RULES[k][0](val(k));
+  const err = (k) => (touched[k] && !ok(k) ? t(RULES[k][1]) : '');
+  const label = (k) => LABELS[k][language] || LABELS[k].en;
+  const digits = (n) => (s) => s.replace(/\D/g, '').slice(0, n);
+  const phone = (s) => s.replace(/[^\d ]/g, '').slice(0, 12);
 
-  const cancelSkipTimer = () => { if (skipTimerRef.current) clearTimeout(skipTimerRef.current); };
-
-  // Once they've typed anything, switch to the same "pause = done" timing
-  // every other typed field uses, instead of the long total-silence timer.
-  useAutoAdvance(value, typed && isRequired(value), onDone, { delay: 1500, enabled: typed });
-
-  const toggleMic = () => {
-    cancelSkipTimer();
-    if (listening) { stop(); return; }
-    start((finalText) => {
-      if (finalText) onChange((value ? value + ' ' : '') + finalText);
-      setTimeout(onDone, 900);
-    });
+    const submit = () => {
+    const firstBad = Object.keys(RULES).find((k) => !ok(k));
+    if (firstBad) {
+      setTouched(Object.fromEntries(Object.keys(RULES).map((k) => [k, true])));
+      document.getElementById(ids[firstBad])?.focus();
+      return;
+    }
+    const registeredPatient = session.registerPatient({ ...values, language });
+    session.savePatient(registeredPatient);
+    navigate('/symptoms', { state: registeredPatient });
   };
 
-  const handleType = (e) => { cancelSkipTimer(); setTyped(true); onChange(e.target.value); };
-  const handleKeyDown = (e) => e.key === 'Enter' && !e.shiftKey && onDone();
-
   return (
-    <div className="voice-textarea">
-      <textarea
-        rows={3}
-        value={listening ? [value, interimTranscript].filter(Boolean).join(' ') : value}
-        onChange={handleType}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        disabled={listening}
-        className="basic-details__textarea"
-      />
-      {supported && (
-        <button onClick={toggleMic} className={`voice-textarea__mic ${listening ? 'voice-textarea__mic--active' : ''}`}>
-          {listening ? <Square size={14} /> : <Mic size={14} />}
-        </button>
-      )}
-      {listening && <Waveform mode="recording" className="voice-textarea__wave" />}
+    <div className="pd">
+      <div className="pd-bg" aria-hidden="true">
+        <img src={girlImg} alt="" className="pd-bg__girl" />
+      </div>
+
+      <div className="pd-body">
+        <PatientSidebar />
+
+        <main className="pd-main">
+          <div className="pd-progress"><ProgressDots step={2} /></div>
+          <section className="pd-card">
+            <div className="pd-card__head">
+              <span className="pd-card__avatar"><User size={38} strokeWidth={1.7} /></span>
+              <div>
+                <h1 className="pd-card__title">{t('basicDetailsTitle')}</h1>
+                <p className="pd-card__sub">{t('basicDetailsSubtitle')}</p>
+                <svg className="pd-card__wave" viewBox="0 0 150 14" aria-hidden="true">
+                  <path d="M2 9 C30 2 60 2 85 8 C105 12 128 8 148 4" fill="none" stroke="#86c9ac" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              </div>
+            </div>
+
+            {!voiceOk && (
+              <p className="pd-voice-note"><AlertCircle size={16} /> Voice input works in Google Chrome or Microsoft Edge. In this browser, please type your answers.</p>
+            )}
+
+            <Row icon={User} label={label('name')} htmlFor={ids.name} error={err('name')}>
+              <VoiceInput id={ids.name} value={val('name')} onChange={set('name')} onBlur={blur('name')}
+                placeholder={t('namePlaceholder')} lang={bcp47} invalid={!!err('name')} />
+            </Row>
+
+            <div className="pd-two">
+              <Row icon={Calendar} label={label('age')} htmlFor={ids.age} error={err('age')}>
+                <VoiceInput id={ids.age} value={val('age')} onChange={set('age')} onBlur={blur('age')}
+                  placeholder={t('agePlaceholder')} inputMode="numeric" sanitize={digits(3)} lang={bcp47} invalid={!!err('age')} />
+              </Row>
+              <Row icon={Phone} label={label('contact')} htmlFor={ids.contact} error={err('contact')}>
+                <VoiceInput id={ids.contact} value={val('contact')} onChange={set('contact')} onBlur={blur('contact')}
+                  placeholder={t('phonePlaceholder')} type="tel" inputMode="tel" sanitize={phone} lang={bcp47} invalid={!!err('contact')} />
+              </Row>
+            </div>
+
+            <Row icon={Mail} label={t('emailLabel')} htmlFor={ids.email} error={err('email')}>
+              <VoiceInput id={ids.email} value={val('email')} onChange={set('email')} onBlur={blur('email')}
+                placeholder={t('emailPlaceholder')} type="email" lang={bcp47} invalid={!!err('email')} />
+            </Row>
+
+            <Row icon={Users} label={t('fieldGender')} error={err('gender')}>
+              <div id={ids.gender} className="pd-gender" role="radiogroup" aria-label={t('fieldGender')}>
+                {GENDERS.map(({ key, Icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={val('gender') === key}
+                    onClick={() => { set('gender')(key); blur('gender')(); }}
+                    className={`pd-pill ${val('gender') === key ? 'pd-pill--on' : ''}`}
+                  >
+                    <span className="pd-pill__radio" /> <Icon size={20} /> {t(key)}
+                  </button>
+                ))}
+              </div>
+            </Row>
+
+            <Row icon={MapPin} label={label('location')} htmlFor={ids.location} error={err('location')}>
+              <VoiceInput id={ids.location} value={val('location')} onChange={set('location')} onBlur={blur('location')}
+                placeholder={t('cityPlaceholder')} lang={bcp47} invalid={!!err('location')} />
+            </Row>
+
+            <button type="button" className="pd-more" onClick={() => setShowMore((s) => !s)} aria-expanded={showMore}>
+              <span>{t('optionalConditions')}</span>
+              <PlusCircle size={22} className={showMore ? 'is-open' : ''} />
+            </button>
+            {showMore && (
+              <div className="pd-more__fields pd-two">
+                <Row icon={Heart} label={t('fieldAllergies')} htmlFor="pd-allergies">
+                  <VoiceInput id="pd-allergies" multiline value={val('allergies')} onChange={set('allergies')} placeholder="Penicillin, peanuts…" lang={bcp47} />
+                </Row>
+                <Row icon={Heart} label={t('fieldConditions')} htmlFor="pd-conditions">
+                  <VoiceInput id="pd-conditions" multiline value={val('conditions')} onChange={set('conditions')} placeholder="Diabetes, asthma…" lang={bcp47} />
+                </Row>
+              </div>
+            )}
+
+            <button type="button" onClick={submit} className="pd-submit">
+              <ArrowRight size={22} strokeWidth={2.2} /> {t('submitDetails')}
+            </button>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

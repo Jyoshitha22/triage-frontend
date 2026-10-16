@@ -1,267 +1,179 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, Square, Volume2, AlertCircle, Keyboard } from 'lucide-react';
-import NavShell from '../components/NavShell';
-import Card from '../components/Card';
-import Waveform from '../components/Waveform';
+import { ArrowRight, AlertCircle, Mic, Square, Stethoscope } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import PatientSidebar from '../components/PatientSidebar';
+import ProgressDots from '../components/ProgressDots';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
-import useAutoAdvance from '../hooks/useAutoAdvance';
-import { isRequired } from '../utils/validators';
-import './SymptomRecording.css';
+import session from '../utils/session';
+import './BasicDetails.css';
 
-const FOLLOWUP_KEYS = ['followupQ1', 'followupQ2'];
-const SEND_DELAY_MS = 2200;
-// How long to wait after the patient goes quiet before treating the
-// description as finished — long enough for a natural mid-sentence
-// pause, short enough that it doesn't feel like it's hanging.
-const SILENCE_TIMEOUT_MS = 2800;
+const URGENCY_OPTIONS = [
+  { key: 'low', labelKey: 'urgencyLow' },
+  { key: 'medium', labelKey: 'urgencyMedium' },
+  { key: 'high', labelKey: 'urgencyHigh' },
+  { key: 'emergency', labelKey: 'urgencyEmergency' },
+];
 
-/**
- * The mic is ~90% of this screen on purpose, but typing is always one
- * tap away for anyone who'd rather not talk. What the patient says is
- * captured live by the browser's speech recognition (real ASR, not
- * sample text) — the transcript fills in as they talk, and recording
- * stops on its own once they've gone quiet for a couple of seconds, no
- * "stop" tap required (tapping still works for anyone who wants to end
- * early). Once the main symptom is captured, follow-up questions are
- * asked aloud one at a time and each answer — spoken or typed — auto-
- * advances to the next.
- */
 export default function SymptomRecording() {
   const navigate = useNavigate();
-  const { t, bcp47, speakPrompt } = useLanguage();
-  const [inputMode, setInputMode] = useState('voice'); // voice | type
-  const [mainStatus, setMainStatus] = useState('idle'); // idle | recording | done
-  const [seconds, setSeconds] = useState(0);
-  const [transcript, setTranscript] = useState('');
-  const [followupIndex, setFollowupIndex] = useState(-1);
-  const [answeredLog, setAnsweredLog] = useState([]);
-  const [sending, setSending] = useState(false);
-  const timerRef = useRef(null);
+  const { bcp47, t } = useLanguage();
+  const patient = session.getPatient();
+  const [symptoms, setSymptoms] = useState('');
+  const [durationDays, setDurationDays] = useState('');
+  const [urgency, setUrgency] = useState('medium');
+  const [error, setError] = useState('');
 
-  const { supported, listening, interimTranscript, error, start, stop } = useSpeechRecognition({
-    lang: bcp47,
-    continuous: true,
-    silenceTimeoutMs: SILENCE_TIMEOUT_MS,
+  useEffect(() => {
+    if (!patient) {
+      navigate('/basic-details', { replace: true });
+    }
+  }, [patient, navigate]);
+
+  const { supported, listening, interimTranscript, error: voiceError, start, stop } = useSpeechRecognition({
+    lang: bcp47 || 'en-IN',
+    continuous: false,
+    silenceTimeoutMs: 6000,
   });
 
-  useEffect(() => {
-    if (mainStatus === 'recording') timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    else clearInterval(timerRef.current);
-    return () => clearInterval(timerRef.current);
-  }, [mainStatus]);
+  const value = listening ? (interimTranscript || symptoms) : symptoms;
 
-  // Ask the patient to begin, aloud, once the screen loads.
-  useEffect(() => { speakPrompt('symptomSubtitle'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const handleSubmit = () => {
+    const trimmed = symptoms.trim();
+    if (!trimmed) {
+      setError(t('errorRequired') || 'Please describe your symptoms before continuing.');
+      return;
+    }
+    if (durationDays === '') {
+      setError(t('errorRequired') || 'Please enter how many days you have had these symptoms.');
+      return;
+    }
 
-  // Typed description auto-advances a beat after the patient stops
-  // typing — same hands-free pattern as voice.
-  useAutoAdvance(transcript, inputMode === 'type' && mainStatus === 'idle' && isRequired(transcript), () => {
-    setMainStatus('done');
-    setFollowupIndex(0);
-  }, { delay: 1500 });
+    const symptomId = `symptom-${Date.now()}`;
+    const record = {
+      symptom_id: symptomId,
+      patient_name: patient?.name || 'Patient',
+      patient_age: patient?.age || '',
+      patient_gender: patient?.gender || '',
+      patient_contact: patient?.contact || '',
+      patient_location: patient?.location || '',
+      symptom_text: trimmed,
+      duration_days: Number(durationDays),
+      urgency,
+      department: 'General Physician',
+      status: 'waiting',
+      replies: [],
+      created_at: new Date().toISOString(),
+    };
 
-  useEffect(() => {
-    if (followupIndex !== FOLLOWUP_KEYS.length || mainStatus !== 'done') return;
-    setSending(true);
-    const t2 = setTimeout(() => navigate('/waiting', { state: { transcript, followUps: answeredLog } }), SEND_DELAY_MS);
-    return () => clearTimeout(t2);
-  }, [followupIndex, mainStatus]); // eslint-disable-line react-hooks/exhaustive-deps
+    session.saveActiveSymptomId(symptomId);
+    session.savePending({ endAt: Date.now() + 360000, notified: false, symptomId });
+    session.addSymptomRecord(record);
+    navigate('/waiting', { replace: true });
+  };
 
-  const toggleMain = () => {
+  const toggleMic = () => {
     if (listening) {
       stop();
       return;
     }
-    setSeconds(0);
-    setTranscript('');
-    setMainStatus('recording');
+
     start((finalText) => {
-      if (!finalText) { setMainStatus('idle'); return; }
-      setTranscript(finalText);
-      setMainStatus('done');
-      setFollowupIndex(0);
+      const spoken = (finalText || '').trim();
+      if (!spoken) return;
+      setSymptoms((current) => (current ? `${current} ${spoken}` : spoken));
     });
   };
 
-  const restart = () => {
-    setMainStatus('idle');
-    setTranscript('');
-    setFollowupIndex(-1);
-    setAnsweredLog([]);
-    setSending(false);
-  };
-
-  const handleTypedKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey && isRequired(transcript)) {
-      e.preventDefault();
-      setMainStatus('done');
-      setFollowupIndex(0);
-    }
-  };
-
-  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-  const ss = String(seconds % 60).padStart(2, '0');
-  const inFollowups = mainStatus === 'done' && followupIndex >= 0 && followupIndex < FOLLOWUP_KEYS.length;
-  const showingCapture = mainStatus === 'idle' || mainStatus === 'recording';
+  if (!patient) return null;
 
   return (
-    <NavShell step={3} onBack={() => navigate('/basic-details')}>
-      <div className="symptom-recording">
-        <div className="symptom-recording__header-row">
-          <h1 className="symptom-recording__title">
-            {showingCapture ? t('symptomTitleIdle') : inFollowups ? t('symptomTitleFollowup') : t('symptomTitleSending')}
-          </h1>
-          {showingCapture && (
-            <button onClick={() => setInputMode((m) => (m === 'voice' ? 'type' : 'voice'))} className="symptom-recording__mode-toggle">
-              {inputMode === 'voice' ? (<><Keyboard size={13} /> {t('typeInstead')}</>) : (<><Mic size={13} /> {t('useVoiceInstead')}</>)}
-            </button>
-          )}
-        </div>
-        {showingCapture && <p className="symptom-recording__subtitle">{t('symptomSubtitle')}</p>}
+    <div className="pd">
+      <div className="pd-body">
+        <PatientSidebar />
 
-        <Card className="symptom-recording__card">
-          {showingCapture && inputMode === 'type' && (
-            <textarea
-              autoFocus
-              rows={5}
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              onKeyDown={handleTypedKeyDown}
-              placeholder="I have a headache and mild fever since yesterday…"
-              className="symptom-recording__textarea"
-            />
-          )}
-
-          {showingCapture && inputMode === 'voice' && (
-            <>
-              <button onClick={toggleMain} className={`symptom-recording__mic ${listening ? 'symptom-recording__mic--active' : ''}`}>
-                {listening ? <Square size={32} className="symptom-recording__mic-icon-stop" /> : <Mic size={36} className="symptom-recording__mic-icon" />}
-              </button>
-              <p className="symptom-recording__timer">{listening ? `${mm}:${ss} · ${t('recording')}` : t('tapToSpeak')}</p>
-              <Waveform mode={listening ? 'recording' : 'idle'} className="symptom-recording__wave" />
-
-              {listening && interimTranscript && (
-                <p className="symptom-recording__live-caption">{interimTranscript}</p>
-              )}
-
-              {!supported && (
-                <p className="symptom-recording__hint"><AlertCircle size={14} /> {t('micNotSupported')}</p>
-              )}
-              {error === 'not-allowed' && (
-                <p className="symptom-recording__hint"><AlertCircle size={14} /> {t('micDenied')}</p>
-              )}
-            </>
-          )}
-
-          {mainStatus !== 'idle' && mainStatus !== 'recording' && (
-            <div className="symptom-recording__transcript-area">
-              <div className="symptom-recording__transcript"><p>{transcript}</p></div>
-
-              {answeredLog.map((item, idx) => <QABubble key={idx} q={item.q} a={item.a} />)}
-
-              {inFollowups && (
-                <FollowUpQA
-                  key={followupIndex}
-                  questionKey={FOLLOWUP_KEYS[followupIndex]}
-                  onDone={(answer) => {
-                    setAnsweredLog((log) => [...log, { q: t(FOLLOWUP_KEYS[followupIndex]), a: answer }]);
-                    setFollowupIndex((idx) => idx + 1);
-                  }}
-                />
-              )}
-
-              {sending && (
-                <div className="symptom-recording__sending">
-                  <div className="symptom-recording__progress-track"><div className="symptom-recording__progress-fill" /></div>
-                  <button onClick={restart} className="symptom-recording__add-more">{t('addMore')}</button>
-                </div>
-              )}
+        <main className="pd-main">
+          <div className="pd-progress"><ProgressDots step={3} /></div>
+          <section className="pd-card">
+            <div className="pd-card__head">
+              <span className="pd-card__avatar"><Stethoscope size={34} strokeWidth={2} /></span>
+              <div>
+                <h1 className="pd-card__title">{t('symptomTitleIdle')}</h1>
+                <p className="pd-card__sub">{t('symptomSubtitle')}</p>
+                <svg className="pd-card__wave" viewBox="0 0 150 14" aria-hidden="true">
+                  <path d="M2 9 C30 2 60 2 85 8 C105 12 128 8 148 4" fill="none" stroke="#86c9ac" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
-          )}
-        </Card>
+
+            <div className="pd-row">
+              <div className="pd-row__body">
+                <label className="pd-row__label" htmlFor="symptom-text">{t('symptomTitleIdle')}</label>
+                <div className={`pd-input pd-input--area ${listening ? 'pd-input--live' : ''}`}>
+                  <textarea
+                    id="symptom-text"
+                    rows={6}
+                    value={value}
+                    onChange={(e) => { setSymptoms(e.target.value); setError(''); }}
+                    placeholder={t('symptomSubtitle')}
+                    disabled={listening}
+                  />
+                  {supported && (
+                    <button type="button" onClick={toggleMic} aria-label="Speak symptoms" className={`pd-input__mic ${listening ? 'pd-input__mic--on' : ''}`}>
+                      {listening ? <Square size={15} /> : <Mic size={18} />}
+                    </button>
+                  )}
+                </div>
+                {error && <p className="pd-error"><AlertCircle size={13} /> {error}</p>}
+                {voiceError && <p className="pd-hint"><AlertCircle size={13} /> {voiceError}</p>}
+              </div>
+            </div>
+
+            <div className="pd-row">
+              <div className="pd-row__body">
+                <label className="pd-row__label" htmlFor="symptom-duration">{t('followupQ1')}</label>
+                <div className="pd-input">
+                  <input
+                    id="symptom-duration"
+                    type="number"
+                    min="0"
+                    step="1"
+                    inputMode="numeric"
+                    value={durationDays}
+                    onChange={(e) => { setDurationDays(e.target.value); setError(''); }}
+                    placeholder={t('symptomDurationPlaceholder')}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pd-row">
+              <div className="pd-row__body">
+                <label className="pd-row__label" htmlFor="symptom-urgency">{t('symptomUrgency')}</label>
+                <div id="symptom-urgency" className="pd-gender" role="radiogroup" aria-label={t('symptomUrgency')}>
+                  {URGENCY_OPTIONS.map(({ key, labelKey }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="radio"
+                      aria-checked={urgency === key}
+                      onClick={() => setUrgency(key)}
+                      className={`pd-pill ${urgency === key ? 'pd-pill--on' : ''}`}
+                    >
+                      <span className="pd-pill__radio" />
+                      {t(labelKey)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <button type="button" onClick={handleSubmit} className="pd-submit">
+              <ArrowRight size={22} strokeWidth={2.2} /> {t('sendToDoctor')}
+            </button>
+          </section>
+        </main>
       </div>
-    </NavShell>
-  );
-}
-
-function QABubble({ q, a }) {
-  return (
-    <div className="qa-bubble">
-      <p className="qa-bubble__q"><Volume2 size={14} /> {q}</p>
-      <p className="qa-bubble__a">{a}</p>
-    </div>
-  );
-}
-
-function FollowUpQA({ questionKey, onDone }) {
-  const { t, bcp47, speakPrompt } = useLanguage();
-  const [inputMode, setInputMode] = useState('voice'); // voice | type
-  const [stage, setStage] = useState('idle'); // idle | recording | done
-  const [answer, setAnswer] = useState('');
-  const { supported, listening, interimTranscript, start, stop } = useSpeechRecognition({
-    lang: bcp47,
-    continuous: false,
-  });
-
-  // Ask this follow-up question aloud as soon as it appears.
-  useEffect(() => { speakPrompt(questionKey); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Typed answers auto-advance a beat after the patient stops typing.
-  useAutoAdvance(answer, inputMode === 'type' && stage === 'idle' && isRequired(answer), () => onDone(answer), { delay: 1300 });
-
-  const toggleMic = () => {
-    if (listening) { stop(); return; }
-    setStage('recording');
-    start((finalText) => {
-      if (!finalText) { setStage('idle'); return; }
-      setAnswer(finalText);
-      setStage('done');
-      setTimeout(() => onDone(finalText), 700);
-    });
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && isRequired(answer)) onDone(answer);
-  };
-
-  return (
-    <div className="followup">
-      <div className="followup__header-row">
-        <p className="followup__q"><Volume2 size={16} className="followup__q-icon" /> {t(questionKey)}</p>
-        {stage === 'idle' && (
-          <button onClick={() => setInputMode((m) => (m === 'voice' ? 'type' : 'voice'))} className="followup__mode-toggle">
-            {inputMode === 'voice' ? <Keyboard size={13} /> : <Mic size={13} />}
-          </button>
-        )}
-      </div>
-
-      {inputMode === 'type' && stage !== 'done' ? (
-        <input
-          autoFocus
-          type="text"
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type your answer…"
-          className="followup__input"
-        />
-      ) : (
-        <>
-          {stage === 'idle' && supported && (
-            <button onClick={toggleMic} className="followup__mic"><Mic size={16} /></button>
-          )}
-          {stage === 'recording' && (
-            <button onClick={toggleMic} className="followup__mic followup__mic--active"><Square size={16} /></button>
-          )}
-          {stage === 'recording' && interimTranscript && <p className="followup__answer followup__answer--live">{interimTranscript}</p>}
-          {stage === 'done' && <p className="followup__answer">{answer}</p>}
-          {!supported && stage === 'idle' && (
-            <p className="symptom-recording__hint"><AlertCircle size={14} /> {t('micNotSupported')}</p>
-          )}
-        </>
-      )}
     </div>
   );
 }

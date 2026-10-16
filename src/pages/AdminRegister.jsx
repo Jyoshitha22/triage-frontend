@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, ArrowRight, AlertCircle, ChevronLeft } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import api from '../utils/api';
 import session from '../utils/session';
+import { saveLocalStaffAccount } from '../utils/localStaffAccounts';
 import { isRequired, isValidLandlineOrPhone, isValidEmail, isValidPassword } from '../utils/validators';
 import './HospitalRegistration.css';
 
@@ -20,10 +20,8 @@ const FIELDS = [
 ];
 
 /**
- * This whole form is done exactly ONCE per hospital — every future
- * admin login goes straight to Admin Home, never back through this.
- * Creates the hospital AND the first admin account together in one
- * call, since neither is useful without the other.
+ * Frontend demo registration: keep the hospital profile and admin
+ * credentials in this browser until the backend flow is connected.
  */
 export default function AdminRegister() {
   const navigate = useNavigate();
@@ -31,6 +29,7 @@ export default function AdminRegister() {
   const [address, setAddress] = useState('');
   const [hospitalType, setHospitalType] = useState(HOSPITAL_TYPES[1]);
   const [email, setEmail] = useState('');
+  const [emailTouched, setEmailTouched] = useState(false);
   const [password, setPassword] = useState('');
   const [attempted, setAttempted] = useState(false);
   const [serverError, setServerError] = useState(null);
@@ -48,10 +47,20 @@ export default function AdminRegister() {
     setLoading(true);
     setServerError(null);
     try {
-      const admin = await api.post('/admin/register', {
-        email, password,
-        hospital: { ...values, address, hospital_type: hospitalType },
-      });
+      const hospitalId = Date.now();
+      const hospital = {
+        ...values,
+        hospital_id: hospitalId,
+        address,
+        hospital_type: hospitalType,
+      };
+      const admin = {
+        admin_id: `local-admin-${Date.now()}`,
+        email: email.trim().toLowerCase(),
+        hospital_id: hospitalId,
+        hospital,
+      };
+      await saveLocalStaffAccount('admin', email, password, admin);
       session.saveAdmin(admin);
       navigate('/hospital/admin/home');
     } catch (e) {
@@ -62,15 +71,12 @@ export default function AdminRegister() {
   };
 
   return (
-    <HospitalShell title="Hospital setup">
+    <HospitalShell compact wide showDoctorArtwork doctorArtworkSide="right">
       <div className="hospital-registration">
-        <button onClick={() => navigate('/hospital/admin')} className="hospital-registration__back"><ChevronLeft size={14} /> Back</button>
-
         <div className="hospital-registration__header">
           <span className="hospital-registration__icon-badge"><Building2 size={20} /></span>
           <div>
             <h1 className="hospital-registration__title">Hospital details</h1>
-            <p className="hospital-registration__lede">Tell us about your facility — this is a one-time setup.</p>
           </div>
         </div>
 
@@ -117,8 +123,8 @@ export default function AdminRegister() {
           <div className="hospital-registration__grid">
             <div>
               <FieldLabel>Email</FieldLabel>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@hospital.org" className="hospital-registration__input" />
-              {attempted && !emailValid && <p className="field-error"><AlertCircle size={12} /> Enter a valid email address.</p>}
+              <input type="email" autoComplete="email" maxLength={254} value={email} onBlur={() => setEmailTouched(true)} onChange={(e) => { setEmail(e.target.value); setEmailTouched(true); }} placeholder="admin@hospital.org" className="hospital-registration__input" />
+              {(attempted || emailTouched) && !emailValid && <p className="field-error"><AlertCircle size={12} /> Enter a valid email address.</p>}
             </div>
             <div>
               <FieldLabel>Password</FieldLabel>
@@ -133,6 +139,7 @@ export default function AdminRegister() {
             <Button onClick={submit} disabled={loading} icon={ArrowRight}>{loading ? 'Setting up…' : 'Complete setup'}</Button>
           </div>
         </Card>
+        <button type="button" onClick={() => navigate('/hospital/admin')} className="hospital-registration__back hospital-registration__back--bottom"><ChevronLeft size={16} /> Back</button>
       </div>
     </HospitalShell>
   );

@@ -4,13 +4,15 @@
   border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
 }
 .specialist-details__back:hover { color: var(--color-navy); }
+.specialist-details__back--bottom { display: flex; align-items: center; gap: 5px; width: fit-content; margin: 18px 0 0 auto; padding: 9px 13px; border: 1px solid rgba(54,151,235,0.16); border-radius: 10px; background: #edf6ff; color: #247fcf; font-size: 14px; font-weight: 700; }
+.specialist-details__back--bottom:hover { background: #dceeff; color: #1769ad; }
 .specialist-details__span2 { grid-column: 1 / -1; }
 .specialist-details__lang-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .specialist-details__lang-chip {
   border-radius: var(--radius-full); border: 1px solid rgba(14,107,71,0.2); background: transparent;
   padding: 7px 14px; font-size: 12px; font-weight: 600; color: var(--color-navy); cursor: pointer;
 }
-.specialist-details__lang-chip--active { background: var(--color-navy); border-color: var(--color-navy); color: var(--color-gold-glow); }
+.specialist-details__lang-chip--active { background: #3697eb; border-color: #3697eb; color: #ffffff; }
 .specialist-details__power {
   flex-shrink: 0; display: flex; align-items: center; justify-content: center;
   width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(14,107,71,0.15); background: white; color: rgba(74,92,83,0.4); cursor: pointer;
@@ -39,8 +41,9 @@
 .specialist-details__add-btn {
   display: flex; align-items: center; justify-content: center; gap: 6px; height: 46px;
   border-radius: var(--radius-lg); border: none; cursor: pointer;
-  background: var(--color-navy); color: var(--color-gold-glow); padding: 0 16px; font-size: 14px; font-weight: 600;
+  background: #3697eb; color: #ffffff; padding: 0 16px; font-size: 14px; font-weight: 600;
 }
+.specialist-details__add-btn:hover { background: #247fcf; }
 
 .specialist-details__roster { margin-top: 24px; }
 .specialist-details__roster-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(14,107,71,0.05); }
@@ -62,7 +65,7 @@
 .specialist-details__edit-input--num { flex: 0 0 70px; min-width: 0; }
 .specialist-details__save-edit {
   flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 50%; border: none; background: var(--color-gold); color: var(--color-navy); cursor: pointer;
+  width: 32px; height: 32px; border-radius: 50%; border: none; background: #3697eb; color: #ffffff; cursor: pointer;
 }
 .specialist-details__empty { padding: 16px 0; text-align: center; font-size: 14px; color: var(--color-slate); }
 

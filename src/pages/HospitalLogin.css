@@ -1,5 +1,5 @@
-.hospital-login { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--color-mist); padding: 40px 20px; font-family: var(--font-body); }
-.hospital-login__panel { width: 100%; max-width: 768px; display: grid; grid-template-columns: 1fr; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-hero); }
+.hospital-login { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--color-mist); padding: 40px 20px; font-family: var(--font-body); }
+.hospital-login__panel { width: 100%; max-width: 960px; display: grid; grid-template-columns: 1fr; border-radius: var(--radius-xl); overflow: hidden; box-shadow: var(--shadow-hero); }
 @media (min-width: 640px) { .hospital-login__panel { grid-template-columns: 1fr 1fr; } }
 
 .hospital-login__hero { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; background: var(--color-midnight); color: var(--color-mist); padding: 40px 32px; }
@@ -22,16 +22,188 @@
 .hospital-login__mic-badge { display: flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; background: rgba(255,255,255,0.1); color: var(--color-gold-glow); }
 .hospital-login__hero-wave { margin-top: 24px; width: 100%; opacity: 0.7; }
 
-.hospital-login__form { display: flex; flex-direction: column; justify-content: center; background: var(--color-white); padding: 40px 32px; }
-.hospital-login__title { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); margin: 0; }
+.hospital-login__form { display: flex; flex-direction: column; justify-content: center; background: var(--color-white); padding: 48px 40px; }
+.hospital-login__title { font-family: var(--font-display); font-size: 30px; font-weight: 600; color: var(--color-navy); margin: 0; }
 .hospital-login__lede { margin: 4px 0 0; font-size: 14px; color: var(--color-slate); }
-.hospital-login__label { margin-top: 24px; display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
-.hospital-login__input-wrap { margin-top: 8px; display: flex; align-items: center; gap: 8px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15); background: var(--color-mist); padding: 12px 16px; }
+.hospital-login__label { margin-top: 24px; display: block; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--color-slate); }
+.hospital-login__input-wrap { margin-top: 8px; display: flex; align-items: center; gap: 8px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15); background: var(--color-mist); padding: 15px 18px; }
 .hospital-login__input-wrap:focus-within { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
 .hospital-login__eye-toggle { flex-shrink: 0; border: none; background: none; padding: 0; color: var(--color-slate); cursor: pointer; display: flex; align-items: center; }
 .hospital-login__eye-toggle:hover { color: var(--color-navy); }
 .hospital-login__input-icon { color: var(--color-slate); flex-shrink: 0; }
-.hospital-login__input { width: 100%; border: none; outline: none; background: transparent; font-size: 14px; color: var(--color-navy); font-family: var(--font-body); }
-.hospital-login__submit { margin-top: 24px; width: 100%; }
+.hospital-login__input { width: 100%; border: none; outline: none; background: transparent; font-size: 16px; color: var(--color-navy); font-family: var(--font-body); }
+.hospital-login__submit { margin-top: 24px; width: 100%; background: #3697eb; color: #fff; box-shadow: 0 8px 20px -10px rgba(54, 151, 235, 0.8); }
+.hospital-login__submit:hover { background: #247fcf; }
 .hospital-login__password-hint { margin: 6px 0 0; font-size: 12px; color: var(--color-slate); }
 .hospital-login__security { margin-top: 24px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--color-slate); }
+.hospital-login__mic-badge { background: #f4f9fe; }
+.hospital-login__mic-badge img { display: block; width: 52px; height: auto; }
+
+.hospital-login__back-bottom {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  margin: 18px 0 0;
+  padding: 9px 13px;
+  border: 1px solid rgba(54,151,235,0.16);
+  border-radius: 10px;
+  background: #edf6ff;
+  color: #247fcf;
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+}
+.hospital-login__back-bottom:hover { background: #dceeff; color: #1769ad; }
+.hospital-login__forgot {
+  align-self: flex-end;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #3697eb;
+  font: 600 14px var(--font-body);
+  cursor: pointer;
+}
+.hospital-login__forgot:hover, .staff-recovery__resend:hover { color: #247fcf; text-decoration: underline; }
+.hospital-login__notice { margin: 12px 0 0; color: #287a55; font-size: 13px; }
+
+.staff-recovery { width: 100%; }
+.staff-recovery__back {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 20px 0 0 auto;
+  padding: 9px 13px;
+  border: 1px solid rgba(54,151,235,0.16);
+  border-radius: 10px;
+  background: #edf6ff;
+  color: #247fcf;
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+}
+.staff-recovery__back:hover { background: #dceeff; color: #1769ad; }
+.staff-recovery__submit { margin-top: 24px; width: 100%; background: #3697eb; color: #fff; }
+.staff-recovery__submit:hover, .staff-recovery__dialog .btn--primary:hover { background: #247fcf; }
+.staff-recovery__resend { margin-top: 14px; padding: 0; border: 0; background: none; color: #3697eb; font: 600 13px var(--font-body); cursor: pointer; }
+.staff-recovery__overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; }
+.staff-recovery__scrim { position: absolute; inset: 0; width: 100%; border: 0; background: rgba(12, 35, 82, 0.42); cursor: default; }
+.staff-recovery__dialog {
+  position: relative;
+  width: min(100%, 400px);
+  padding: 28px;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(12, 35, 82, 0.22);
+  text-align: center;
+}
+.staff-recovery__icon { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: #e8f4ff; color: #3697eb; }
+.staff-recovery__dialog h3 { margin: 14px 0 8px; color: #0c2352; }
+.staff-recovery__dialog p { margin: 0; color: #6f84ab; font-size: 13px; line-height: 1.5; }
+.staff-recovery__code { display: block; margin: 18px 0; padding: 12px; border-radius: 12px; background: #f2f8ff; color: #0c2352; font: 700 30px var(--font-mono); letter-spacing: 0.2em; }
+.staff-recovery__dialog .btn--primary { background: #3697eb; color: #fff; }
+
+.admin-login-layout {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 1200px);
+  margin: auto;
+  display: grid;
+  grid-template-columns: minmax(400px, 0.95fr) minmax(280px, 0.85fr);
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+}
+.admin-login__form {
+  width: 100%;
+  min-height: 0;
+  border-radius: 28px;
+  box-shadow: var(--shadow-hero);
+}
+
+@media (max-width: 1000px) {
+  .admin-login-layout {
+    grid-template-columns: minmax(360px, 1fr) minmax(220px, 0.7fr);
+    gap: 24px;
+  }
+}
+@media (max-width: 760px) {
+  .admin-login-layout { display: block; }
+  .admin-login__form { position: relative; z-index: 2; }
+}
+
+.hospital-login__back-bottom,
+.staff-recovery__back,
+.hospital-registration__back--bottom,
+.specialist-details__back--bottom,
+.hospital-role__back--bottom,
+.record-reply__back,
+.replied-list__back,
+.doctor-dashboard__logout,
+.patient-list__logout,
+.admin-home__logout {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: fit-content;
+  transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.hospital-login__back-bottom::after,
+.staff-recovery__back::after,
+.hospital-registration__back--bottom::after,
+.specialist-details__back--bottom::after,
+.hospital-role__back--bottom::after,
+.record-reply__back::after,
+.replied-list__back::after,
+.doctor-dashboard__logout::after,
+.patient-list__logout::after,
+.admin-home__logout::after {
+  position: absolute;
+  top: -60%;
+  left: -80%;
+  z-index: 1;
+  width: 45%;
+  height: 220%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,0.9), transparent);
+  content: "";
+  transform: skewX(-22deg);
+  pointer-events: none;
+}
+
+.hospital-login__back-bottom:hover,
+.staff-recovery__back:hover,
+.hospital-registration__back--bottom:hover,
+.specialist-details__back--bottom:hover,
+.hospital-role__back--bottom:hover,
+.record-reply__back:hover,
+.replied-list__back:hover,
+.doctor-dashboard__logout:hover,
+.patient-list__logout:hover,
+.admin-home__logout:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(54, 151, 235, 0.18);
+}
+
+.hospital-login__back-bottom:hover::after,
+.staff-recovery__back:hover::after,
+.hospital-registration__back--bottom:hover::after,
+.specialist-details__back--bottom:hover::after,
+.hospital-role__back--bottom:hover::after,
+.record-reply__back:hover::after,
+.replied-list__back:hover::after,
+.doctor-dashboard__logout:hover::after,
+.patient-list__logout:hover::after,
+.admin-home__logout:hover::after {
+  left: 140%;
+  transition: left 650ms ease;
+}
+
+.hospital-login__back-bottom,
+.staff-recovery__back,
+.hospital-registration__back--bottom,
+.specialist-details__back--bottom,
+.hospital-role__back--bottom,
+.record-reply__back,
+.replied-list__back {
+  margin-left: auto;
+}

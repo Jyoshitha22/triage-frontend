@@ -1,15 +1,24 @@
-.hospital-registration { margin: 0 auto; width: 100%; max-width: 576px; }
+.hospital-registration { margin: 0 auto; width: 100%; max-width: 900px; }
 .hospital-registration__back {
   display: flex; align-items: center; gap: 4px; margin-bottom: 12px;
   border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
 }
 .hospital-registration__back:hover { color: var(--color-navy); }
+.hospital-registration__back--bottom {
+  display: flex; align-items: center; gap: 5px;
+  margin: 18px 0 0 auto; padding: 9px 13px;
+  border: 1px solid rgba(54,151,235,0.16); border-radius: 10px;
+  background: #edf6ff; color: #247fcf;
+  font-size: 14px;
+  font-weight: 700;
+}
+.hospital-registration__back--bottom:hover { background: #dceeff; color: #1769ad; }
 .hospital-registration__lang-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .hospital-registration__lang-chip {
   border-radius: var(--radius-full); border: 1px solid rgba(14,107,71,0.2); background: transparent;
   padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--color-navy); cursor: pointer;
 }
-.hospital-registration__lang-chip--active { background: var(--color-navy); border-color: var(--color-navy); color: var(--color-gold-glow); }
+.hospital-registration__lang-chip--active { background: #3697eb; border-color: #3697eb; color: #ffffff; }
 .hospital-registration__hint { margin: 10px 0 0; font-size: 12px; color: var(--color-slate); }
 .hospital-registration__section-label {
   margin: 28px 0 12px; padding-top: 20px; border-top: 1px solid rgba(14,107,71,0.08);

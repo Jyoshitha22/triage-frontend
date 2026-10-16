@@ -1,8 +1,7 @@
 .progress-dots {
-  display: none;
+  display: flex;
   align-items: center;
 }
-@media (min-width: 640px) { .progress-dots { display: flex; } }
 
 .progress-dots__item { display: flex; align-items: center; }
 .progress-dots__node { display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -26,5 +25,10 @@
 .progress-dots__label { font-size: 13px; font-weight: 500; color: rgba(74, 92, 83, 0.85); }
 .progress-dots__label--current { color: var(--color-navy); }
 
-.progress-dots__line { width: 32px; height: 1px; margin: 0 8px; background: var(--color-slate-200); }
+.progress-dots__line { width: clamp(16px, 4vw, 32px); height: 1px; margin: 0 clamp(3px, 1vw, 8px); background: var(--color-slate-200); }
 .progress-dots__line--done { background: var(--color-navy); }
+
+@media (max-width: 480px) {
+  .progress-dots__circle { width: 24px; height: 24px; }
+  .progress-dots__label { font-size: 11px; }
+}

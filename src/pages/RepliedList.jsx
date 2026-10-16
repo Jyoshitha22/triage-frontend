@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Pill, ClipboardList, MessageSquare, ChevronLeft } from 'lucide-react';
+import { CheckCircle2, Pill, ClipboardList, MessageSquare } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import api from '../utils/api';
@@ -16,15 +16,26 @@ export default function RepliedList() {
   const [replied, setReplied] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const goBack = () => {
+    if (window.history.length > 2) {
+      navigate(-1);
+      return;
+    }
+    navigate('/hospital/dashboard');
+  };
+
   useEffect(() => {
     if (!doctor) { navigate('/hospital/doctor', { replace: true }); return; }
-    api.get(`/doctors/${doctor.doctor_id}/replied`).then(setReplied).finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    api.get(`/doctors/${doctor.doctor_id}/replied`)
+      .then(setReplied)
+      .catch(() => setReplied(session.getRepliedRecords(doctor.doctor_id)))
+      .finally(() => setLoading(false));
+  }, [doctor, navigate]);
 
   if (!doctor) return null;
 
   return (
-    <HospitalShell title="Hospital Portal" doctorName={doctor.name}>
+    <HospitalShell showDoctorArtwork>
       <h1 className="replied-list__title">Replied</h1>
       <p className="replied-list__lede">Patients you've already responded to, and what you sent them.</p>
 
@@ -60,7 +71,7 @@ export default function RepliedList() {
         </div>
       )}
 
-      <button onClick={() => navigate('/hospital/dashboard')} className="replied-list__back">← Back to dashboard</button>
+      <button onClick={goBack} className="replied-list__back">← Back</button>
     </HospitalShell>
   );
 }

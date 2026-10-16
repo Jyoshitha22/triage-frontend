@@ -1,0 +1,32 @@
+.doctor-page-art {
+  position: fixed;
+  z-index: 1;
+  bottom: 0;
+  left: clamp(88px, 7vw, 112px);
+  width: min(36vw, 490px);
+  height: min(82vh, 740px);
+  object-fit: contain;
+  object-position: bottom left;
+  pointer-events: none;
+  filter: drop-shadow(0 24px 38px rgba(12, 35, 82, 0.12));
+}
+
+.doctor-page-art--right {
+  right: clamp(12px, 3vw, 44px);
+  left: auto;
+  object-position: bottom right;
+}
+
+@media (max-width: 760px) {
+  .doctor-page-art {
+    left: 20px;
+    width: clamp(180px, 55vw, 260px);
+    height: min(58vh, 420px);
+    opacity: 0.16;
+  }
+
+  .doctor-page-art--right {
+    right: 8px;
+    left: auto;
+  }
+}

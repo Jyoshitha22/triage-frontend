@@ -1,22 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Check, AlertCircle, ChevronLeft } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import api from '../utils/api';
 import session from '../utils/session';
+import { updateLocalStaffProfile } from '../utils/localStaffAccounts';
 import { isRequired, isValidLandlineOrPhone } from '../utils/validators';
 import './HospitalRegistration.css';
 
 const HOSPITAL_TYPES = ['Government', 'Private', 'Clinic'];
 
 /**
- * The "address changed, phone number changed" screen — edits the
- * EXISTING hospital row (PUT), never creates a new one. Separate from
- * AdminRegister.jsx on purpose: that one creates the hospital+admin
- * together, once; this one only ever updates fields on a hospital that
- * already exists.
+ * Update the locally registered hospital profile without requiring the
+ * backend used by the earlier server-backed setup flow.
  */
 export default function EditHospital() {
   const navigate = useNavigate();
@@ -41,14 +38,14 @@ export default function EditHospital() {
     setLoading(true);
     setError(null);
     try {
-      const updated = await api.put(`/hospitals/${admin.hospital_id}`, {
-        hospital_name: values.hospital_name, address: values.address, phone: values.phone,
-        hospital_type: values.hospital_type, registration_id: values.registration_id,
-        city: values.city, state: values.state,
-      });
-      session.saveAdmin({ ...admin, hospital: updated });
+      const hospital = { ...admin.hospital, ...values };
+      const updatedAdmin = { ...admin, hospital, hospital_id: hospital.hospital_id || admin.hospital_id };
+      if (!updateLocalStaffProfile('admin', admin.email, updatedAdmin)) {
+        throw new Error('Could not find the saved admin account in this browser. Please register the hospital again.');
+      }
+      session.saveAdmin(updatedAdmin);
       setSaved(true);
-      setTimeout(() => navigate('/hospital/admin/home'), 1000);
+      setTimeout(() => navigate('/hospital/admin/home'), 700);
     } catch (e) {
       setError(e.message || 'Could not save changes.');
     } finally {
@@ -59,10 +56,8 @@ export default function EditHospital() {
   if (!admin) return null;
 
   return (
-    <HospitalShell title="Edit hospital details">
+    <HospitalShell compact wide showDoctorArtwork doctorArtworkSide="right">
       <div className="hospital-registration">
-        <button onClick={() => navigate('/hospital/admin/home')} className="hospital-registration__back"><ChevronLeft size={14} /> Back to Admin Home</button>
-
         <div className="hospital-registration__header">
           <span className="hospital-registration__icon-badge"><Building2 size={20} /></span>
           <div>
@@ -116,6 +111,7 @@ export default function EditHospital() {
             <Button onClick={submit} disabled={loading} icon={Check}>{loading ? 'Saving…' : saved ? 'Saved' : 'Save changes'}</Button>
           </div>
         </Card>
+        <button type="button" onClick={() => navigate(-1)} className="hospital-registration__back hospital-registration__back--bottom"><ChevronLeft size={16} /> Back</button>
       </div>
     </HospitalShell>
   );

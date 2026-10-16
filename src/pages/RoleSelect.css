@@ -1,42 +1,105 @@
+/* Pale blue/teal palette is scoped to this page so other screens keep their own look.
+   Sizes use vh-based clamp() so the whole page fits the window height. */
 .role-select {
+  --rs-navy: #0c2352;
+  --rs-muted: #6f84ab;
+  --rs-green: #3db78a;
+  --rs-blue: #3697eb;
+  position: relative;
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-midnight);
-  padding: 24px;
+  flex-direction: column;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef6fd 100%);
   font-family: var(--font-body);
+  color: var(--rs-navy);
 }
 
-.role-select__panel { width: 100%; max-width: 460px; text-align: center; color: var(--color-mist); position: relative; }
-.role-select__back {
-  position: absolute; top: -8px; left: 0; display: flex; align-items: center; gap: 4px;
-  border: none; background: none; color: rgba(220,243,231,0.7); font-size: 13px; cursor: pointer;
+/* ---- decoration ---- */
+.role-select__decor { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.role-select__waves { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 31.6%; }
+.role-select__leaves { position: absolute; left: 0; bottom: 21.5%; width: clamp(70px, 10.7vw, 165px); height: auto; }
+.role-select__ecg {
+  --ecg-w: clamp(150px, 21.5vw, 330px);
+  position: absolute; right: 0; width: var(--ecg-w); height: auto;
+  bottom: calc(24% - 0.176 * var(--ecg-w)); /* baseline sits at 76% of page height, like the reference */
 }
-.role-select__back:hover { color: var(--color-mist); }
-.role-select__sublabel { font-size: 12px; opacity: 0.75; margin-top: -8px; }
-.role-select__logo { color: var(--color-gold-glow); }
-.role-select__title { margin: 16px 0 4px; font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--color-mist); }
-.role-select__intro { margin: 12px 0 20px; font-size: 15px; line-height: 1.5; opacity: 0.85; max-width: 360px; }
-.role-select__subtitle { margin: 0; font-size: 16px; opacity: 0.8; }
 
-.role-select__grid { margin-top: 36px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 380px) { .role-select__grid { grid-template-columns: 1fr; } }
+/* ---- header ---- */
+.role-select__header {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: clamp(8px, 2vh, 28px) clamp(20px, 3.5vw, 52px);
+}
+.role-select__brand { display: flex; align-items: center; gap: 14px; }
+.role-select__brand-logo { flex: none; display: block; width: clamp(48px, min(5vw, 9vh), 76px); height: auto; }
+.role-select__brand-name { font-size: clamp(24px, 4.2vh, 34px); font-weight: 800; line-height: 1; letter-spacing: -0.01em; color: var(--rs-navy); }
+.role-select__brand-tag { margin-top: 3px; font-size: clamp(12px, 1.9vh, 15px); color: var(--rs-muted); }
+
+.role-select__nav { display: flex; align-items: center; gap: 14px; font-size: clamp(13px, 2vh, 15px); color: var(--rs-muted); }
+.role-select__nav i { width: 5px; height: 5px; border-radius: 50%; background: var(--rs-muted); }
+
+/* ---- hero ---- */
+.role-select__main {
+  position: relative; z-index: 1;
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 0 24px clamp(14px, 3vh, 40px); text-align: center;
+}
+.role-select__title {
+  margin: 0; font-family: var(--font-body); color: var(--rs-navy);
+  font-size: clamp(28px, 7vh, 64px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+}
+.role-select__intro {
+  margin: clamp(10px, 2.2vh, 24px) 0 0; max-width: 600px;
+  font-size: clamp(14px, 2.4vh, 22px); line-height: 1.4; color: var(--rs-muted);
+}
+
+/* two upright cards, same proportions as the reference (375 x 425) */
+.role-select__grid {
+  --card-w: clamp(210px, min(46vh, 40vw), 375px);
+  margin-top: clamp(16px, 4.4vh, 52px);
+  display: grid; grid-template-columns: repeat(2, var(--card-w));
+  justify-content: center; gap: clamp(16px, 3vw, 46px);
+}
 
 .role-select__card {
-  display: flex; flex-direction: column; align-items: center; gap: 16px;
-  padding: 32px 16px; border-radius: var(--radius-xl);
-  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05);
-  cursor: pointer; transition: all 0.2s;
+  width: 100%; aspect-ratio: 375 / 425;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: clamp(12px, 2.2vh, 26px) 20px clamp(12px, 2.2vh, 26px);
+  border-radius: 26px; border: 1.5px solid #c9f0e2;
+  background: #eefcf7;
+  color: var(--rs-navy); font-family: inherit; text-align: center; cursor: pointer;
+  box-shadow: 0 18px 40px -26px rgba(40, 120, 130, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.role-select__card:hover, .role-select__card:active {
-  border-color: var(--color-gold); background: rgba(16,185,129,0.15); transform: translateY(-2px);
+.role-select__card--staff { border-color: #bfe0fa; background: #e8f7fe; }
+.role-select__card:hover, .role-select__card:focus-visible {
+  transform: translateY(-3px); box-shadow: 0 26px 50px -24px rgba(40, 110, 150, 0.4);
 }
-.role-select__icon {
+.role-select__card:focus-visible { outline: 3px solid var(--rs-blue); outline-offset: 3px; }
+
+.role-select__art { display: block; width: 100%; max-width: 300px; height: auto; flex: none; }
+.role-select__label { margin-top: clamp(4px, 1vh, 10px); font-size: clamp(18px, 3.3vh, 30px); font-weight: 800; color: var(--rs-navy); }
+.role-select__desc { margin-top: clamp(3px, 0.8vh, 8px); max-width: 250px; font-size: clamp(13px, 2.2vh, 17px); line-height: 1.4; color: #3f7185; }
+.role-select__card--staff .role-select__desc { color: #4f7fa8; }
+.role-select__go {
+  margin-top: clamp(8px, 1.8vh, 18px);
+  width: clamp(38px, 7vh, 60px); height: clamp(38px, 7vh, 60px); border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  width: 96px; height: 96px; border-radius: 50%;
+  background: var(--rs-green); color: #fff; transition: transform 0.2s;
 }
-.role-select__icon--patient { background: rgba(16,185,129,0.18); color: var(--color-gold-glow); }
-.role-select__icon--doctor { background: rgba(16,185,129,0.18); color: var(--color-gold-glow); }
-.role-select__label { font-family: var(--font-display); font-size: 18px; font-weight: 600; color: var(--color-mist); }
+.role-select__card--staff .role-select__go { background: var(--rs-blue); }
+.role-select__go svg { width: 45%; height: 45%; }
+.role-select__card:hover .role-select__go { transform: translateX(4px); }
+
+/* ---- responsive ---- */
+@media (max-width: 760px) {
+  .role-select__nav { display: none; }
+  .role-select__main { justify-content: flex-start; padding-top: 8px; }
+  .role-select__grid { grid-template-columns: min(80vw, 320px); }
+  .role-select__ecg { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .role-select__card, .role-select__go { transition: none; }
+}

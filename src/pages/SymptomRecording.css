@@ -1,95 +1,343 @@
-.symptom-recording { width: 100%; max-width: 512px; }
-.symptom-recording__header-row { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; position: relative; }
-.symptom-recording__title { text-align: center; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
-@media (min-width: 640px) { .symptom-recording__title { font-size: 30px; } }
+/* Matches the exact layout, colors, and centered aesthetic of BasicDetails.css */
+.symptom-recording {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.symptom-recording__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.symptom-recording__title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f4a3a;
+  text-align: left;
+}
+
+.symptom-recording__subtitle {
+  font-size: 15px;
+  color: #6f9a8b;
+  margin-top: 4px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
 .symptom-recording__mode-toggle {
-  display: flex; align-items: center; gap: 6px;
-  border-radius: var(--radius-full); border: 1px solid rgba(14,107,71,0.15);
-  background: transparent; padding: 6px 12px; font-size: 12px; font-weight: 500;
-  color: var(--color-slate); cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1.5px solid #cfe8dc;
+  background: #f5fcf8;
+  color: #12614a;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.symptom-recording__mode-toggle:hover { border-color: rgba(14,107,71,0.4); }
-.symptom-recording__subtitle { margin-top: 8px; text-align: center; font-size: 14px; color: var(--color-slate); }
 
-.symptom-recording__textarea {
-  width: 100%; min-height: 140px; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15);
-  background: var(--color-mist); padding: 16px; font-size: 16px; color: var(--color-navy);
-  font-family: var(--font-body); outline: none; text-align: left; resize: vertical;
+.symptom-recording__mode-toggle:hover {
+  background: #e2f4ec;
+  border-color: #86c9ac;
 }
-.symptom-recording__textarea:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
-.symptom-recording__textarea::placeholder { color: rgba(92,107,100,0.5); }
 
-.symptom-recording__card { margin-top: 32px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+/* Central Voice Recording Hub */
+.symptom-recording__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+  border: 1px solid #eef7f3;
+}
 
 .symptom-recording__mic {
-  position: relative; display: flex; align-items: center; justify-content: center;
-  width: 112px; height: 112px; border-radius: 50%; border: none; cursor: pointer;
-  background: var(--color-navy); box-shadow: 0 10px 30px -8px rgba(14,107,71,0.5);
-  transition: all 0.3s;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #1e785e 0%, #12614a 100%);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 12px 28px -6px rgba(18, 97, 74, 0.45);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-bottom: 12px;
 }
-.symptom-recording__mic--active { background: var(--color-gold); box-shadow: 0 0 0 12px rgba(16,185,129,0.12); }
-.symptom-recording__mic-icon { color: var(--color-gold-glow); }
-.symptom-recording__mic-icon-stop { color: white; fill: white; }
 
-.symptom-recording__timer { margin-top: 16px; font-family: var(--font-mono); font-size: 14px; color: var(--color-slate); }
-.symptom-recording__wave { margin-top: 24px; width: 100%; }
+.symptom-recording__mic:hover {
+  transform: scale(1.04);
+  box-shadow: 0 16px 36px -6px rgba(18, 97, 74, 0.55);
+}
+
+.symptom-recording__mic--active {
+  background: linear-gradient(135deg, #e05252 0%, #c0392b 100%);
+  box-shadow: 0 0 0 10px rgba(192, 57, 43, 0.15), 0 0 0 20px rgba(192, 57, 43, 0.08);
+  animation: symptom-pulse 1.8s infinite;
+}
+
+@keyframes symptom-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.35); }
+  70% { transform: scale(1.05); box-shadow: 0 0 0 18px rgba(192, 57, 43, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+}
+
+.symptom-recording__timer {
+  margin: 8px 0 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: #12614a;
+}
+
+.symptom-recording__wave {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 10px;
+}
 
 .symptom-recording__live-caption {
-  margin-top: 20px;
+  margin: 16px 0 0;
+  font-size: 14px;
+  color: #1e785e;
+  font-weight: 500;
+  background: #f4fbf8;
+  padding: 8px 16px;
+  border-radius: 12px;
+  border: 1px solid #d4ece0;
+}
+
+/* Text Input Area */
+.symptom-recording__textarea {
   width: 100%;
-  min-height: 22px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1.5px solid #cfe8dc;
+  background: #fcfffd;
+  font-family: inherit;
   font-size: 15px;
-  line-height: 1.5;
-  color: var(--color-navy);
-  opacity: 0.75;
+  line-height: 1.6;
+  color: #0f4a3a;
+  outline: none;
+  resize: vertical;
+  min-height: 120px;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.symptom-recording__textarea:focus {
+  border-color: #1e785e;
+  box-shadow: 0 0 0 3px rgba(30, 120, 94, 0.15);
 }
 
 .symptom-recording__hint {
-  margin-top: 16px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: #fff6e5;
+  color: #9a5c12;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Transcripts & Chat Log Container */
+.symptom-recording__transcript-area {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.symptom-recording__transcript {
+  background: #f4fbf8;
+  border: 1px solid #d4ece0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  text-align: left;
+  color: #0f4a3a;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* QA Bubbles */
+.qa-bubble {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #fcfffd;
+  border: 1px solid #dceddf;
+  text-align: left;
+}
+
+.qa-bubble__q {
+  margin: 0;
+  display: flex;
+  align-items: center;
   gap: 6px;
   font-size: 12px;
-  line-height: 1.4;
-  color: var(--color-slate);
+  font-weight: 700;
+  color: #12614a;
+  text-transform: uppercase;
 }
-.symptom-recording__hint svg { flex-shrink: 0; margin-top: 1px; color: var(--color-medium); }
 
-.symptom-recording__transcript-area { width: 100%; text-align: left; }
-.symptom-recording__transcript { border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.1); background: var(--color-mist); padding: 16px; }
-.symptom-recording__transcript p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--color-navy); }
+.qa-bubble__a {
+  margin: 0;
+  font-size: 14px;
+  color: #0f4a3a;
+  font-weight: 500;
+}
 
-.symptom-recording__sending { margin-top: 20px; }
-.symptom-recording__progress-track { height: 4px; width: 100%; overflow: hidden; border-radius: var(--radius-full); background: rgba(14,107,71,0.1); }
-.symptom-recording__progress-fill { height: 100%; border-radius: var(--radius-full); background: var(--color-gold); animation: sr-shrink 2200ms linear forwards; }
-@keyframes sr-shrink { from { width: 100%; } to { width: 0%; } }
-.symptom-recording__add-more { margin-top: 12px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--color-gold); }
-.symptom-recording__add-more:hover { color: var(--color-navy); }
+/* Follow-up Panel */
+.followup {
+  margin-top: 6px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f2f9f5;
+  border: 1.5px solid #d5ecdf;
+  text-align: left;
+}
 
-.qa-bubble { margin-top: 16px; border-radius: var(--radius-lg); background: rgba(14,107,71,0.05); padding: 16px; }
-.qa-bubble__q { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: rgba(14,107,71,0.6); }
-.qa-bubble__a { margin: 4px 0 0; font-size: 14px; color: var(--color-navy); }
+.followup__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
 
-.followup { margin-top: 16px; border-radius: var(--radius-lg); background: rgba(16,185,129,0.1); padding: 16px; }
-.followup__header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.followup__q { display: flex; align-items: flex-start; gap: 6px; margin: 0; font-size: 14px; font-weight: 500; color: var(--color-navy); }
-.followup__q-icon { margin-top: 2px; flex-shrink: 0; color: var(--color-gold); }
+.followup__q {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f4a3a;
+}
+
+.followup__q-icon {
+  color: #1e785e;
+}
+
 .followup__mode-toggle {
-  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(14,107,71,0.15);
-  background: white; color: var(--color-slate); cursor: pointer;
+  border: none;
+  background: #ffffff;
+  color: #12614a;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid #cfe8dc;
+  transition: all 0.2s;
 }
+
+.followup__mode-toggle:hover {
+  background: #eaf7f1;
+}
+
 .followup__input {
-  margin-top: 12px; width: 100%; border-radius: var(--radius-lg); border: 1px solid rgba(14,107,71,0.15);
-  background: white; padding: 12px 14px; font-size: 14px; color: var(--color-navy);
-  font-family: var(--font-body); outline: none;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1.5px solid #cfe8dc;
+  background: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  color: #0f4a3a;
+  outline: none;
+  box-sizing: border-box;
 }
-.followup__input:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
+
+.followup__input:focus {
+  border-color: #1e785e;
+}
+
 .followup__mic {
-  margin-top: 12px; display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; border-radius: 50%; border: none; cursor: pointer;
-  background: var(--color-navy); color: var(--color-gold-glow); box-shadow: 0 8px 20px -8px rgba(14,107,71,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #d9efe4;
+  color: #12614a;
+  cursor: pointer;
+  transition: all 0.2s;
 }
-.followup__mic--active { background: var(--color-gold); color: var(--color-navy); box-shadow: 0 0 0 8px rgba(16,185,129,0.15); }
-.followup__answer { margin-top: 8px; font-size: 14px; color: var(--color-navy); }
-.followup__answer--live { opacity: 0.7; }
+
+.followup__mic--active {
+  background: #c0392b;
+  color: #ffffff;
+  animation: symptom-pulse 1.5s infinite;
+}
+
+.followup__answer {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #1e785e;
+  font-weight: 600;
+}
+
+/* Progress Sending Bar */
+.symptom-recording__sending {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.symptom-recording__progress-track {
+  width: 100%;
+  height: 6px;
+  background: #e8f5ee;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.symptom-recording__progress-fill {
+  height: 100%;
+  width: 100%;
+  background: #1e785e;
+  animation: loading-fill 2s linear forwards;
+}
+
+@keyframes loading-fill {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(0%); }
+}
+
+.symptom-recording__add-more {
+  border: none;
+  background: transparent;
+  color: #c0392b;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+}

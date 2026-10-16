@@ -1,97 +1,331 @@
-import React, { useState } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Pause, CheckCircle2, Bookmark, ArrowRight, Info, Pill, ClipboardList, MessageSquare } from 'lucide-react';
-import NavShell from '../components/NavShell';
-import Card from '../components/Card';
-import Button from '../components/Button';
+import {
+  Play, Pause, CheckCircle2, Bookmark, ArrowRight,
+  Pill, ClipboardList, MessageSquare, Stethoscope,
+} from 'lucide-react';
+import PatientSidebar from '../components/PatientSidebar';
+import ProgressDots from '../components/ProgressDots';
 import { useLanguage } from '../context/LanguageContext';
 import useSpeechSynthesis from '../hooks/useSpeechSynthesis';
+import api from '../utils/api';
+import session from '../utils/session';
 import './DoctorReply.css';
 
-// Standing in for the real reply, which — once a backend exists — would
-// be fetched using this patient's own session/request ID. Structured to
-// match exactly what RecordReply.jsx now actually produces: medicines,
-// tests, advice, each optionally filled in.
-const SAMPLE_REPLY = {
-  medicines: 'Paracetamol 500mg, twice a day for 3 days.',
-  tests: '',
-  advice: "This sounds like a mild viral fever. Rest, stay hydrated, and come back if the fever crosses 102°F or lasts more than 3 days.",
+const TRANSLATION_API_BASE = import.meta.env.VITE_TRANSLATION_API_BASE || 'http://localhost:5000';
+
+async function createReplyAudio(text, languageCode) {
+  const response = await fetch(TRANSLATION_API_BASE + '/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, languageCode }),
+  });
+  if (!response.ok) throw new Error('Reply audio generation failed');
+  const result = await response.json();
+  if (!result?.audio) throw new Error('Empty reply audio');
+  const base64 = result.audio.replace(/^data:audio\/[^;]+;base64,/, '');
+  const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+  return new Blob([bytes], { type: 'audio/mpeg' });
+}
+
+async function translateReplyText(text, sourceLanguageCode, targetLanguageCode) {
+  const response = await fetch(TRANSLATION_API_BASE + '/api/translate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, sourceLanguageCode, targetLanguageCode }),
+  });
+  if (!response.ok) throw new Error('Reply translation failed');
+  const result = await response.json();
+  if (!result || !result.translatedText) throw new Error('Empty translation');
+  return result.translatedText;
+}
+
+const SAMPLE_REPLIES_BY_LANG = {
+  en: {
+    doctorName: 'Dr. Ananya Rao',
+    specialty: 'General Physician · 8 years experience',
+    medicines: 'Paracetamol 500mg for 2 days.',
+    tests: '',
+    advice: 'Stay hydrated.',
+  },
+  te: {
+    doctorName: 'డా. అనన్య రావు',
+    specialty: 'జనరల్ ఫిజీషియన్ · 8 సంవత్సరాల అనుభవం',
+    medicines: 'పారాసిటమాల్ 500mg 2 రోజుల పాటు తీసుకోండి.',
+    tests: '',
+    advice: 'శరీరంలో తగినంత నీరు ఉండేలా ద్రవాలు తాగండి.',
+  },
+  hi: {
+    doctorName: 'डॉ. अनन्या राव',
+    specialty: 'जनरल फिजिशियन · 8 साल का अनुभव',
+    medicines: 'पैरासिटामॉल 500mg 2 दिनों तक लें।',
+    tests: '',
+    advice: 'पर्याप्त पानी पीते रहें।',
+  },
+  ta: {
+    doctorName: 'டாக்டர் அனன்யா ராவ்',
+    specialty: 'பொது மருத்துவர் · 8 ஆண்டுகள் அனுபவம்',
+    medicines: 'பாராசிட்டமால் 500mg-ஐ 2 நாட்களுக்கு எடுத்துக்கொள்ளவும்.',
+    tests: '',
+    advice: 'போதுமான அளவு தண்ணீர் குடிக்கவும்.',
+  },
 };
+
+const SECTION_LABELS = {
+  medicines: { en: 'Medicines', te: 'మందులు', hi: 'दवाएं', ta: 'மருந்துகள்' },
+  tests: { en: 'Tests', te: 'పరీక్షలు', hi: 'जांचें', ta: 'பரிசோதனைகள்' },
+  advice: { en: 'Doctor Advice', te: 'వైద్యుల సలహా', hi: 'सलाह', ta: 'அறிவுரை' },
+};
+
+const SECTIONS = [
+  { key: 'medicines', icon: Pill },
+  { key: 'tests', icon: ClipboardList },
+  { key: 'advice', icon: MessageSquare },
+];
+
+const PART_TO_SECTION = { medicine: 'medicines', test: 'tests', advice: 'advice' };
+const EMPTY_NOTE = { medicines: '', tests: '', advice: '' };
+
+function noteFromRecord(rec) {
+  const note = { medicines: '', tests: '', advice: '' };
+  (rec?.replies || []).forEach((part) => {
+    const key = PART_TO_SECTION[part.response_type];
+    if (!key) return;
+    note[key] = [note[key], part.response_text || part.original_text].filter(Boolean).join(' ');
+  });
+  return note;
+}
+
+function detectReplyLanguage(note) {
+  const text = Object.values(note || {}).join(' ');
+  const counts = {
+    te: (text.match(/[\u0C00-\u0C7F]/g) || []).length,
+    hi: (text.match(/[\u0900-\u097F]/g) || []).length,
+    ta: (text.match(/[\u0B80-\u0BFF]/g) || []).length,
+  };
+  const detected = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return detected && detected[1] > 0 ? { te: 'te-IN', hi: 'hi-IN', ta: 'ta-IN' }[detected[0]] : 'en-IN';
+}
 
 export default function DoctorReply() {
   const navigate = useNavigate();
-  const { language, t } = useLanguage();
-  const { speak, cancel } = useSpeechSynthesis();
+  const { language, bcp47, t, languages } = useLanguage();
+  const defaultReply = SAMPLE_REPLIES_BY_LANG[language] || SAMPLE_REPLIES_BY_LANG.en;
+  const { speak: speakWithBrowser, cancel: cancelBrowserSpeech } = useSpeechSynthesis();
   const [playing, setPlaying] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [note, setNote] = useState(defaultReply);
+  const [sourceNote, setSourceNote] = useState(null);
+  const [sourceLanguage, setSourceLanguage] = useState('en-IN');
+  const [voiceLanguage, setVoiceLanguage] = useState(bcp47);
+  const [translatedLanguage, setTranslatedLanguage] = useState(null);
+  const [failedLanguage, setFailedLanguage] = useState(null);
+  const [fromDoctor, setFromDoctor] = useState(false);
+  const [voiceError, setVoiceError] = useState(false);
+  const doctorInfo = fromDoctor ? { name: '', specialty: '' } : { name: defaultReply.doctorName, specialty: defaultReply.specialty };
+  const playTimerRef = useRef(null);
+  const replyAudioRef = useRef(null);
+  const audioUrlRef = useRef(null);
+  const speechRequestRef = useRef(0);
 
-  const sections = [
-    { key: 'medicines', label: 'Medicines', icon: Pill },
-    { key: 'tests', label: 'Tests', icon: ClipboardList },
-    { key: 'advice', label: 'Advice', icon: MessageSquare },
-  ].filter((s) => SAMPLE_REPLY[s.key]);
+  const cancelReply = useCallback(() => {
+    speechRequestRef.current += 1;
+    cancelBrowserSpeech();
+    replyAudioRef.current?.pause();
+    replyAudioRef.current = null;
+    if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+    audioUrlRef.current = null;
+  }, [cancelBrowserSpeech]);
 
-  // The doctor's note is written in English — reading it aloud with an
-  // English voice keeps it understandable. Real translation into the
-  // patient's language would need a backend translation service; that's
-  // not wired up yet, so the notice below is shown instead of silently
-  // guessing. UI chrome around it (labels, buttons) still follows the
-  // patient's chosen language.
-  const playReply = () => {
-    if (playing) { cancel(); setPlaying(false); return; }
+  useEffect(() => {
+    if (!fromDoctor || !sourceNote) return undefined;
+    let active = true;
+    const originalLanguage = sourceLanguage || detectReplyLanguage(sourceNote);
+    if (originalLanguage === bcp47) {
+      Promise.resolve().then(() => {
+        if (!active) return;
+        setNote(sourceNote);
+        setTranslatedLanguage(bcp47);
+        setFailedLanguage(null);
+        setVoiceLanguage(bcp47);
+      });
+      return () => { active = false; };
+    }
+
+    Promise.all(Object.entries(sourceNote).map(async ([key, value]) => {
+      if (!value) return [key, ''];
+      const translatedText = await translateReplyText(value, originalLanguage, bcp47);
+      return [key, translatedText];
+    })).then((entries) => {
+      if (!active) return;
+      setNote(Object.fromEntries(entries));
+      setTranslatedLanguage(bcp47);
+      setFailedLanguage(null);
+      setVoiceLanguage(bcp47);
+    }).catch(() => {
+      if (!active) return;
+      setNote(sourceNote);
+      setTranslatedLanguage(null);
+      setFailedLanguage(bcp47);
+      setVoiceLanguage(originalLanguage);
+    });
+    return () => { active = false; };
+  }, [bcp47, fromDoctor, sourceLanguage, sourceNote]);
+
+  useEffect(() => {
+    const symptomId = session.getActiveSymptomId();
+    if (!symptomId) return undefined;
+    let active = true;
+    const applyRecord = (record) => {
+      const real = noteFromRecord(record);
+      if (!real.medicines && !real.tests && !real.advice) return false;
+      if (active) {
+        setSourceNote(real);
+        setSourceLanguage(detectReplyLanguage(real));
+        setFromDoctor(true);
+      }
+      return true;
+    };
+    applyRecord(session.getSymptomRecord(symptomId));
+    api.get('/symptom-records/' + symptomId)
+      .then((record) => { applyRecord(record); })
+      .catch(() => { /* Keep the local reply or localized sample when offline. */ });
+    return () => { active = false; };
+  }, []);
+
+  const label = useCallback((key) => SECTION_LABELS[key][language] || SECTION_LABELS[key].en, [language]);
+  const replyReady = !fromDoctor || !sourceNote || translatedLanguage === bcp47 || failedLanguage === bcp47;
+  const translationFailed = fromDoctor && !!sourceNote && failedLanguage === bcp47;
+  const isTranslating = fromDoctor && !!sourceNote && !replyReady;
+  const displayedNote = isTranslating ? EMPTY_NOTE : (fromDoctor && sourceNote ? note : defaultReply);
+  const sections = useMemo(() => SECTIONS.filter((section) => displayedNote[section.key]), [displayedNote]);
+  const activeVoiceLanguage = fromDoctor ? voiceLanguage : bcp47;
+  const voiceLanguageName = (languages.find((item) => item.bcp47 === activeVoiceLanguage) || languages.find((item) => item.code === activeVoiceLanguage.split('-')[0]))?.nativeLabel || activeVoiceLanguage;
+
+  const playReply = useCallback(() => {
+    if (!replyReady) return;
+    cancelReply();
+    const requestId = speechRequestRef.current;
+    setVoiceError(false);
     setPlaying(true);
-    const fullText = sections.map((s) => `${s.label}. ${SAMPLE_REPLY[s.key]}`).join(' ');
-    speak(fullText, 'en-IN');
-    const estimatedMs = (fullText.split(' ').length / 2.5) * 1000 + 500;
-    setTimeout(() => setPlaying(false), estimatedMs);
+    const speechLabel = (key) => translationFailed
+      ? (SECTION_LABELS[key][activeVoiceLanguage.split('-')[0]] || SECTION_LABELS[key].en)
+      : label(key);
+    const fullText = sections.map((section) => speechLabel(section.key) + ': ' + displayedNote[section.key]).join('. ');
+    createReplyAudio(fullText, activeVoiceLanguage).then(async (blob) => {
+      if (requestId !== speechRequestRef.current) return;
+      const audioUrl = URL.createObjectURL(blob);
+      audioUrlRef.current = audioUrl;
+      const audio = new Audio(audioUrl);
+      replyAudioRef.current = audio;
+      audio.onended = () => {
+        if (requestId !== speechRequestRef.current) return;
+        setPlaying(false);
+        if (playTimerRef.current) clearTimeout(playTimerRef.current);
+        URL.revokeObjectURL(audioUrl);
+        audioUrlRef.current = null;
+        replyAudioRef.current = null;
+      };
+      await audio.play();
+    }).catch(() => {
+      if (requestId !== speechRequestRef.current) return;
+      replyAudioRef.current?.pause();
+      replyAudioRef.current = null;
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+      setVoiceError(true);
+      speakWithBrowser(fullText, activeVoiceLanguage);
+    });
+    const estimatedMs = (fullText.split(/\s+/).length / 2.0) * 1000 + 1000;
+    if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    playTimerRef.current = setTimeout(() => setPlaying(false), Math.max(3000, estimatedMs));
+  }, [sections, label, displayedNote, speakWithBrowser, activeVoiceLanguage, cancelReply, replyReady, translationFailed]);
+
+  const togglePlay = () => {
+    if (playing) {
+      cancelReply();
+      setPlaying(false);
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+    } else {
+      playReply();
+    }
   };
 
+  useEffect(() => {
+    if (!replyReady) return undefined;
+    const allowed = typeof navigator === 'undefined' || navigator.userActivation?.hasBeenActive !== false;
+    const autoPlayTimer = allowed ? setTimeout(() => playReply(), 900) : null;
+    return () => {
+      if (autoPlayTimer) clearTimeout(autoPlayTimer);
+      if (playTimerRef.current) clearTimeout(playTimerRef.current);
+      cancelReply();
+    };
+  }, [language, displayedNote, replyReady, playReply, cancelReply]);
+
   const saveNote = () => setSaved(true);
+  const goHome = () => { session.clearPending(); session.clearActiveSymptomId(); navigate('/'); };
 
   return (
-    <NavShell step={5}>
-      <div className="doctor-reply">
-        <h1 className="doctor-reply__title">{t('doctorRepliedTitle')}</h1>
-
-        <Card className="doctor-reply__card">
-          <div className="doctor-reply__header">
-            <div className="doctor-reply__avatar">AR</div>
-            <div>
-              <p className="doctor-reply__name">Dr. Ananya Rao</p>
-              <p className="doctor-reply__specialty">General Physician · 8 years experience</p>
+    <div className="pd">
+      <div className="pd-body">
+        <PatientSidebar />
+        <main className="pd-main">
+          <div className="pd-progress"><ProgressDots step={5} t={t} /></div>
+          <section className="pd-card reply-box">
+            <div className="reply-head">
+              <span className="pd-card__avatar"><Stethoscope size={34} strokeWidth={2} /></span>
+              <div>
+                <h1 className="pd-card__title">{t('doctorRepliedTitle')}</h1>
+                <p className="pd-card__sub">{t('doctorsNote')}</p>
+                <svg className="pd-card__wave" viewBox="0 0 150 14" aria-hidden="true">
+                  <path d="M2 9 C30 2 60 2 85 8 C105 12 128 8 148 4" fill="none" stroke="#86c9ac" strokeWidth="3" strokeLinecap="round" />
+                </svg>
+              </div>
             </div>
-            <CheckCircle2 size={20} className="doctor-reply__check" />
-          </div>
-
-          <button onClick={playReply} className="doctor-reply__player">
-            <span className="doctor-reply__play-btn">{playing ? <Pause size={20} /> : <Play size={20} className="doctor-reply__play-icon" />}</span>
-            <span className="doctor-reply__player-label">{playing ? t('playingReply') : t('playReply')}</span>
-          </button>
-
-          {language !== 'en' && (
-            <p className="doctor-reply__translation-notice"><Info size={12} /> {t('translationNotice')}</p>
-          )}
-
-          <div className="doctor-reply__note">
-            {sections.map((s) => {
-              const Icon = s.icon;
-              return (
-                <div key={s.key} className="doctor-reply__note-section">
-                  <p className="doctor-reply__note-label"><Icon size={12} /> {s.label}</p>
-                  <p className="doctor-reply__note-text">{SAMPLE_REPLY[s.key]}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="doctor-reply__actions">
-            <button onClick={saveNote} disabled={saved} className={`doctor-reply__save ${saved ? 'doctor-reply__save--saved' : ''}`}>
-              {saved ? <><CheckCircle2 size={16} /> {t('savedNote')}</> : <><Bookmark size={16} /> {t('saveNote')}</>}
-            </button>
-            <Button onClick={() => navigate('/')} icon={ArrowRight}>{t('backToHome')}</Button>
-          </div>
-        </Card>
+            <div className="reply-doctor-banner">
+              <div className="reply-doctor-avatar" aria-hidden="true"><Stethoscope size={20} /></div>
+              <div className="reply-doctor-details">
+                {doctorInfo.name && <p className="reply-doctor-name">{doctorInfo.name}</p>}
+                {doctorInfo.specialty && <p className="reply-doctor-spec">{doctorInfo.specialty}</p>}
+              </div>
+            </div>
+            <div className="reply-audio-hub">
+              <button type="button" onClick={togglePlay} disabled={!replyReady}
+                className={'reply-play-btn ' + (playing ? 'is-playing' : '')}
+                aria-label={playing ? t('playingReply') : t('playReply')}>
+                {playing ? <Pause size={22} /> : <Play size={22} className="play-icon-offset" />}
+                <span>{playing ? t('playingReply') : t('playReply')}</span>
+              </button>
+              {replyReady && <span className="reply-lang-tag">{t('voiceInLanguage').replace('{language}', voiceLanguageName)}</span>}
+            </div>
+            {voiceError && <p role="status" className="reply-translation-status">{t('voiceServiceFallback').replace('{language}', voiceLanguageName)}</p>}
+            {isTranslating && <p role="status" className="reply-translation-status">{t('replyTranslationLoading')}</p>}
+            {translationFailed && <p role="alert" className="reply-translation-status">{t('replyTranslationFallback').replace('{language}', voiceLanguageName)}</p>}
+            <div className="reply-sections-list">
+              {sections.map((section) => {
+                const Icon = section.icon;
+                return (
+                  <div key={section.key} className="reply-section-card">
+                    <div className="reply-section-header">
+                      <Icon size={16} className="reply-section-icon" />
+                      <span className="reply-section-title">{label(section.key)}</span>
+                    </div>
+                    <p className="reply-section-text">{displayedNote[section.key]}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="reply-actions" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', width: '100%' }}>
+              <button type="button" onClick={saveNote} disabled={saved} className={'reply-save-btn ' + (saved ? 'is-saved' : '')} style={{ flex: 1 }}>
+                {saved ? <><CheckCircle2 size={16} /> {t('prescriptionSaved')}</> : <><Bookmark size={16} /> {t('savePrescription')}</>}
+              </button>
+              <button type="button" onClick={goHome} className="pd-btn pd-btn--primary reply-home-btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0 }}>
+                {t('backToHome')} <ArrowRight size={18} />
+              </button>
+            </div>
+          </section>
+        </main>
       </div>
-    </NavShell>
+    </div>
   );
 }

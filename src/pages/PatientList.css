@@ -5,6 +5,12 @@
 .patient-list__count-badge { display: flex; align-items: center; gap: 6px; border-radius: var(--radius-full); background: rgba(14,107,71,0.05); padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--color-navy); white-space: nowrap; }
 
 .patient-list__empty { margin-top: 24px; text-align: center; }
+.patient-list__logout {
+  display: flex; align-items: center; gap: 7px; width: fit-content; margin: 20px 0 0 auto;
+  border: 1px solid rgba(54,151,235,0.16); border-radius: 10px; background: #edf6ff;
+  padding: 9px 13px; color: #247fcf; font: 700 14px var(--font-body); cursor: pointer;
+}
+.patient-list__logout:hover { background: #dceeff; color: #1769ad; }
 
 .patient-list__items { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
 .patient-list__row {

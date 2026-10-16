@@ -1,52 +1,43 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Stethoscope } from 'lucide-react';
-import HeartbeatLogo from '../components/HeartbeatLogo';
-import session from '../utils/session';
+import { ArrowRight } from 'lucide-react';
+import patientArt from '../assets/role-patient.png';
+import doctorArt from '../assets/role-doctor.png';
+import brandHeart from '../assets/brand-heart.png';
 import './RoleSelect.css';
 
 /**
- * The very first screen anyone sees. Deliberately icon-first and
- * text-light — a person who can't read still needs to be able to tell
- * these two options apart at a glance, so each one is a big tappable
- * card built around a single, unambiguous symbol (a person vs. a
- * stethoscope), not a sentence to parse. A short line above them
- * explains what the app does at all, for anyone opening it cold.
- *
- * If this device already has a saved patient/admin/doctor session,
- * skip straight past this — see session.js.
+ * Home page: welcome hero + two role cards.
+ * Patient -> language page. Hospital staff -> hospital login options.
+ * It never skips ahead, even if this device has saved details.
  */
 export default function RoleSelect() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (session.getPatient()) { navigate('/symptoms', { replace: true }); return; }
-    if (session.getAdmin()) { navigate('/hospital/admin/home', { replace: true }); return; }
-    if (session.getDoctor()) { navigate('/hospital/dashboard', { replace: true }); }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   return (
     <div className="role-select">
-      <div className="role-select__panel">
-        <HeartbeatLogo size={44} className="role-select__logo" />
-        <h1 className="role-select__title">Triage</h1>
+      <main className="role-select__main">
+        <h1 className="role-select__title">Welcome to Triage</h1>
         <p className="role-select__intro">
-          Speak your symptoms in your own language — a real doctor reviews them and replies with guidance, by voice.
+          Your voice matters. Tell us your symptoms and get the right guidance — in your language, your way.
         </p>
-        <p className="role-select__subtitle">Who's using this?</p>
 
         <div className="role-select__grid">
-          <button onClick={() => navigate('/language')} className="role-select__card">
-            <span className="role-select__icon role-select__icon--patient"><User size={56} strokeWidth={1.6} /></span>
-            <span className="role-select__label">I'm a patient</span>
+          <button onClick={() => navigate('/language')} className="role-select__card role-select__card--patient">
+            <img src={patientArt} alt="" className="role-select__art" />
+            <span className="role-select__label">I’m a Patient</span>
+            <span className="role-select__desc">Share your symptoms and get proper guidance.</span>
+            <span className="role-select__go"><ArrowRight size={26} strokeWidth={2.4} /></span>
           </button>
 
-          <button onClick={() => navigate('/hospital')} className="role-select__card">
-            <span className="role-select__icon role-select__icon--doctor"><Stethoscope size={56} strokeWidth={1.6} /></span>
-            <span className="role-select__label">I'm hospital staff</span>
+          <button onClick={() => navigate('/hospital')} className="role-select__card role-select__card--staff">
+            <img src={doctorArt} alt="" className="role-select__art" />
+            <span className="role-select__label">I’m Hospital Staff</span>
+            <span className="role-select__desc">Access patient records, respond and provide care.</span>
+            <span className="role-select__go"><ArrowRight size={26} strokeWidth={2.4} /></span>
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

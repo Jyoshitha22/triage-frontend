@@ -36,7 +36,8 @@
 .admin-home__action-sub { font-size: 12px; font-weight: 400; color: var(--color-slate); }
 
 .admin-home__logout {
-  margin-top: 28px; display: flex; align-items: center; gap: 6px;
-  border: none; background: none; color: var(--color-slate); font-size: 13px; cursor: pointer;
+  width: fit-content; margin: 28px 0 0 auto; display: flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(54,151,235,0.16); border-radius: 10px; background: #edf6ff;
+  padding: 9px 13px; color: #247fcf; font-size: 14px; font-weight: 700; cursor: pointer;
 }
-.admin-home__logout:hover { color: var(--color-navy); }
+.admin-home__logout:hover { background: #dceeff; color: #1769ad; }

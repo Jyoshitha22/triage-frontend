@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, AlertTriangle, Info } from 'lucide-react';
+import { Users, AlertTriangle, Info, LogOut } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Waveform from '../components/Waveform';
@@ -33,20 +33,41 @@ export default function PatientList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!doctor) { navigate('/hospital/doctor', { replace: true }); return; }
-    api.get(`/symptom-records?status=waiting&doctor_id=${doctor.doctor_id}`)
+    const doctorId = doctor?.doctor_id || 1;
+    api.get(`/symptom-records?status=waiting&doctor_id=${doctorId}`)
       .then(setPatients)
+      .catch(() => {
+        // Fallback to local session storage if server is unreachable
+        const local = session.getWaitingRecords ? session.getWaitingRecords() : [];
+        setPatients(local);
+      })
       .finally(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [doctor]);
 
   const sorted = [...patients].sort((a, b) => ORDER[a.urgency] - ORDER[b.urgency]);
   const selectPatient = (p) => navigate('/hospital/reply', { state: { symptomId: p.symptom_id } });
   const logout = () => { session.clearDoctor(); navigate('/hospital'); };
 
-  if (!doctor) return null;
-
+  if (!doctor) {
   return (
-    <HospitalShell title="Hospital Portal" doctorName={doctor.name} onLogout={logout}>
+    <HospitalShell showDoctorArtwork>
+      <div className="patient-list__header">
+        <div>
+          <h1 className="patient-list__title">Patient queue</h1>
+          <p className="patient-list__lede">
+            Patients are prioritized by urgency.
+          </p>
+        </div>
+      </div>
+
+      <Card className="patient-list__empty">
+        <p>Patient queue is available for testing.</p>
+      </Card>
+    </HospitalShell>
+  );
+}
+  return (
+    <HospitalShell showDoctorArtwork>
       <div className="patient-list__header">
         <div>
           <h1 className="patient-list__title">Patient queue</h1>
@@ -98,6 +119,7 @@ export default function PatientList() {
           })}
         </div>
       )}
+      <button onClick={logout} className="patient-list__logout"><LogOut size={15} /> Log out</button>
     </HospitalShell>
   );
 }

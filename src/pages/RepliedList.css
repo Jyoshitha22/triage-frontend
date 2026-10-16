@@ -29,7 +29,7 @@
 .replied-list__reply svg { flex-shrink: 0; margin-top: 3px; color: var(--color-gold); }
 
 .replied-list__back {
-  margin-top: 24px; border: none; background: none; padding: 0;
-  color: var(--color-slate); font-size: 14px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 5px; width: fit-content; margin: 24px 0 0 auto; border: 1px solid rgba(54,151,235,0.16); border-radius: 10px; background: #edf6ff; padding: 9px 13px;
+  color: #247fcf; font-size: 14px; font-weight: 700; cursor: pointer;
 }
-.replied-list__back:hover { color: var(--color-navy); }
+.replied-list__back:hover { background: #dceeff; color: #1769ad; }

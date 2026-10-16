@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, ArrowRight, AlertCircle } from 'lucide-react';
+import { Building2, ArrowRight, AlertCircle, ChevronLeft } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Button from '../components/Button';
@@ -35,7 +35,7 @@ export default function HospitalRegistration() {
   };
 
   return (
-    <HospitalShell title="Hospital setup">
+    <HospitalShell title="Hospital setup" compact>
       <div className="hospital-registration">
         <div className="hospital-registration__header">
           <span className="hospital-registration__icon-badge"><Building2 size={20} /></span>
@@ -80,6 +80,7 @@ export default function HospitalRegistration() {
             <Button onClick={submit} icon={ArrowRight}>Continue to specialist details</Button>
           </div>
         </Card>
+        <button type="button" onClick={() => navigate('/hospital')} className="hospital-registration__back hospital-registration__back--bottom"><ChevronLeft size={16} /> Back</button>
       </div>
     </HospitalShell>
   );

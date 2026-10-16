@@ -9,7 +9,7 @@ async function request(path, options = {}) {
   });
   if (!res.ok) {
     const detail = await res.json().catch(() => ({}));
-    throw new Error(detail.detail || `Request failed (${res.status})`);
+    throw new Error(detail.detail || detail.error || `Request failed (${res.status})`);
   }
   const contentType = res.headers.get('content-type') || '';
   if (contentType.includes('audio')) return res.blob();

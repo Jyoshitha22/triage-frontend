@@ -1,0 +1,13 @@
+.app-header {
+  position: relative; z-index: 3;
+  height: 96px; padding: 0 32px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.app-header__home { display: block; text-decoration: none; }
+.app-header__nav { display: flex; align-items: center; gap: 18px; font-family: var(--font-body); font-size: 19px; font-weight: 600; color: #496985; }
+.app-header__nav i { width: 6px; height: 6px; border-radius: 50%; background: #6f84ab; }
+
+@media (max-width: 760px) {
+  .app-header { padding: 0 20px; }
+  .app-header__nav { display: none; }
+}

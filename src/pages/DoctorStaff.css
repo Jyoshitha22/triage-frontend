@@ -1,0 +1,37 @@
+.doctor-register-layout {
+  width: 100%;
+}
+
+.doctor-register-content { min-width: 0; }
+.doctor-register-content .hospital-registration { max-width: 860px; }
+.doctor-register-content .hospital-registration__card { background: rgba(255, 255, 255, 0.78); }
+
+.doctor-login-layout {
+  width: min(100%, 1120px);
+  margin-inline: auto;
+  padding-left: clamp(280px, 31vw, 420px);
+  box-sizing: border-box;
+}
+
+.doctor-login__form {
+  width: 100%;
+  min-height: 0;
+  border-radius: 28px;
+  box-shadow: var(--shadow-hero);
+  position: relative;
+  z-index: 2;
+}
+
+@media (max-width: 1000px) {
+  .doctor-register-content .hospital-registration__card { padding: 24px; }
+  .doctor-login-layout { padding-left: clamp(220px, 28vw, 300px); }
+}
+
+@media (max-width: 760px) {
+  .doctor-register-content .hospital-registration__card { padding: 20px; }
+}
+
+@media (max-width: 639px) {
+  .doctor-login-layout { padding-left: 0; }
+  .doctor-login__form { padding: 32px 24px; }
+}
