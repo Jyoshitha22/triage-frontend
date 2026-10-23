@@ -174,7 +174,7 @@ export default function BasicDetails() {
         <PatientSidebar />
 
         <main className="pd-main">
-          <div className="pd-progress"><ProgressDots step={2} /></div>
+          <div className="pd-progress"><ProgressDots step={2} t={t} /></div>
           <section className="pd-card">
             <div className="pd-card__head">
               <span className="pd-card__avatar"><User size={38} strokeWidth={1.7} /></span>
@@ -207,32 +207,29 @@ export default function BasicDetails() {
               </Row>
             </div>
 
-            <Row icon={Mail} label={t('emailLabel')} htmlFor={ids.email} error={err('email')}>
-              <VoiceInput id={ids.email} value={val('email')} onChange={set('email')} onBlur={blur('email')}
-                placeholder={t('emailPlaceholder')} type="email" lang={bcp47} invalid={!!err('email')} />
-            </Row>
+            <div className="pd-two pd-two--gender-city">
+              <Row icon={Users} label={t('fieldGender')} error={err('gender')}>
+                <div id={ids.gender} className="pd-gender" role="radiogroup" aria-label={t('fieldGender')}>
+                  {GENDERS.map(({ key, Icon }) => (
+                    <button
+                      key={key}
+                      type="button"
+                      role="radio"
+                      aria-checked={val('gender') === key}
+                      onClick={() => { set('gender')(key); blur('gender')(); }}
+                      className={`pd-pill ${val('gender') === key ? 'pd-pill--on' : ''}`}
+                    >
+                      <span className="pd-pill__radio" /> <Icon size={20} /> {t(key)}
+                    </button>
+                  ))}
+                </div>
+              </Row>
 
-            <Row icon={Users} label={t('fieldGender')} error={err('gender')}>
-              <div id={ids.gender} className="pd-gender" role="radiogroup" aria-label={t('fieldGender')}>
-                {GENDERS.map(({ key, Icon }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="radio"
-                    aria-checked={val('gender') === key}
-                    onClick={() => { set('gender')(key); blur('gender')(); }}
-                    className={`pd-pill ${val('gender') === key ? 'pd-pill--on' : ''}`}
-                  >
-                    <span className="pd-pill__radio" /> <Icon size={20} /> {t(key)}
-                  </button>
-                ))}
-              </div>
-            </Row>
-
-            <Row icon={MapPin} label={label('location')} htmlFor={ids.location} error={err('location')}>
-              <VoiceInput id={ids.location} value={val('location')} onChange={set('location')} onBlur={blur('location')}
-                placeholder={t('cityPlaceholder')} lang={bcp47} invalid={!!err('location')} />
-            </Row>
+              <Row icon={MapPin} label={label('location')} htmlFor={ids.location} error={err('location')}>
+                <VoiceInput id={ids.location} value={val('location')} onChange={set('location')} onBlur={blur('location')}
+                  placeholder={t('cityPlaceholder')} lang={bcp47} invalid={!!err('location')} />
+              </Row>
+            </div>
 
             <button type="button" className="pd-more" onClick={() => setShowMore((s) => !s)} aria-expanded={showMore}>
               <span>{t('optionalConditions')}</span>

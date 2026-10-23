@@ -55,8 +55,10 @@ export default function PatientSidebar() {
         <div className="psb-modal" role="dialog" aria-modal="true" aria-label={t('helpTitle')}>
           <button type="button" className="psb-modal__backdrop" aria-label={t('close')} onClick={() => setHelpOpen(false)} />
           <div className="psb-modal__box">
-            <button type="button" className="psb-modal__close" aria-label={t('close')} onClick={() => setHelpOpen(false)}><X size={20} /></button>
-            <h2 className="psb-modal__title">{t('helpTitle')}</h2>
+            <div className="psb-modal__header">
+              <h2 className="psb-modal__title">{t('helpTitle')}</h2>
+              <button type="button" className="psb-modal__close" aria-label={t('close')} onClick={() => setHelpOpen(false)}><X size={20} /></button>
+            </div>
             <ol className="psb-modal__steps">
               <li>{t('helpDetailsStep')}</li>
               <li>{t('helpSymptomsStep')}</li>

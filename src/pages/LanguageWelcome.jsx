@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mic, ArrowRight } from 'lucide-react';
 import Waveform from '../components/Waveform';
@@ -28,6 +28,7 @@ export default function LanguageWelcome() {
   const [selected, setSelected] = useState(null);
   const [heard, setHeard] = useState('');
   const { supported, listening, start, stop } = useSpeechRecognition({ lang: 'en-IN', continuous: false });
+  const subtitleLines = t('chooseLanguageSubtitle').split('\n');
 
   // Navigation to next step
   const goNext = () => { navigate('/patient-login'); };
@@ -68,8 +69,12 @@ export default function LanguageWelcome() {
           {/* <span className="language-welcome__step">Step 1 of 1</span> */}
           <h1 className="language-welcome__title">{t('chooseLanguage')}</h1>
           <p className="language-welcome__subtitle">
-            Select your preferred language to continue.<br />
-            This helps us communicate with you better.
+            {subtitleLines.map((line, index) => (
+              <React.Fragment key={index}>
+                {line}
+                {index < subtitleLines.length - 1 && <br />}
+              </React.Fragment>
+            ))}
           </p>
 
           <div className="language-welcome__grid" role="radiogroup" aria-label={t('chooseLanguage')}>
