@@ -19,8 +19,8 @@
 }
 .specialist-details__power--on { color: var(--color-gold); border-color: var(--color-gold); background: rgba(16,185,129,0.08); }
 .specialist-details__header { display: flex; align-items: center; gap: 12px; }
-.specialist-details__icon-badge { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(14,107,71,0.1); color: var(--color-navy); flex-shrink: 0; }
-.specialist-details__title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--color-navy); }
+.specialist-details__icon-badge { display: flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: rgba(14,107,71,0.1); color: var(--color-navy); flex-shrink: 0; }
+.specialist-details__title { margin: 0; font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--color-navy); }
 .specialist-details__lede { margin: 2px 0 0; font-size: 14px; color: var(--color-slate); }
 
 .specialist-details__counts { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; }

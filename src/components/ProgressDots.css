@@ -28,7 +28,37 @@
 .progress-dots__line { width: clamp(16px, 4vw, 32px); height: 1px; margin: 0 clamp(3px, 1vw, 8px); background: var(--color-slate-200); }
 .progress-dots__line--done { background: var(--color-navy); }
 
+.progress-dots.progress-dots--large .progress-dots__node {
+  gap: 8px;
+}
+
+.progress-dots.progress-dots--large .progress-dots__circle {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+
+.progress-dots.progress-dots--large .progress-dots__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.progress-dots.progress-dots--large .progress-dots__line {
+  width: clamp(22px, 5vw, 42px);
+  margin: 0 clamp(5px, 1.2vw, 10px);
+}
+
 @media (max-width: 480px) {
   .progress-dots__circle { width: 24px; height: 24px; }
   .progress-dots__label { font-size: 11px; }
+
+  .progress-dots.progress-dots--large .progress-dots__circle {
+    width: 30px;
+    height: 30px;
+    font-size: 12px;
+  }
+
+  .progress-dots.progress-dots--large .progress-dots__label {
+    font-size: 12px;
+  }
 }

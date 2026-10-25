@@ -4,6 +4,39 @@
 .patient-list__lede { margin: 4px 0 0; font-size: 14px; color: var(--color-slate); max-width: 480px; }
 .patient-list__count-badge { display: flex; align-items: center; gap: 6px; border-radius: var(--radius-full); background: rgba(14,107,71,0.05); padding: 6px 12px; font-size: 13px; font-weight: 600; color: var(--color-navy); white-space: nowrap; }
 
+.patient-list__nav {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.patient-list__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(14,107,71,0.15);
+  background: #fff;
+  color: var(--color-navy);
+  padding: 7px 12px;
+  font: 700 12px var(--font-body);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.patient-list__nav-btn:hover {
+  border-color: rgba(14,107,71,0.35);
+  background: rgba(14,107,71,0.04);
+}
+
+.patient-list__nav-btn--active {
+  border-color: rgba(14,107,71,0.8);
+  background: rgba(14,107,71,0.1);
+}
+
 .patient-list__empty { margin-top: 24px; text-align: center; }
 .patient-list__logout {
   display: flex; align-items: center; gap: 7px; width: fit-content; margin: 20px 0 0 auto;

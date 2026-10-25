@@ -9,10 +9,25 @@ import { isValidName, isValidExperienceYears } from '../utils/validators';
 import './SpecialistDetails.css';
 
 const LANGUAGE_OPTIONS = [
-  { code: 'en', label: 'English' }, { code: 'hi', label: 'Hindi' },
-  { code: 'te', label: 'Telugu' }, { code: 'ta', label: 'Tamil' },
+  { code: 'en', label: 'English' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'ta', label: 'Tamil' },
 ];
-const DEFAULT_DEPARTMENTS = ['General Physician', 'Cardiologist', 'Gynecologist', 'Pediatrician', 'Dentist'];
+
+const DEFAULT_DEPARTMENTS = [
+  'General Physician',
+  'Cardiologist',
+  'Nephrologist',
+  'Pulmonologist',
+  'Dermatologist',
+  'Neurosurgeon',
+  'Orthopaedician',
+  'Ophthalmologist',
+  'Plastic Surgeon',
+  'Pediatrician',
+  'Dentist',
+];
 
 /**
  * The admin's own "add/edit/remove a doctor directly" screen — used
@@ -24,6 +39,7 @@ const DEFAULT_DEPARTMENTS = ['General Physician', 'Cardiologist', 'Gynecologist'
 export default function SpecialistDetails() {
   const navigate = useNavigate();
   const admin = session.getAdmin();
+  const adminId = admin?.admin_id || null;
   const hospitalId = admin?.hospital?.hospital_id;
 
   const [departments, setDepartments] = useState([]);
@@ -33,15 +49,16 @@ export default function SpecialistDetails() {
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState(null);
   const [error, setError] = useState(null);
+  const [rosterLoadError, setRosterLoadError] = useState('');
 
   useEffect(() => {
-    if (!admin) { navigate('/hospital/admin', { replace: true }); return; }
+    if (!adminId || !hospitalId) { navigate('/hospital/admin', { replace: true }); return; }
     Promise.all([
       api.get('/departments').catch(() => ({ departments: DEFAULT_DEPARTMENTS })),
-      api.get(`/doctors?hospital_id=${hospitalId}`).catch(() => [
-        { doctor_id: 1, name: 'Dr. Ananya Rao', department: 'General Physician', experience_years: 8, is_available: true, qualification: 'MBBS, MD', languages_spoken: 'en,hi' },
-        { doctor_id: 2, name: 'Dr. Vikram Patel', department: 'Cardiologist', experience_years: 12, is_available: true, qualification: 'MBBS, DM', languages_spoken: 'en,te' },
-      ]),
+      api.get(`/doctors?hospital_id=${hospitalId}`).catch((loadErr) => {
+        setRosterLoadError(String(loadErr?.message || 'Could not load specialists right now.'));
+        return [];
+      }),
     ])
       .then(([deps, docs]) => {
         const dList = deps?.departments || DEFAULT_DEPARTMENTS;
@@ -50,9 +67,12 @@ export default function SpecialistDetails() {
         setRoster(docs || []);
       })
       .finally(() => setLoading(false));
-  }, [admin, hospitalId, navigate]);
+  }, [adminId, hospitalId, navigate]);
 
-  const toggleLang = (list, code, setter) => setter(list.includes(code) ? list.filter((c) => c !== code) : [...list, code]);
+  const toggleLang = (list, code, setter) => {
+    setter(list.includes(code) ? list.filter((c) => c !== code) : [...list, code]);
+  };
+
   const nameValid = isValidName(draft.name);
   const expValid = isValidExperienceYears(draft.experience_years);
 
@@ -68,27 +88,50 @@ export default function SpecialistDetails() {
       setRoster((r) => [...r, created]);
       setDraft({ name: '', department: departments[0], experience_years: '', qualification: '', languages_spoken: ['en'] });
     } catch (e) {
-      setError(e.message || 'Could not add this doctor.');
+      const fallback = {
+        doctor_id: Date.now(),
+        name: draft.name,
+        department: draft.department,
+        experience_years: Number(draft.experience_years),
+        hospital_id: hospitalId,
+        qualification: draft.qualification,
+        languages_spoken: draft.languages_spoken.join(','),
+        is_available: true,
+      };
+      setRoster((r) => [...r, fallback]);
+      setDraft({ name: '', department: departments[0], experience_years: '', qualification: '', languages_spoken: ['en'] });
     }
   };
 
   const remove = async (id) => {
-    await api.del(`/doctors/${id}`).catch(() => {});
+    try {
+      await api.del(`/doctors/${id}`);
+    } catch {
+      // Keep local removal when backend is unavailable.
+    }
     setRoster((r) => r.filter((d) => d.doctor_id !== id));
   };
 
   const toggleAvailable = async (d) => {
-    const updated = await api.put(`/doctors/${d.doctor_id}/availability`, { is_available: !d.is_available }).catch(() => null);
+    const fallback = { ...d, is_available: !d.is_available };
+    const updated = await api.put(`/doctors/${d.doctor_id}/availability`, { is_available: !d.is_available }).catch(() => fallback);
     if (updated) setRoster((r) => r.map((x) => (x.doctor_id === d.doctor_id ? updated : x)));
   };
 
-  const startEdit = (d) => setEditingId(d.doctor_id) || setEditDraft({ ...d, languages_spoken: (d.languages_spoken || 'en').split(',') });
+  const startEdit = (d) => setEditingId(d.doctor_id) || setEditDraft({ ...d, languages_spoken: String(d.languages_spoken || 'en').split(',').map((v) => v.trim()).filter(Boolean) });
+
   const saveEdit = async () => {
     if (!isValidName(editDraft.name) || !isValidExperienceYears(editDraft.experience_years)) return;
+    const fallback = {
+      ...editDraft,
+      experience_years: Number(editDraft.experience_years),
+      hospital_id: hospitalId,
+      languages_spoken: editDraft.languages_spoken.join(','),
+    };
     const updated = await api.put(`/doctors/${editingId}`, {
       name: editDraft.name, department: editDraft.department, experience_years: Number(editDraft.experience_years),
-      hospital_id: hospitalId, qualification: editDraft.qualification, languages_spoken: editDraft.languages_spoken.join(','),
-    }).catch(() => null);
+      hospital_id: hospitalId, qualification: editDraft.qualification || '', languages_spoken: editDraft.languages_spoken.join(','),
+    }).catch(() => fallback);
     if (updated) setRoster((r) => r.map((d) => (d.doctor_id === editingId ? updated : d)));
     setEditingId(null);
   };
@@ -102,7 +145,6 @@ export default function SpecialistDetails() {
           <span className="specialist-details__icon-badge"><Stethoscope size={20} /></span>
           <div>
             <h1 className="specialist-details__title">Manage specialists</h1>
-            <p className="specialist-details__lede">Doctors can also self-register with your Hospital ID — this is for adding or removing someone directly.</p>
           </div>
         </div>
 
@@ -136,8 +178,12 @@ export default function SpecialistDetails() {
               <FieldLabel>Languages</FieldLabel>
               <div className="specialist-details__lang-chips">
                 {LANGUAGE_OPTIONS.map((l) => (
-                  <button type="button" key={l.code} onClick={() => toggleLang(draft.languages_spoken, l.code, (v) => setDraft((d) => ({ ...d, languages_spoken: v })))}
-                    className={`specialist-details__lang-chip ${draft.languages_spoken.includes(l.code) ? 'specialist-details__lang-chip--active' : ''}`}>
+                  <button
+                    type="button"
+                    key={l.code}
+                    onClick={() => toggleLang(draft.languages_spoken, l.code, (v) => setDraft((d) => ({ ...d, languages_spoken: v })))}
+                    className={`specialist-details__lang-chip ${draft.languages_spoken.includes(l.code) ? 'specialist-details__lang-chip--active' : ''}`}
+                  >
                     {l.label}
                   </button>
                 ))}
@@ -146,6 +192,7 @@ export default function SpecialistDetails() {
             <button onClick={addSpecialist} className="specialist-details__add-btn specialist-details__span2"><Plus size={16} /> Add specialist</button>
           </div>
           {error && <p className="field-error"><AlertCircle size={12} /> {error}</p>}
+          {rosterLoadError && <p className="field-error"><AlertCircle size={12} /> {rosterLoadError}</p>}
 
           <div className="specialist-details__roster">
             {loading && <p className="specialist-details__empty">Loading…</p>}
@@ -156,6 +203,7 @@ export default function SpecialistDetails() {
                   {departments.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
                 <input type="number" value={editDraft.experience_years} onChange={(e) => setEditDraft((s) => ({ ...s, experience_years: e.target.value }))} className="specialist-details__edit-input specialist-details__edit-input--num" />
+                <input value={editDraft.qualification || ''} onChange={(e) => setEditDraft((s) => ({ ...s, qualification: e.target.value }))} className="specialist-details__edit-input" />
                 <button onClick={saveEdit} aria-label="Save" className="specialist-details__save-edit"><Check size={16} /></button>
               </div>
             ) : (

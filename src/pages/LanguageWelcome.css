@@ -56,6 +56,7 @@
 .language-welcome__subtitle {
   margin: clamp(6px, 1.4vh, 14px) 0 0;
   font-size: clamp(14px, 2.5vh, 22px); line-height: 1.4; color: var(--lw-muted);
+  white-space: pre-line;
 }
 
 /* ---- language cards ---- */

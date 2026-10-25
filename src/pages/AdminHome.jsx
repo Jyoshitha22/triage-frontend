@@ -6,6 +6,19 @@ import Card from '../components/Card';
 import session from '../utils/session';
 import './AdminHome.css';
 
+function normalizeHospitalCode(code, hospitalId) {
+  const raw = String(code || '').trim();
+  if (raw) {
+    // Keep backend-issued Hospital ID as the single source of truth.
+    if (/^\d+$/.test(raw)) return raw.padStart(12, '0').slice(-12);
+    return raw;
+  }
+  const fallback = String(hospitalId || '').trim();
+  if (!fallback) return '';
+  if (/^\d+$/.test(fallback)) return fallback.padStart(12, '0').slice(-12);
+  return fallback;
+}
+
 /**
  * What an admin sees every login after the first — no re-registration,
  * ever. Just the hospital's identity, its ID (for doctors joining to
@@ -15,6 +28,7 @@ import './AdminHome.css';
 export default function AdminHome() {
   const navigate = useNavigate();
   const admin = session.getAdmin();
+  const registrationDraft = session.getAdminRegistrationDraft() || {};
   const [copied, setCopied] = React.useState(false);
 
   useEffect(() => {
@@ -22,10 +36,14 @@ export default function AdminHome() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!admin) return null;
-  const hospital = admin.hospital;
+  const hospital = {
+    ...(registrationDraft || {}),
+    ...(admin.hospital || {}),
+  };
+  const hospitalCode = normalizeHospitalCode(hospital.hospital_code, hospital.hospital_id || admin.hospital_id);
 
   const copyId = () => {
-    navigator.clipboard?.writeText(String(hospital.hospital_id));
+    navigator.clipboard?.writeText(String(hospitalCode));
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -46,7 +64,7 @@ export default function AdminHome() {
         <Card className="admin-home__id-card">
           <p className="admin-home__id-label">Hospital ID — share this with doctors joining your hospital</p>
           <div className="admin-home__id-row">
-            <span className="admin-home__id-value">{hospital.hospital_id}</span>
+            <span className="admin-home__id-value">{hospitalCode}</span>
             <button onClick={copyId} className="admin-home__copy-btn">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}</button>
           </div>
         </Card>

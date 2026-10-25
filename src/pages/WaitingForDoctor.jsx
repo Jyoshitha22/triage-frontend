@@ -242,7 +242,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, CheckCircle2, Circle, ArrowRight, Bell } from 'lucide-react';
+import { Stethoscope, CheckCircle2, Circle, Bell } from 'lucide-react';
 import NavShell from '../components/NavShell';
 import Card from '../components/Card';
 import Waveform from '../components/Waveform';
@@ -305,11 +305,12 @@ export default function WaitingForDoctor() {
 
   const [progress, setProgress] = useState(() => progressFromRecord(session.getSymptomRecord(symptomId)));
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [notifyStatus, setNotifyStatus] = useState('');
+  const [replyToken, setReplyToken] = useState('');
   const notified = useRef(Boolean(session.getPending()?.notified));
   const originalTitle = useRef(typeof document !== 'undefined' ? document.title : '');
 
   const replied = progress >= 3;
-  const goToReply = useCallback(() => navigate('/reply'), [navigate]);
 
   const getBannerText = () => {
     if (isTe) return 'డాక్టర్ సమాధానం ఇచ్చారు. ఇప్పుడే చూడండి.';
@@ -360,11 +361,13 @@ export default function WaitingForDoctor() {
         if (!stop) {
           const nextProgress = progressFromRecord(rec);
           setProgress((p) => Math.max(p, nextProgress));
+          setReplyToken(rec?.reply_access_token || '');
         }
       } catch {
         const localRecord = session.getSymptomRecord(symptomId);
         if (!stop && localRecord) {
           setProgress((p) => Math.max(p, progressFromRecord(localRecord)));
+          setReplyToken(localRecord?.reply_access_token || '');
         }
       }
     };
@@ -388,28 +391,43 @@ export default function WaitingForDoctor() {
           icon: heartIcon,
           tag: 'triage-doctor-replied',
           requireInteraction: true,
-        }).onclick = () => { window.focus(); goToReply(); };
+        }).onclick = () => { window.focus(); };
       } catch {
         // Safe background context wrap exception handling
       }
     }
-  }, [replied, goToReply, language, symptomId]);
+  }, [replied, language, symptomId]);
 
   useEffect(() => {
     const title = originalTitle.current;
     return () => { document.title = title; };
   }, []);
 
-  const addSampleReply = () => {
-    const reply = session.addDoctorReply(symptomId, [{
-      response_type: 'medicine',
-      response_text: t('sampleReplyMedicine'),
-    }, {
-      response_type: 'advice',
-      response_text: t('sampleReplyAdvice'),
-    }], 'demo-doctor');
-    if (!reply) return;
-    navigate('/reply');
+  const sendNotifyEmail = async () => {
+    if (!patientEmail) {
+      setNotifyStatus(t('emailNotAvailable'));
+      setNotifyOpen(true);
+      return;
+    }
+    if (!replied || !replyToken) {
+      setNotifyStatus('The doctor reply link is not ready yet. Please try again after the doctor sends a reply.');
+      setNotifyOpen(true);
+      return;
+    }
+    const replyUrl = `${window.location.origin}/reply/${replyToken}`;
+    const patientName = session.getPatient()?.name || 'Patient';
+    try {
+      await api.post('/notifications/reply-ready', {
+        email: patientEmail,
+        language,
+        patientName,
+        replyUrl,
+      });
+      setNotifyStatus('Reply-ready email sent successfully. Please check your inbox.');
+    } catch {
+      setNotifyStatus('Could not send reply email right now. Please try again in a moment.');
+    }
+    setNotifyOpen(true);
   };
 
   // Safe escape shell render to avoid blank calculations on immediate redirect
@@ -421,13 +439,6 @@ export default function WaitingForDoctor() {
   return (
     <NavShell step={4}>
       <div className="waiting-box">
-        <h1 className="waiting__title" style={{ textAlign: 'center', margin: '0 0 6px', fontSize: '24px', fontWeight: 800, color: '#0f4a3a' }}>
-          {t('waitingTitle')}
-        </h1>
-        <p className="waiting__subtitle" style={{ textAlign: 'center', margin: '0 auto 24px', color: '#6f9a8b', fontSize: '15px' }}>
-          {t('waitingSubtitle')}
-        </p>
-
         <Card className="waiting-timer-card">
           <div className="waiting-pulse-area">
             <Waveform mode={replied ? 'idle' : 'pulse'} className="waiting-wave-graphic" />
@@ -435,9 +446,10 @@ export default function WaitingForDoctor() {
 
           <div className="waiting-countdown">
             <Stethoscope className="waiting-clock-icon" size={24} />
-            <p className="waiting-time">{replied ? '00:00' : `${mm}:${ss}`}</p>
+            <p className="waiting-time-label">{t('waitingPleaseWait')}</p>
           </div>
-          <p className="waiting-time-label">{getEtaLabel()}</p>
+
+          <p className="waiting-time-label">{t('waitingSubtitle')}</p>
 
           <ul className="waiting-steps-list" style={{ width: '100%', marginTop: '24px' }}>
             {STEPS.map((s, i) => {
@@ -463,28 +475,16 @@ export default function WaitingForDoctor() {
         </Card>
 
         <div className="waiting-actions">
-          <button type="button" onClick={() => setNotifyOpen(true)} className="waiting-dev-btn">
+          <button type="button" onClick={sendNotifyEmail} className="waiting-dev-btn">
             <Bell size={16} /> {t('notifyPatient')}
           </button>
-          {!replied && (
-            <button type="button" onClick={addSampleReply} className="waiting-dev-btn waiting-dev-btn--secondary">
-              {t('doctorHasReplied')}
-            </button>
-          )}
         </div>
 
         {replied && (
           <div className="waiting-reply-notification" role="alert">
             <div>
-              <span style={{ fontSize: '14px' }}>{getBannerText()}</span>
+              <span style={{ fontSize: '14px' }}>{getBannerText()} Please open the link sent to your email to view the doctor reply securely.</span>
             </div>
-            <button
-              type="button"
-              onClick={goToReply}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 20px', border: 'none', borderRadius: 999, cursor: 'pointer', background: '#1e785e', color: '#fff', font: 'inherit', fontWeight: 700, transition: 'all 0.2s' }}
-            >
-              {getButtonText()} <ArrowRight size={16} />
-            </button>
           </div>
         )}
 
@@ -494,8 +494,11 @@ export default function WaitingForDoctor() {
           }}>
             <section className="waiting-dialog" role="dialog" aria-modal="true" aria-labelledby="notification-title">
               <h2 id="notification-title">{t('notificationPreviewTitle')}</h2>
-              <p>{t('notificationPreviewSent')}</p>
+              <p>{t('notificationPreviewBody')}</p>
+              <p>{t('notificationPreviewTo')}</p>
               <strong>{patientEmail || t('emailNotAvailable')}</strong>
+              {notifyStatus && <p className="waiting-dialog__note">{notifyStatus}</p>}
+              <p className="waiting-dialog__note">{t('notificationPreviewFooter')}</p>
               <button type="button" className="waiting-dev-btn" onClick={() => setNotifyOpen(false)}>
                 {t('close')}
               </button>

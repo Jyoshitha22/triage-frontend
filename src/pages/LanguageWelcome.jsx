@@ -68,8 +68,7 @@ export default function LanguageWelcome() {
           {/* <span className="language-welcome__step">Step 1 of 1</span> */}
           <h1 className="language-welcome__title">{t('chooseLanguage')}</h1>
           <p className="language-welcome__subtitle">
-            Select your preferred language to continue.<br />
-            This helps us communicate with you better.
+            {t('chooseLanguageSubtitle')}
           </p>
 
           <div className="language-welcome__grid" role="radiogroup" aria-label={t('chooseLanguage')}>

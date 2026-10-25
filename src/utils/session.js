@@ -15,7 +15,11 @@
 const KEYS = {
   patient: 'triage.session.patient',
   admin: 'triage.session.admin',
+  adminLoginPrefill: 'triage.session.adminLoginPrefill',
+  adminRegistrationDraft: 'triage.session.adminRegistrationDraft',
   doctor: 'triage.session.doctor',
+  doctorLoginPrefill: 'triage.session.doctorLoginPrefill',
+  doctorRegistrationDraft: 'triage.session.doctorRegistrationDraft',
   activeSymptomId: 'triage.session.activeSymptomId',
   pending: 'triage.session.pending',
   symptomQueue: 'triage.session.symptomQueue',
@@ -66,11 +70,23 @@ export const session = {
   getAdmin: () => read(KEYS.admin, null),
   saveAdmin: (data) => write(KEYS.admin, data),
   clearAdmin: () => remove(KEYS.admin),
+  getAdminLoginPrefill: () => read(KEYS.adminLoginPrefill, null),
+  saveAdminLoginPrefill: (data) => write(KEYS.adminLoginPrefill, data),
+  clearAdminLoginPrefill: () => remove(KEYS.adminLoginPrefill),
+  getAdminRegistrationDraft: () => read(KEYS.adminRegistrationDraft, null),
+  saveAdminRegistrationDraft: (data) => write(KEYS.adminRegistrationDraft, data),
+  clearAdminRegistrationDraft: () => remove(KEYS.adminRegistrationDraft),
 
   // ---- Doctor (real per-account login now, not a roster tap) ----
   getDoctor: () => read(KEYS.doctor, null),
   saveDoctor: (data) => write(KEYS.doctor, data),
   clearDoctor: () => remove(KEYS.doctor),
+  getDoctorLoginPrefill: () => read(KEYS.doctorLoginPrefill, null),
+  saveDoctorLoginPrefill: (data) => write(KEYS.doctorLoginPrefill, data),
+  clearDoctorLoginPrefill: () => remove(KEYS.doctorLoginPrefill),
+  getDoctorRegistrationDraft: () => read(KEYS.doctorRegistrationDraft, null),
+  saveDoctorRegistrationDraft: (data) => write(KEYS.doctorRegistrationDraft, data),
+  clearDoctorRegistrationDraft: () => remove(KEYS.doctorRegistrationDraft),
 
   // ---- Active symptom pointer ----
   getActiveSymptomId: () => read(KEYS.activeSymptomId, null),
@@ -110,7 +126,7 @@ export const session = {
     session.saveActiveSymptomId(record.symptom_id);
     return record;
   },
-  addDoctorReply: (symptomId, parts, doctorId) => {
+  addDoctorReply: (symptomId, parts, doctorId, doctorName) => {
     const all = session.getAllRecords();
     const updated = all.map((r) => {
       if (String(r.symptom_id) === String(symptomId)) {
@@ -118,6 +134,7 @@ export const session = {
           ...r,
           status: 'replied',
           doctorId: doctorId || r.doctorId,
+          doctor_name: doctorName || r.doctor_name,
           replied_at: new Date().toISOString(),
           replies: parts.map((p, idx) => ({
             response_id: `resp-${idx}-${Date.now()}`,

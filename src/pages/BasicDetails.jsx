@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   ArrowRight, AlertCircle, Heart, Mail,
@@ -9,6 +9,7 @@ import PatientSidebar from '../components/PatientSidebar';
 import ProgressDots from '../components/ProgressDots';
 import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import session from '../utils/session';
+import api from '../utils/api';
 import { isValidName, isValidAge, isValidPhone, isValidEmail, isRequired } from '../utils/validators';
 import girlImg from '../assets/details-girl.png';
 import './BasicDetails.css';
@@ -73,7 +74,7 @@ function Row({ icon: Icon, label, htmlFor, error, className = '', children }) {
 }
 
 /* Text box with a mic button, so the patient can speak instead of typing. */
-function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', inputMode, lang, sanitize, multiline, invalid, readOnly = false }) {
+function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', inputMode, lang, sanitize, multiline, invalid, readOnly = false, autoScrollToEnd = false }) {
   const { supported, listening, interimTranscript, error, start, stop } = useSpeechRecognition({ lang, continuous: !!multiline, silenceTimeoutMs: 6000 });
   const [hint, setHint] = useState('');
   const clean = (s) => (sanitize ? sanitize(toAsciiDigits(s)) : s);
@@ -102,11 +103,25 @@ function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', i
   const errorText = error && error !== 'aborted' ? (MIC_ERRORS[error] || `Voice input stopped (${error}).`) : '';
   const message = errorText || hint;
   const Tag = multiline ? 'textarea' : 'input';
+  const fieldRef = useRef(null);
+
+  useEffect(() => {
+    if (!autoScrollToEnd || !multiline || !fieldRef.current) return;
+    const node = fieldRef.current;
+    node.scrollTop = node.scrollHeight;
+    const len = String(node.value || '').length;
+    try {
+      node.setSelectionRange(len, len);
+    } catch {
+      // setSelectionRange may fail on some input modes/browsers.
+    }
+  }, [value, interimTranscript, listening, autoScrollToEnd, multiline]);
 
   return (
     <div>
       <div className={`pd-input ${multiline ? 'pd-input--area' : ''} ${listening ? 'pd-input--live' : ''} ${invalid ? 'pd-input--invalid' : ''}`}>
         <Tag
+          ref={fieldRef}
           id={id}
           type={multiline ? undefined : type}
           rows={multiline ? 1 : undefined}
@@ -152,20 +167,39 @@ export default function BasicDetails() {
   const digits = (n) => (s) => s.replace(/\D/g, '').slice(0, n);
   const phone = (s) => s.replace(/[^\d ]/g, '').slice(0, 12);
 
-    const submit = () => {
+    const submit = async () => {
     const firstBad = Object.keys(RULES).find((k) => !ok(k));
     if (firstBad) {
       setTouched(Object.fromEntries(Object.keys(RULES).map((k) => [k, true])));
       document.getElementById(ids[firstBad])?.focus();
       return;
     }
-    const registeredPatient = session.registerPatient({ ...values, language });
+
+    let patientPayload = { ...values, language };
+    try {
+      const result = await api.post('/api/patients', {
+        name: values.name,
+        age: values.age ? Number(values.age) : null,
+        gender: values.gender,
+        phone: values.contact,
+        language,
+        email: values.email,
+        city: values.location,
+        allergies: values.allergies || '',
+        conditions: values.conditions || '',
+      });
+      patientPayload = { ...patientPayload, ...(result?.patient || {}) };
+    } catch {
+      // Continue with local session flow if backend create fails.
+    }
+
+    const registeredPatient = session.registerPatient(patientPayload);
     session.savePatient(registeredPatient);
     navigate('/symptoms', { state: registeredPatient });
   };
 
   return (
-    <div className="pd">
+    <div className="pd pd--page-scroll">
       <div className="pd-bg" aria-hidden="true">
         <img src={girlImg} alt="" className="pd-bg__girl" />
       </div>
@@ -174,7 +208,7 @@ export default function BasicDetails() {
         <PatientSidebar />
 
         <main className="pd-main">
-          <div className="pd-progress"><ProgressDots step={2} /></div>
+          <div className="pd-progress"><ProgressDots step={2} t={t} size="large" /></div>
           <section className="pd-card">
             <div className="pd-card__head">
               <span className="pd-card__avatar"><User size={38} strokeWidth={1.7} /></span>
@@ -241,10 +275,10 @@ export default function BasicDetails() {
             {showMore && (
               <div className="pd-more__fields pd-two">
                 <Row icon={Heart} label={t('fieldAllergies')} htmlFor="pd-allergies">
-                  <VoiceInput id="pd-allergies" multiline value={val('allergies')} onChange={set('allergies')} placeholder="Penicillin, peanuts…" lang={bcp47} />
+                  <VoiceInput id="pd-allergies" multiline autoScrollToEnd value={val('allergies')} onChange={set('allergies')} placeholder="Penicillin, peanuts…" lang={bcp47} />
                 </Row>
                 <Row icon={Heart} label={t('fieldConditions')} htmlFor="pd-conditions">
-                  <VoiceInput id="pd-conditions" multiline value={val('conditions')} onChange={set('conditions')} placeholder="Diabetes, asthma…" lang={bcp47} />
+                  <VoiceInput id="pd-conditions" multiline autoScrollToEnd value={val('conditions')} onChange={set('conditions')} placeholder="Diabetes, asthma…" lang={bcp47} />
                 </Row>
               </div>
             )}

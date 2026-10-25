@@ -10,28 +10,79 @@ import './DoctorDashboard.css';
 
 const URGENCY = colors.urgency;
 
+function queueCacheKey(doctorId, kind) {
+  return `triage.realQueue.${kind}.doctor.${doctorId}`;
+}
+
+function readCachedQueue(doctorId, kind) {
+  try {
+    const raw = window.localStorage.getItem(queueCacheKey(doctorId, kind));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedQueue(doctorId, kind, items) {
+  try {
+    window.localStorage.setItem(queueCacheKey(doctorId, kind), JSON.stringify(Array.isArray(items) ? items : []));
+  } catch {
+    // ignore localStorage write failures
+  }
+}
+
 export default function DoctorDashboard() {
   const navigate = useNavigate();
   const doctor = session.getDoctor();
+  const doctorId = doctor?.doctor_id || null;
   const [waiting, setWaiting] = useState([]);
   const [repliedCount, setRepliedCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!doctor) { navigate('/hospital/doctor', { replace: true }); return; }
-    Promise.all([
-      api.get(`/symptom-records?status=waiting&doctor_id=${doctor.doctor_id}`).catch(() => session.getWaitingRecords()),
-      api.get(`/doctors/${doctor.doctor_id}/replied`).catch(() => session.getRepliedRecords(doctor.doctor_id)),
-    ])
-      .then(([q, replied]) => { setWaiting(q || []); setRepliedCount((replied || []).length); })
-      .catch(() => {
-        setWaiting(session.getWaitingRecords());
-        setRepliedCount(session.getRepliedRecords(doctor.doctor_id).length);
-      })
-      .finally(() => setLoading(false));
-  }, [doctor]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (!doctorId) { navigate('/hospital/doctor', { replace: true }); return; }
+    let stopped = false;
+    const load = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
+      Promise.all([
+        api.get(`/symptom-records?status=waiting&doctor_id=${doctorId}`),
+        api.get(`/doctors/${doctorId}/replied`),
+      ])
+        .then(([q, replied]) => {
+          if (stopped) return;
+          setWaiting(q || []);
+          setRepliedCount((replied || []).length);
+          writeCachedQueue(doctorId, 'waiting', q || []);
+          writeCachedQueue(doctorId, 'replied', replied || []);
+        })
+        .catch(() => {
+          if (stopped) return;
+          const cachedWaiting = readCachedQueue(doctorId, 'waiting');
+          const cachedReplied = readCachedQueue(doctorId, 'replied');
+          setWaiting(cachedWaiting);
+          setRepliedCount(cachedReplied.length);
+        })
+        .finally(() => {
+          if (!stopped) setLoading(false);
+        });
+    };
+
+    load();
+    const timer = setInterval(load, 8000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [doctorId, navigate]);
 
   const urgentCount = waiting.filter((p) => p.urgency === 'emergency').length;
+  const openWaiting = () => navigate('/hospital/patients', { state: { initialPatients: waiting, source: 'dashboard' } });
+  const openUrgent = () => navigate('/hospital/patients?view=urgent', {
+    state: { initialPatients: waiting.filter((p) => String(p.urgency || '').toLowerCase() === 'emergency'), source: 'dashboard' },
+  });
   const logout = () => { session.clearDoctor(); navigate('/hospital'); };
 
   if (!doctor) return null;
@@ -40,23 +91,23 @@ export default function DoctorDashboard() {
   return (
     <HospitalShell showDoctorArtwork>
       <h1 className="doctor-dashboard__title">Good to see you, Dr. {doctorName}</h1>
-      <p className="doctor-dashboard__lede">{doctor.department} · {doctor.experience_years} yrs experience — here's what's waiting for you today.</p>
+      <p className="doctor-dashboard__lede">{doctor.department}.{doctor.experience_years} years of experience - here's what's waiting for you today.</p>
 
       <div className="doctor-dashboard__stats">
-        <button onClick={() => navigate('/hospital/patients')} className="doctor-dashboard__stat-card">
+        <button onClick={openWaiting} className="doctor-dashboard__stat-card">
           <span className="doctor-dashboard__stat-icon doctor-dashboard__stat-icon--gold"><Users size={20} /></span>
           <div>
             <p className="doctor-dashboard__stat-number">{loading ? '…' : waiting.length}</p>
             <p className="doctor-dashboard__stat-label">waiting</p>
           </div>
         </button>
-        <div className="doctor-dashboard__stat-card doctor-dashboard__stat-card--static">
+        <button onClick={openUrgent} className="doctor-dashboard__stat-card">
           <span className="doctor-dashboard__stat-icon doctor-dashboard__stat-icon--urgent"><AlertTriangle size={20} /></span>
           <div>
             <p className="doctor-dashboard__stat-number">{loading ? '…' : urgentCount}</p>
             <p className="doctor-dashboard__stat-label">urgent</p>
           </div>
-        </div>
+        </button>
         <button onClick={() => navigate('/hospital/replied')} className="doctor-dashboard__stat-card">
           <span className="doctor-dashboard__stat-icon doctor-dashboard__stat-icon--navy"><CheckCircle2 size={20} /></span>
           <div>
@@ -72,7 +123,7 @@ export default function DoctorDashboard() {
         {waiting.slice(0, 3).map((p) => {
           const u = URGENCY[p.urgency] || URGENCY.medium;
           return (
-            <button key={p.symptom_id} onClick={() => navigate('/hospital/patients')} className="doctor-dashboard__preview-row">
+            <button key={p.symptom_id} onClick={openWaiting} className="doctor-dashboard__preview-row">
               <span className="doctor-dashboard__preview-dot" style={{ background: u.color }} />
               <span className="doctor-dashboard__preview-name">{p.patient_name}</span>
               <span className="doctor-dashboard__preview-symptom">{p.symptom_text}</span>
@@ -80,7 +131,7 @@ export default function DoctorDashboard() {
           );
         })}
         {waiting.length > 3 && (
-          <button onClick={() => navigate('/hospital/patients')} className="doctor-dashboard__preview-more">
+          <button onClick={openWaiting} className="doctor-dashboard__preview-more">
             View all {waiting.length} waiting <ArrowRight size={14} />
           </button>
         )}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Users, AlertTriangle, Info, LogOut } from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Users, AlertTriangle, Info, LogOut, CheckCircle2 } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import Waveform from '../components/Waveform';
@@ -11,6 +11,40 @@ import './PatientList.css';
 
 const URGENCY = colors.urgency;
 const ORDER = { emergency: 0, medium: 1, low: 2 };
+
+function queueCacheKey(doctorId) {
+  return `triage.realQueue.waiting.doctor.${doctorId}`;
+}
+
+function readCachedQueue(doctorId) {
+  try {
+    const raw = window.localStorage.getItem(queueCacheKey(doctorId));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeCachedQueue(doctorId, items) {
+  try {
+    window.localStorage.setItem(queueCacheKey(doctorId), JSON.stringify(Array.isArray(items) ? items : []));
+  } catch {
+    // ignore localStorage write failures
+  }
+}
+
+function scopeQueueByDoctor(items, isUrgentView) {
+  const scoped = Array.isArray(items) ? items : [];
+  if (!isUrgentView) return scoped;
+  return scoped.filter((item) => String(item.urgency || '').toLowerCase() === 'emergency');
+}
+
+function summarize(text) {
+  const cleaned = String(text || '').replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= 120) return cleaned;
+  return `${cleaned.slice(0, 117)}...`;
+}
 
 function timeAgo(iso) {
   const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -28,24 +62,57 @@ function timeAgo(iso) {
  */
 export default function PatientList() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const doctor = session.getDoctor();
-  const [patients, setPatients] = useState([]);
+  const doctorId = doctor?.doctor_id || null;
+  const dashboardInitial = scopeQueueByDoctor(location.state?.initialPatients || [], searchParams.get('view') === 'urgent');
+  const [patients, setPatients] = useState(dashboardInitial);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const isUrgentView = searchParams.get('view') === 'urgent';
 
   useEffect(() => {
-    const doctorId = doctor?.doctor_id || 1;
-    api.get(`/symptom-records?status=waiting&doctor_id=${doctorId}`)
-      .then(setPatients)
-      .catch(() => {
-        // Fallback to local session storage if server is unreachable
-        const local = session.getWaitingRecords ? session.getWaitingRecords() : [];
-        setPatients(local);
-      })
-      .finally(() => setLoading(false));
-  }, [doctor]);
+    if (!doctorId) {
+      navigate('/hospital/doctor', { replace: true });
+      return;
+    }
+    let stopped = false;
+    const load = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
+      const urgencyQuery = isUrgentView ? '&urgency=emergency' : '';
+      api.get(`/symptom-records?status=waiting&doctor_id=${doctorId}${urgencyQuery}`)
+        .then((items) => {
+          if (stopped) return;
+          const scoped = scopeQueueByDoctor(items || [], isUrgentView);
+          setLoadError('');
+          setPatients(scoped);
+          writeCachedQueue(doctorId, scoped);
+        })
+        .catch((err) => {
+          if (stopped) return;
+          const fromDashboard = scopeQueueByDoctor(location.state?.initialPatients || [], isUrgentView);
+          const cached = scopeQueueByDoctor(readCachedQueue(doctorId), isUrgentView);
+          const fallback = cached.length > 0 ? cached : fromDashboard;
+          setPatients(fallback);
+          setLoadError(fallback.length > 0 ? '' : String(err?.message || 'Server is temporarily unreachable.'));
+        })
+        .finally(() => {
+          if (!stopped) setLoading(false);
+        });
+    };
+    load();
+    const timer = setInterval(load, 8000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [doctorId, navigate, isUrgentView, location.state]);
 
   const sorted = [...patients].sort((a, b) => ORDER[a.urgency] - ORDER[b.urgency]);
-  const selectPatient = (p) => navigate('/hospital/reply', { state: { symptomId: p.symptom_id } });
+  const selectPatient = (p) => navigate('/hospital/reply', { state: { symptomId: p.symptom_id, fromView: isUrgentView ? 'urgent' : 'waiting' } });
   const logout = () => { session.clearDoctor(); navigate('/hospital'); };
 
   if (!doctor) {
@@ -70,16 +137,42 @@ export default function PatientList() {
     <HospitalShell showDoctorArtwork>
       <div className="patient-list__header">
         <div>
-          <h1 className="patient-list__title">Patient queue</h1>
-          <p className="patient-list__lede">Patients are prioritized by urgency. Select a patient to review their symptoms and respond.</p>
+          <h1 className="patient-list__title">{isUrgentView ? 'Urgent queue' : 'Patient queue'}</h1>
+          <p className="patient-list__lede">
+            {isUrgentView
+              ? 'Emergency-only patients assigned to you. Respond quickly, then move to Replied.'
+              : 'Patients assigned to you, prioritized by urgency. Select a patient to review and respond.'}
+          </p>
         </div>
-        <span className="patient-list__count-badge"><Users size={16} /> {patients.length} Patients Waiting</span>
+        <span className="patient-list__count-badge"><Users size={16} /> {patients.length} {isUrgentView ? 'Urgent' : 'Patients Waiting'}</span>
       </div>
+
+      <div className="patient-list__nav">
+        <button
+          type="button"
+          onClick={() => navigate('/hospital/patients')}
+          className={`patient-list__nav-btn ${!isUrgentView ? 'patient-list__nav-btn--active' : ''}`}
+        >
+          <Users size={14} /> Waiting
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/hospital/patients?view=urgent')}
+          className={`patient-list__nav-btn ${isUrgentView ? 'patient-list__nav-btn--active' : ''}`}
+        >
+          <AlertTriangle size={14} /> Urgent
+        </button>
+        <button type="button" onClick={() => navigate('/hospital/replied')} className="patient-list__nav-btn">
+          <CheckCircle2 size={14} /> Replied
+        </button>
+      </div>
+
+      {loadError && <Card className="patient-list__empty"><p>{loadError}</p></Card>}
 
       {loading && <Card className="patient-list__empty"><p>Loading…</p></Card>}
 
       {!loading && patients.length === 0 ? (
-        <Card className="patient-list__empty"><p>You're all caught up — no patients waiting right now.</p></Card>
+        <Card className="patient-list__empty"><p>{isUrgentView ? 'No urgent patients in your queue right now.' : "You're all caught up — no patients waiting right now."}</p></Card>
       ) : (
         <div className="patient-list__items">
           {sorted.map((p) => {
@@ -98,7 +191,7 @@ export default function PatientList() {
                     {u.label.toUpperCase()}
                     {p.urgency === 'emergency' && <AlertTriangle size={12} />}
                   </span>
-                  <p className="patient-list__snippet">{p.symptom_text}</p>
+                  <p className="patient-list__snippet">{summarize(p.doctor_summary || p.symptom_text)}</p>
                   <div className="patient-list__meta-row">
                     <span className="patient-list__wave"><Waveform mode="playback" bars={14} /></span>
                     <div className="patient-list__specialty-block">

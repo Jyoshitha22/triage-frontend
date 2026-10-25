@@ -1,0 +1,118 @@
+{
+  "Cardiologist": [
+    "heart",
+    "cardiac",
+    "chest pain",
+    "palpitations",
+    "angina",
+    "tightness in chest",
+    "left arm pain",
+    "shortness of breath on exertion",
+    "high bp",
+    "hypertension",
+    "arrhythmia"
+  ],
+  "Dermatologist": [
+    "skin",
+    "rash",
+    "itch",
+    "itching",
+    "acne",
+    "eczema",
+    "psoriasis",
+    "hives",
+    "red patches",
+    "dry skin",
+    "blisters",
+    "fungal"
+  ],
+  "Pulmonologist": [
+    "breathing",
+    "breathlessness",
+    "shortness of breath",
+    "lung",
+    "asthma",
+    "wheezing",
+    "chronic cough",
+    "chest congestion",
+    "copd"
+  ],
+  "Nephrologist": [
+    "kidney",
+    "renal",
+    "dialysis",
+    "creatinine",
+    "urine",
+    "urination pain",
+    "swelling legs",
+    "frothy urine"
+  ],
+  "Neurosurgeon": [
+    "seizure",
+    "brain",
+    "spine",
+    "head injury",
+    "numbness",
+    "paralysis",
+    "loss of balance",
+    "nerve pain"
+  ],
+  "Orthopaedician": [
+    "joint",
+    "bone",
+    "fracture",
+    "knee pain",
+    "back pain",
+    "shoulder pain",
+    "sprain",
+    "orthopedic"
+  ],
+  "Ophthalmologist": [
+    "eye",
+    "vision",
+    "blurred vision",
+    "red eye",
+    "watering",
+    "cataract",
+    "eye pain"
+  ],
+  "Dentist": [
+    "tooth",
+    "teeth",
+    "gum",
+    "jaw pain",
+    "dental",
+    "mouth ulcer"
+  ],
+  "Pediatrician": [
+    "child",
+    "baby",
+    "infant",
+    "fever in child",
+    "pediatric",
+    "paediatric"
+  ],
+  "Plastic Surgeon": [
+    "burn",
+    "scar",
+    "reconstructive",
+    "cosmetic",
+    "facial injury"
+  ],
+  "General Physician": [
+    "fever",
+    "cold",
+    "common cold",
+    "viral fever",
+    "flu",
+    "sore throat",
+    "runny nose",
+    "sneezing",
+    "vomiting",
+    "weakness",
+    "body pain",
+    "headache",
+    "tired",
+    "infection"
+  ]
+}

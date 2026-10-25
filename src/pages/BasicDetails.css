@@ -96,18 +96,53 @@
 
 .patient-email-form,
 .patient-code-form { display: flex; flex-direction: column; }
-.patient-email-card:not(.has-code) .patient-email-form { flex: 1 0 auto; justify-content: space-between; }
-.patient-email-art { display: flex; flex: 1 1 auto; min-height: 110px; max-height: min(25vh, 210px); align-items: center; justify-content: center; }
+.patient-email-card { justify-content: flex-start; }
+.patient-email-card.pd-card { padding-bottom: 8px; }
+.patient-email-card .pd-card__title { font-size: clamp(24px, 4.3vh, 44px); }
+.patient-email-card .pd-card__sub { font-size: clamp(14px, 2.2vh, 20px); }
+.patient-email-card:not(.has-code) .patient-email-form { flex: 1 0 auto; justify-content: flex-start; gap: 10px; }
+.patient-email-card:not(.has-code) { padding-bottom: 8px; }
+.patient-email-art { display: flex; flex: 1 1 auto; min-height: 92px; max-height: min(22vh, 190px); align-items: center; justify-content: center; margin-bottom: 0; }
 .patient-email-art img { display: block; width: min(100%, 340px); height: 100%; object-fit: contain; }
 .patient-email-card.has-code .patient-email-form { flex: 0 0 auto; }
 .patient-email-card.has-code .patient-code-form { flex: 1 0 auto; justify-content: space-between; }
-.patient-email-visual { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+.patient-email-visual { display: flex; flex: 1 1 auto; min-height: 0; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; }
 .patient-email-visual__art { position: relative; width: clamp(86px, 13vh, 128px); height: clamp(86px, 13vh, 128px); }
 .patient-email-visual__art img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .patient-email-visual__badge { position: absolute; right: -8px; bottom: 5px; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 3px solid #fbfefc; border-radius: 50%; background: #d9efe4; color: var(--pd-title); }
 .patient-email-visual__badge svg:last-child { position: absolute; right: -5px; bottom: -3px; width: 18px; height: 18px; border-radius: 50%; background: #fbfefc; color: var(--pd-green); }
 .patient-email-visual > p { margin: 0; overflow-wrap: anywhere; color: var(--pd-ink); font-size: 14px; }
 .patient-email-visual > .patient-email-visual__note { color: var(--pd-muted); font-size: 12px; }
+.patient-email-form .pd-row,
+.patient-code-form .pd-row { margin-top: 6px; }
+.patient-email-form .pd-row__label,
+.patient-code-form .pd-row__label { margin-bottom: 2px; }
+.patient-email-card .pd-row__label {
+  font-size: clamp(15px, 1.35vw, 19px);
+  margin-bottom: 3px;
+}
+.patient-email-card .pd-input {
+  height: clamp(50px, 6.6vh, 64px);
+}
+.patient-email-card .pd-input input {
+  font-size: clamp(16px, 1.25vw, 18px);
+}
+.patient-email-card .pd-input__mic {
+  width: calc(var(--pd-field) - 16px);
+  height: calc(var(--pd-field) - 16px);
+  background: #e7f3ed;
+  color: #4d8b74;
+  box-shadow: inset 0 0 0 1px #d2e6dc;
+}
+.patient-email-card .pd-input__mic:hover {
+  background: #deeee7;
+}
+.patient-email-card .pd-input__mic--on {
+  background: #88bca6;
+  color: #ffffff;
+  box-shadow: none;
+}
+.patient-email-form .pd-submit { margin-top: 0; margin-bottom: 0; }
 .patient-resend-code,
 .patient-change-email { align-self: center; padding: 8px 12px; border: 0; background: transparent; color: var(--pd-green); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .patient-resend-code { margin-top: 6px; }
@@ -190,9 +225,9 @@
 /* ---- help popup ---- */
 .pd-modal { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .pd-modal__backdrop { position: absolute; inset: 0; border: none; background: rgba(10, 50, 35, 0.4); cursor: default; }
-.pd-modal__box { position: relative; width: min(100%, 460px); padding: 30px 28px 26px; border-radius: 24px; background: #fff; box-shadow: 0 30px 70px -20px rgba(10, 60, 40, 0.5); }
-.pd-modal__close { position: absolute; top: 14px; right: 14px; display: flex; width: 34px; height: 34px; align-items: center; justify-content: center; border: none; border-radius: 50%; background: #e6f4ec; color: var(--pd-ink); cursor: pointer; }
-.pd-modal__title { margin: 0 0 14px; font-family: var(--font-body); font-size: 24px; font-weight: 800; color: var(--pd-title); }
+.pd-modal__box { position: relative; width: min(100%, 460px); padding: 20px 22px 18px; border-radius: 24px; background: #fff; box-shadow: 0 30px 70px -20px rgba(10, 60, 40, 0.5); }
+.pd-modal__close { position: absolute; top: 8px; right: 8px; display: flex; width: 30px; height: 30px; align-items: center; justify-content: center; border: none; border-radius: 50%; background: #e6f4ec; color: var(--pd-ink); cursor: pointer; }
+.pd-modal__title { margin: 0 28px 10px 0; font-family: var(--font-body); font-size: 22px; font-weight: 800; color: var(--pd-title); line-height: 1.2; }
 .pd-modal__steps { margin: 0; padding-left: 22px; font-size: 16px; line-height: 1.6; color: var(--pd-ink); }
 .pd-modal__steps li + li { margin-top: 8px; }
 .pd-modal__warn { margin: 18px 0 0; padding: 12px 14px; border-radius: 12px; background: #fdecea; color: #a8322a; font-size: 15px; font-weight: 600; line-height: 1.45; }
@@ -227,4 +262,250 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .pd-input, .pd-pill, .pd-submit, .pd-input__mic, .pd-more svg, .pd-side__chev { transition: none; }
+}
+
+@media (min-width: 801px) {
+  .pd-main {
+    width: min(100%, 740px);
+    max-width: 740px;
+    margin-top: -14px;
+    gap: 2px;
+  }
+
+  .pd-progress {
+    margin-top: -4px;
+  }
+
+  .pd-card {
+    border: 1px solid #d5e6dd;
+    border-radius: 16px;
+    padding: 6px 14px 8px;
+    gap: 1px;
+    min-height: 430px;
+    max-height: 74vh;
+    overflow-y: auto;
+  }
+
+  .pd-card__head {
+    gap: 8px;
+    margin-bottom: 1px;
+  }
+
+  .pd-card__title {
+    font-size: clamp(16px, 1.8vh, 21px);
+    line-height: 1.12;
+  }
+
+  .pd-card__sub {
+    margin-top: 0;
+    font-size: clamp(9.5px, 1.05vh, 11.5px);
+  }
+
+  .pd-row {
+    margin-top: 2px;
+    gap: 7px;
+  }
+
+  .pd-row__label {
+    margin: 0 0 2px 2px;
+    font-size: clamp(10px, 0.95vh, 11.5px);
+  }
+
+  .pd-two {
+    gap: 0 8px;
+  }
+
+  .pd-input {
+    height: 34px;
+    border-radius: 9px;
+    padding-left: 7px;
+    gap: 5px;
+  }
+
+  .pd-input input,
+  .pd-input textarea {
+    font-size: 12px;
+  }
+
+  .patient-email-card .patient-email-form .pd-row {
+    margin-top: 0;
+  }
+
+  .patient-email-card .patient-email-form .pd-submit {
+    margin-top: 2px;
+  }
+
+  .patient-email-card .pd-row__label {
+    font-size: clamp(14px, 1.45vh, 17px);
+    margin-bottom: 3px;
+  }
+
+  .patient-email-card .pd-input {
+    height: 46px;
+  }
+
+  .patient-email-card .pd-input input {
+    font-size: 16px;
+  }
+
+  .patient-email-card .pd-input__mic {
+    width: 30px;
+    height: 30px;
+    background: #e9f3ee;
+    color: #5e8f7c;
+    box-shadow: inset 0 0 0 1px #d2e5db;
+  }
+
+  .patient-email-card .pd-input__mic:hover {
+    background: #dfeee7;
+  }
+
+  .patient-email-card .pd-input__mic--on {
+    background: #7eb39d;
+    color: #ffffff;
+    box-shadow: none;
+  }
+
+  .pd-gender {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .pd-pill {
+    min-width: 60px;
+    height: 26px;
+    padding: 0 7px;
+    font-size: 10px;
+    border-radius: 9px;
+  }
+
+  .pd-more {
+    margin-top: 2px;
+    height: 30px;
+    font-size: 10px;
+    border-radius: 8px;
+  }
+
+  .pd-more__fields {
+    margin-top: 0;
+  }
+
+  .pd-submit {
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    margin-top: 3px;
+    height: 36px;
+    font-size: 13px;
+    box-shadow: 0 8px 18px -12px rgba(20, 100, 75, 0.65);
+  }
+}
+
+.patient-email-card:not(.has-code) .patient-email-form {
+  justify-content: flex-start;
+  gap: 4px;
+}
+
+.patient-email-card .patient-email-form .pd-submit {
+  margin-top: 0;
+}
+
+.patient-email-card .patient-email-art {
+  margin-bottom: 0;
+}
+
+.patient-email-card .patient-email-form .pd-row {
+  margin-top: 2px;
+}
+
+@media (min-width: 801px) {
+  .pd.pd--page-scroll {
+    height: auto;
+    min-height: calc(100vh - 96px);
+    overflow-y: auto;
+  }
+
+  .pd.pd--page-scroll .pd-body {
+    min-height: calc(100vh - 112px);
+    align-items: start;
+    padding-top: 14px;
+    padding-bottom: 28px;
+  }
+
+  .pd.pd--page-scroll .pd-main {
+    align-self: start;
+    height: auto;
+    max-height: none;
+    margin-top: 0;
+    gap: 10px;
+    width: min(100%, 820px);
+    max-width: 820px;
+  }
+
+  .pd.pd--page-scroll .pd-progress {
+    margin-top: 0;
+    margin-bottom: 2px;
+  }
+
+  .pd.pd--page-scroll .pd-card {
+    overflow: visible;
+    max-height: none;
+    min-height: 620px;
+    padding: 18px 24px 22px;
+    gap: 8px;
+    border-radius: 22px;
+  }
+
+  .pd.pd--page-scroll .pd-card__title {
+    font-size: clamp(23px, 2.8vh, 33px);
+  }
+
+  .pd.pd--page-scroll .pd-card__sub {
+    font-size: clamp(13px, 1.45vh, 16px);
+  }
+
+  .pd.pd--page-scroll .pd-row {
+    margin-top: 8px;
+    gap: 12px;
+  }
+
+  .pd.pd--page-scroll .pd-row__label {
+    margin: 0 0 5px 4px;
+    font-size: clamp(14px, 1.4vh, 17px);
+  }
+
+  .pd.pd--page-scroll .pd-input {
+    height: 50px;
+    border-radius: 12px;
+    padding-left: 12px;
+  }
+
+  .pd.pd--page-scroll .pd-input input,
+  .pd.pd--page-scroll .pd-input textarea {
+    font-size: 15px;
+  }
+
+  .pd.pd--page-scroll .pd-input__mic {
+    width: 38px;
+    height: 38px;
+  }
+
+  .pd.pd--page-scroll .pd-gender {
+    padding: 6px;
+    gap: 8px;
+  }
+
+  .pd.pd--page-scroll .pd-pill {
+    min-width: 90px;
+    height: 40px;
+    font-size: 13px;
+    border-radius: 11px;
+  }
+
+  .pd.pd--page-scroll .pd-submit {
+    position: static;
+    height: 48px;
+    margin-top: 10px;
+    font-size: 16px;
+  }
 }

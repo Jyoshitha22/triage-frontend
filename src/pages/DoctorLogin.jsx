@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ShieldCheck, AlertCircle, Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import DoctorArtwork from '../components/DoctorArtwork';
 import Button from '../components/Button';
-import useAutoAdvance from '../hooks/useAutoAdvance';
 import api from '../utils/api';
 import session from '../utils/session';
-import { isValidEmail, isValidPassword } from '../utils/validators';
 import { getLocalStaffAccount, saveLocalStaffAccount, verifyLocalStaffPassword } from '../utils/localStaffAccounts';
-import LocalPasswordRecovery from '../components/LocalPasswordRecovery';
+import { isValidEmail, isValidPassword } from '../utils/validators';
 import './HospitalLogin.css';
 import './DoctorStaff.css';
 
@@ -20,17 +18,13 @@ import './DoctorStaff.css';
  */
 export default function DoctorLogin() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const loginPrefill = useMemo(() => session.getDoctorLoginPrefill() || {}, []);
+  const doctorDraft = useMemo(() => session.getDoctorRegistrationDraft() || {}, []);
+  const [email, setEmail] = useState(loginPrefill.email || doctorDraft.email || '');
+  const [password, setPassword] = useState(loginPrefill.password || doctorDraft.password || '');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
-  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
-  const [recovering, setRecovering] = useState(false);
-
-  useEffect(() => {
-    if (session.getDoctor()) navigate('/hospital/dashboard', { replace: true });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const emailValid = isValidEmail(email);
   const passwordValid = isValidPassword(password);
@@ -41,58 +35,179 @@ export default function DoctorLogin() {
     setLoading(true);
     setError(null);
     try {
+      const doctor = await api.post('/doctors/login', { email, password });
+      await saveLocalStaffAccount('doctor', email.trim().toLowerCase(), password, doctor);
+      session.saveDoctor(doctor);
+      session.saveDoctorLoginPrefill({ email: email.trim().toLowerCase(), password });
+      session.saveDoctorRegistrationDraft({
+        ...(session.getDoctorRegistrationDraft() || {}),
+        doctorId: doctor.doctor_id || session.getDoctorRegistrationDraft()?.doctorId || null,
+        name: doctor.name || session.getDoctorRegistrationDraft()?.name || '',
+        phone: doctor.phone || session.getDoctorRegistrationDraft()?.phone || '',
+        department: doctor.department || session.getDoctorRegistrationDraft()?.department || '',
+        experience: String(
+          doctor.experience_years ??
+            session.getDoctorRegistrationDraft()?.experience ??
+            ''
+        ),
+        hospitalCode: String(
+          doctor.hospital_code ??
+            doctor.hospital_id ??
+            session.getDoctorRegistrationDraft()?.hospitalCode ??
+            ''
+        ),
+        email: email.trim().toLowerCase(),
+        password,
+        isRegistered: true,
+        previousEmail: email.trim().toLowerCase(),
+        previousPassword: password,
+      });
+      navigate('/hospital/dashboard');
+    } catch (e) {
+      const message = String(e?.message || '').toLowerCase();
+      const isBackendDown =
+        message.includes('temporarily unreachable') ||
+        message.includes('failed to fetch') ||
+        message.includes('networkerror') ||
+        message.includes('network error');
+
+      if (!isBackendDown) {
+        setError(e.message || 'Incorrect email or password.');
+        setLoading(false);
+        return;
+      }
+
       const localAccount = getLocalStaffAccount('doctor', email);
       if (localAccount) {
-        if (!await verifyLocalStaffPassword('doctor', email, password)) {
+        const valid = await verifyLocalStaffPassword('doctor', email, password);
+        if (!valid) {
           setError('Incorrect email or password.');
+          setLoading(false);
           return;
         }
         session.saveDoctor(localAccount.profile);
+        session.saveDoctorLoginPrefill({ email: email.trim().toLowerCase(), password });
+        session.saveDoctorRegistrationDraft({
+          ...(session.getDoctorRegistrationDraft() || {}),
+          doctorId: localAccount.profile?.doctor_id || session.getDoctorRegistrationDraft()?.doctorId || null,
+          name: localAccount.profile?.name || session.getDoctorRegistrationDraft()?.name || '',
+          phone: localAccount.profile?.phone || session.getDoctorRegistrationDraft()?.phone || '',
+          department:
+            localAccount.profile?.department || session.getDoctorRegistrationDraft()?.department || '',
+          experience: String(
+            localAccount.profile?.experience_years ??
+              session.getDoctorRegistrationDraft()?.experience ??
+              ''
+          ),
+          hospitalCode: String(
+            localAccount.profile?.hospital_code ??
+              localAccount.profile?.hospital_id ??
+              session.getDoctorRegistrationDraft()?.hospitalCode ??
+              ''
+          ),
+          email: email.trim().toLowerCase(),
+          password,
+          isRegistered: true,
+          previousEmail: email.trim().toLowerCase(),
+          previousPassword: password,
+        });
         navigate('/hospital/dashboard');
         return;
       }
-      const doctor = await api.post('/doctors/login', { email, password });
-      await saveLocalStaffAccount('doctor', email, password, doctor);
-      session.saveDoctor(doctor);
-      navigate('/hospital/dashboard');
-    } catch (e) {
-      if (e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))) {
-        const demoDoctor = {
-          doctor_id: 1,
-          name: 'Dr. Ananya Rao',
-          email,
-          department: 'General Physician',
-          experience_years: 8,
-          hospital_id: 1,
-        };
-        await saveLocalStaffAccount('doctor', email, password, demoDoctor);
-        session.saveDoctor(demoDoctor);
-        navigate('/hospital/dashboard');
-        return;
-      }
-      setError(e.message || 'Incorrect email or password.');
+      setError('Doctor login is temporarily unavailable. Please try again in a moment.');
+      setLoading(false);
+      return;
     } finally {
       setLoading(false);
     }
   };
-  const handleKeyDown = (e) => e.key === 'Enter' && submit();
 
-  useAutoAdvance(`${email}:${password}`, formValid && !recovering, submit, { delay: 1400 });
+  const goToRegister = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    session.saveDoctorLoginPrefill({ email: normalizedEmail, password });
+    const existingDraft = session.getDoctorRegistrationDraft() || {};
+
+    if (isValidEmail(normalizedEmail) && password.trim().length > 0) {
+      try {
+        const doctor = await api.post('/doctors/login', { email: normalizedEmail, password });
+        await saveLocalStaffAccount('doctor', normalizedEmail, password, doctor);
+        session.saveDoctorRegistrationDraft({
+          ...existingDraft,
+          doctorId: doctor.doctor_id || existingDraft.doctorId || null,
+          name: doctor.name || existingDraft.name || '',
+          phone: doctor.phone || existingDraft.phone || '',
+          department: doctor.department || existingDraft.department || '',
+          experience: String(doctor.experience_years ?? existingDraft.experience ?? ''),
+          hospitalCode: String(doctor.hospital_code ?? doctor.hospital_id ?? existingDraft.hospitalCode ?? ''),
+          email: normalizedEmail,
+          password,
+          isRegistered: true,
+          previousEmail: normalizedEmail,
+          previousPassword: password,
+        });
+      } catch {
+        session.saveDoctorRegistrationDraft({
+          ...existingDraft,
+          doctorId: null,
+          name: '',
+          phone: '',
+          department: '',
+          experience: '',
+          hospitalCode: '',
+          isRegistered: false,
+          previousEmail: '',
+          previousPassword: '',
+          email: normalizedEmail,
+          password,
+        });
+
+        const localAccount = getLocalStaffAccount('doctor', normalizedEmail);
+        if (localAccount?.profile) {
+          const localDoctor = localAccount.profile;
+          session.saveDoctorRegistrationDraft({
+            ...existingDraft,
+            doctorId: localDoctor.doctor_id || existingDraft.doctorId || null,
+            name: localDoctor.name || existingDraft.name || '',
+            phone: localDoctor.phone || existingDraft.phone || '',
+            department: localDoctor.department || existingDraft.department || '',
+            experience: String(localDoctor.experience_years ?? existingDraft.experience ?? ''),
+            hospitalCode: String(localDoctor.hospital_code ?? localDoctor.hospital_id ?? existingDraft.hospitalCode ?? ''),
+            email: normalizedEmail,
+            password,
+            isRegistered: true,
+            previousEmail: normalizedEmail,
+            previousPassword: password,
+          });
+        }
+      }
+    } else {
+      session.saveDoctorRegistrationDraft({
+        ...existingDraft,
+        doctorId: null,
+        name: '',
+        phone: '',
+        department: '',
+        experience: '',
+        hospitalCode: '',
+        isRegistered: false,
+        previousEmail: '',
+        previousPassword: '',
+        email: normalizedEmail,
+        password,
+      });
+    }
+
+    navigate('/hospital/doctor/register');
+  };
 
   return (
     <div className="hospital-login doctor-login">
       <div className="doctor-login-layout">
         <DoctorArtwork />
 
-        {recovering ? (
-          <div className="hospital-login__form doctor-login__form">
-            <LocalPasswordRecovery role="doctor" onCancel={(message) => { setRecovering(false); setInfo(message || ''); setError(null); }} />
-            <button type="button" onClick={() => navigate('/hospital')} className="hospital-login__back-bottom"><ChevronLeft size={16} /> Back</button>
-          </div>
-        ) : (
         <div className="hospital-login__form doctor-login__form">
           <h2 className="hospital-login__title">Doctor login</h2>
-          <p className="hospital-login__lede">New here? <button type="button" onClick={() => navigate('/hospital/doctor/register')} className="hospital-login__inline-link">Register your account</button></p>
+          <p className="hospital-login__lede">New here? <button type="button" onClick={goToRegister} className="hospital-login__inline-link">Register your account</button></p>
 
           <label className="hospital-login__label">Email</label>
           <div className="hospital-login__input-wrap">
@@ -103,7 +218,6 @@ export default function DoctorLogin() {
               maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              onKeyDown={handleKeyDown}
               placeholder="doctor@hospital.org"
               className="hospital-login__input"
               autoFocus
@@ -120,7 +234,6 @@ export default function DoctorLogin() {
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              onKeyDown={handleKeyDown}
               placeholder="Your password"
               className="hospital-login__input"
             />
@@ -130,11 +243,6 @@ export default function DoctorLogin() {
           </div>
 
           {error && <p className="field-error"><AlertCircle size={12} /> {error}</p>}
-          {info && <p className="hospital-login__notice" role="status">{info}</p>}
-
-          <button type="button" className="hospital-login__forgot" onClick={() => { setRecovering(true); setError(null); setInfo(''); }}>
-            Forgot password?
-          </button>
 
           <Button className="hospital-login__submit" onClick={submit} disabled={!formValid || loading}>
             {loading ? 'Logging in…' : 'Log in'}
@@ -143,7 +251,6 @@ export default function DoctorLogin() {
           <div className="hospital-login__security"><ShieldCheck size={16} /> Secure staff access. Your credentials are protected.</div>
           <button type="button" onClick={() => navigate('/hospital')} className="hospital-login__back-bottom"><ChevronLeft size={16} /> Back</button>
         </div>
-        )}
       </div>
     </div>
   );

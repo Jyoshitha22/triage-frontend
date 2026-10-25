@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Play, Pause, CheckCircle2, Bookmark, ArrowRight,
   Pill, ClipboardList, MessageSquare, Stethoscope,
@@ -12,82 +12,45 @@ import api from '../utils/api';
 import session from '../utils/session';
 import './DoctorReply.css';
 
-const TRANSLATION_API_BASE = import.meta.env.VITE_TRANSLATION_API_BASE || 'http://localhost:5000';
-
 async function createReplyAudio(text, languageCode) {
-  const response = await fetch(TRANSLATION_API_BASE + '/api/tts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, languageCode }),
-  });
-  if (!response.ok) throw new Error('Reply audio generation failed');
-  const result = await response.json();
+  const result = await api.post('/api/tts', { text, languageCode }, { timeoutMs: 45000 });
   if (!result?.audio) throw new Error('Empty reply audio');
+  const mimeMatch = result.audio.match(/^data:(audio\/[^;]+);base64,/);
+  const mimeType = result.mimeType || (mimeMatch ? mimeMatch[1] : 'audio/wav');
   const base64 = result.audio.replace(/^data:audio\/[^;]+;base64,/, '');
   const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
-  return new Blob([bytes], { type: 'audio/mpeg' });
+  return new Blob([bytes], { type: mimeType });
 }
 
 async function translateReplyText(text, sourceLanguageCode, targetLanguageCode) {
-  const response = await fetch(TRANSLATION_API_BASE + '/api/translate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, sourceLanguageCode, targetLanguageCode }),
-  });
-  if (!response.ok) throw new Error('Reply translation failed');
-  const result = await response.json();
+  const result = await api.post('/api/translate', {
+    text,
+    sourceLanguageCode,
+    targetLanguageCode,
+  }, { timeoutMs: 30000 });
   if (!result || !result.translatedText) throw new Error('Empty translation');
   return result.translatedText;
 }
 
-const SAMPLE_REPLIES_BY_LANG = {
-  en: {
-    doctorName: 'Dr. Ananya Rao',
-    specialty: 'General Physician · 8 years experience',
-    medicines: 'Paracetamol 500mg for 2 days.',
-    tests: '',
-    advice: 'Stay hydrated.',
-  },
-  te: {
-    doctorName: 'డా. అనన్య రావు',
-    specialty: 'జనరల్ ఫిజీషియన్ · 8 సంవత్సరాల అనుభవం',
-    medicines: 'పారాసిటమాల్ 500mg 2 రోజుల పాటు తీసుకోండి.',
-    tests: '',
-    advice: 'శరీరంలో తగినంత నీరు ఉండేలా ద్రవాలు తాగండి.',
-  },
-  hi: {
-    doctorName: 'डॉ. अनन्या राव',
-    specialty: 'जनरल फिजिशियन · 8 साल का अनुभव',
-    medicines: 'पैरासिटामॉल 500mg 2 दिनों तक लें।',
-    tests: '',
-    advice: 'पर्याप्त पानी पीते रहें।',
-  },
-  ta: {
-    doctorName: 'டாக்டர் அனன்யா ராவ்',
-    specialty: 'பொது மருத்துவர் · 8 ஆண்டுகள் அனுபவம்',
-    medicines: 'பாராசிட்டமால் 500mg-ஐ 2 நாட்களுக்கு எடுத்துக்கொள்ளவும்.',
-    tests: '',
-    advice: 'போதுமான அளவு தண்ணீர் குடிக்கவும்.',
-  },
-};
-
 const SECTION_LABELS = {
   medicines: { en: 'Medicines', te: 'మందులు', hi: 'दवाएं', ta: 'மருந்துகள்' },
-  tests: { en: 'Tests', te: 'పరీక్షలు', hi: 'जांचें', ta: 'பரிசோதனைகள்' },
+  tests: { en: 'Scans / Tests', te: 'స్కాన్లు / పరీక్షలు', hi: 'स्कैन / जांचें', ta: 'ஸ்கேன் / பரிசோதனைகள்' },
   advice: { en: 'Doctor Advice', te: 'వైద్యుల సలహా', hi: 'सलाह', ta: 'அறிவுரை' },
+  reason: { en: 'Doctor Reason', te: 'వైద్యుల కారణం', hi: 'डॉक्टर का कारण', ta: 'மருத்துவர் காரணம்' },
 };
 
 const SECTIONS = [
   { key: 'medicines', icon: Pill },
   { key: 'tests', icon: ClipboardList },
   { key: 'advice', icon: MessageSquare },
+  { key: 'reason', icon: MessageSquare },
 ];
 
-const PART_TO_SECTION = { medicine: 'medicines', test: 'tests', advice: 'advice' };
-const EMPTY_NOTE = { medicines: '', tests: '', advice: '' };
+const PART_TO_SECTION = { medicine: 'medicines', test: 'tests', advice: 'advice', reason: 'reason' };
+const EMPTY_NOTE = { medicines: '', tests: '', advice: '', reason: '' };
 
 function noteFromRecord(rec) {
-  const note = { medicines: '', tests: '', advice: '' };
+  const note = { medicines: '', tests: '', advice: '', reason: '' };
   (rec?.replies || []).forEach((part) => {
     const key = PART_TO_SECTION[part.response_type];
     if (!key) return;
@@ -109,20 +72,27 @@ function detectReplyLanguage(note) {
 
 export default function DoctorReply() {
   const navigate = useNavigate();
+  const { token } = useParams();
   const { language, bcp47, t, languages } = useLanguage();
-  const defaultReply = SAMPLE_REPLIES_BY_LANG[language] || SAMPLE_REPLIES_BY_LANG.en;
   const { speak: speakWithBrowser, cancel: cancelBrowserSpeech } = useSpeechSynthesis();
   const [playing, setPlaying] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [note, setNote] = useState(defaultReply);
+  const [note, setNote] = useState(EMPTY_NOTE);
   const [sourceNote, setSourceNote] = useState(null);
   const [sourceLanguage, setSourceLanguage] = useState('en-IN');
   const [voiceLanguage, setVoiceLanguage] = useState(bcp47);
   const [translatedLanguage, setTranslatedLanguage] = useState(null);
   const [failedLanguage, setFailedLanguage] = useState(null);
   const [fromDoctor, setFromDoctor] = useState(false);
+  const [replyMissing, setReplyMissing] = useState(false);
+  const [doctorMeta, setDoctorMeta] = useState({ name: '', specialty: '' });
   const [voiceError, setVoiceError] = useState(false);
-  const doctorInfo = fromDoctor ? { name: '', specialty: '' } : { name: defaultReply.doctorName, specialty: defaultReply.specialty };
+  const doctorInfo = fromDoctor
+    ? {
+      name: doctorMeta.name || '',
+      specialty: doctorMeta.specialty || '',
+    }
+    : { name: '', specialty: '' };
   const playTimerRef = useRef(null);
   const replyAudioRef = useRef(null);
   const audioUrlRef = useRef(null);
@@ -173,31 +143,54 @@ export default function DoctorReply() {
   }, [bcp47, fromDoctor, sourceLanguage, sourceNote]);
 
   useEffect(() => {
-    const symptomId = session.getActiveSymptomId();
-    if (!symptomId) return undefined;
+    const symptomId = token ? null : session.getActiveSymptomId();
+    if (!token && !symptomId) return undefined;
     let active = true;
     const applyRecord = (record) => {
       const real = noteFromRecord(record);
-      if (!real.medicines && !real.tests && !real.advice) return false;
+      if (!real.medicines && !real.tests && !real.advice && !real.reason) return false;
       if (active) {
+        const replyDoctorName = record?.doctor_name || record?.doctorName || record?.doctor?.name || '';
+        const replyDoctorSpecialty =
+          record?.doctor_specialty ||
+          record?.doctorSpecialty ||
+          record?.doctor?.specialty ||
+          record?.doctor?.department ||
+          '';
         setSourceNote(real);
         setSourceLanguage(detectReplyLanguage(real));
+        setDoctorMeta({ name: replyDoctorName, specialty: replyDoctorSpecialty });
         setFromDoctor(true);
       }
       return true;
     };
-    applyRecord(session.getSymptomRecord(symptomId));
-    api.get('/symptom-records/' + symptomId)
-      .then((record) => { applyRecord(record); })
-      .catch(() => { /* Keep the local reply or localized sample when offline. */ });
+    if (token) {
+      api.get('/symptom-records/reply-access/' + token)
+        .then((record) => {
+          const hasRealReply = applyRecord(record);
+          if (!hasRealReply) throw new Error('Reply is not ready yet.');
+        })
+        .catch(() => setReplyMissing(true));
+    } else {
+      const hasLocal = applyRecord(session.getSymptomRecord(symptomId));
+      if (!hasLocal) setReplyMissing(true);
+      api.get('/symptom-records/' + symptomId)
+        .then((record) => {
+          const hasRemote = applyRecord(record);
+          setReplyMissing(!hasRemote);
+        })
+        .catch(() => { /* Keep current reply state when server is unavailable. */ });
+    }
     return () => { active = false; };
-  }, []);
+  }, [navigate, token]);
 
   const label = useCallback((key) => SECTION_LABELS[key][language] || SECTION_LABELS[key].en, [language]);
   const replyReady = !fromDoctor || !sourceNote || translatedLanguage === bcp47 || failedLanguage === bcp47;
   const translationFailed = fromDoctor && !!sourceNote && failedLanguage === bcp47;
   const isTranslating = fromDoctor && !!sourceNote && !replyReady;
-  const displayedNote = isTranslating ? EMPTY_NOTE : (fromDoctor && sourceNote ? note : defaultReply);
+  const displayedNote = isTranslating
+    ? EMPTY_NOTE
+    : (fromDoctor && sourceNote ? note : EMPTY_NOTE);
   const sections = useMemo(() => SECTIONS.filter((section) => displayedNote[section.key]), [displayedNote]);
   const activeVoiceLanguage = fromDoctor ? voiceLanguage : bcp47;
   const voiceLanguageName = (languages.find((item) => item.bcp47 === activeVoiceLanguage) || languages.find((item) => item.code === activeVoiceLanguage.split('-')[0]))?.nativeLabel || activeVoiceLanguage;
@@ -262,11 +255,26 @@ export default function DoctorReply() {
     };
   }, [language, displayedNote, replyReady, playReply, cancelReply]);
 
-  const saveNote = () => setSaved(true);
+  const saveNote = async () => {
+    const symptomId = session.getActiveSymptomId();
+    try {
+      await api.post('/prescriptions', {
+        symptom_id: symptomId,
+        patient_email: session.getPatient()?.email || '',
+        medicines: displayedNote.medicines || '',
+        tests: displayedNote.tests || '',
+        advice: displayedNote.advice || '',
+        language: language,
+      });
+    } catch {
+      // Keep local save confirmation even when backend is temporarily unavailable.
+    }
+    setSaved(true);
+  };
   const goHome = () => { session.clearPending(); session.clearActiveSymptomId(); navigate('/'); };
 
   return (
-    <div className="pd">
+    <div className="pd pd--reply-page-scroll">
       <div className="pd-body">
         <PatientSidebar />
         <main className="pd-main">
@@ -277,6 +285,7 @@ export default function DoctorReply() {
               <div>
                 <h1 className="pd-card__title">{t('doctorRepliedTitle')}</h1>
                 <p className="pd-card__sub">{t('doctorsNote')}</p>
+                {doctorInfo.name && <p className="reply-head__doctor">{doctorInfo.name}</p>}
                 <svg className="pd-card__wave" viewBox="0 0 150 14" aria-hidden="true">
                   <path d="M2 9 C30 2 60 2 85 8 C105 12 128 8 148 4" fill="none" stroke="#86c9ac" strokeWidth="3" strokeLinecap="round" />
                 </svg>
@@ -302,6 +311,11 @@ export default function DoctorReply() {
             {isTranslating && <p role="status" className="reply-translation-status">{t('replyTranslationLoading')}</p>}
             {translationFailed && <p role="alert" className="reply-translation-status">{t('replyTranslationFallback').replace('{language}', voiceLanguageName)}</p>}
             <div className="reply-sections-list">
+              {!fromDoctor && replyMissing && (
+                <div className="reply-section-card">
+                  <p className="reply-section-text">Doctor reply is not ready yet. Please check again from the link in your email.</p>
+                </div>
+              )}
               {sections.map((section) => {
                 const Icon = section.icon;
                 return (

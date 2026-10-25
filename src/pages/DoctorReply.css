@@ -17,6 +17,13 @@
   margin-bottom: 20px;       /* Increased for cleaner spacing */
 }
 
+.reply-head__doctor {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e785e;
+}
+
 /* Doctor Banner */
 .reply-doctor-banner {
   display: flex;
@@ -232,4 +239,38 @@
   font-size: 13px;
   line-height: 1.5;
   text-align: left;
+}
+
+@media (min-width: 801px) {
+  .pd.pd--reply-page-scroll {
+    height: auto;
+    min-height: calc(100vh - 96px);
+    overflow-y: auto;
+  }
+
+  .pd.pd--reply-page-scroll .pd-body {
+    min-height: calc(100vh - 112px);
+    align-items: start;
+    padding-top: 14px;
+    padding-bottom: 28px;
+  }
+
+  .pd.pd--reply-page-scroll .pd-main {
+    align-self: start;
+    height: auto;
+    max-height: none;
+    margin-top: 0;
+    gap: 10px;
+    width: min(100%, 860px);
+    max-width: 860px;
+  }
+
+  .pd.pd--reply-page-scroll .pd-card.reply-box {
+    overflow: visible;
+    max-height: none;
+    min-height: 640px;
+    padding: 20px 26px 24px;
+    gap: 10px;
+    border-radius: 22px;
+  }
 }

@@ -39,7 +39,8 @@ function StartAtHome() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const resume = (pathname === "/waiting" || pathname === "/reply") && session.getPending();
+    const tokenReplyRoute = pathname.startsWith('/reply/');
+    const resume = ((pathname === "/waiting" || pathname === "/reply") && session.getPending()) || tokenReplyRoute;
     if (pathname !== "/" && !resume) navigate("/", { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -96,6 +97,7 @@ function App() {
           <Route path="/symptoms" element={<SymptomRecording />} />
           <Route path="/waiting" element={<WaitingForDoctor />} />
           <Route path="/reply" element={<DoctorReply />} />
+          <Route path="/reply/:token" element={<DoctorReply />} />
 
           {/* Hospital side: Admin and Doctor */}
           <Route path="/hospital" element={<HospitalRoleSelect />} />

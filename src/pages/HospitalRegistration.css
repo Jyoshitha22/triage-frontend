@@ -43,4 +43,21 @@
 .hospital-registration__input:focus, .hospital-registration__textarea:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
 .hospital-registration__input::placeholder, .hospital-registration__textarea::placeholder { color: rgba(92,107,100,0.5); }
 
+.hospital-registration__input--locked {
+  opacity: 1;
+  color: var(--color-navy);
+  background: #f3f8f5;
+  border-color: rgba(14,107,71,0.22);
+}
+
+.hospital-registration__input--locked:disabled,
+.hospital-registration__textarea.hospital-registration__input--locked:disabled,
+select.hospital-registration__input--locked:disabled {
+  opacity: 1;
+  color: var(--color-navy);
+  -webkit-text-fill-color: var(--color-navy);
+  background: #f3f8f5;
+  border-color: rgba(14,107,71,0.22);
+}
+
 .hospital-registration__footer { margin-top: 32px; display: flex; justify-content: flex-end; }

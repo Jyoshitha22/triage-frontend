@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Pill, ClipboardList, MessageSquare } from 'lucide-react';
+import { CheckCircle2, Pill, ClipboardList, MessageSquare, Users, AlertTriangle } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import api from '../utils/api';
@@ -13,24 +13,36 @@ const LABELS = { medicine: 'Medicines', test: 'Tests', advice: 'Advice' };
 export default function RepliedList() {
   const navigate = useNavigate();
   const doctor = session.getDoctor();
+  const doctorId = doctor?.doctor_id || null;
   const [replied, setReplied] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const goBack = () => {
-    if (window.history.length > 2) {
-      navigate(-1);
-      return;
-    }
-    navigate('/hospital/dashboard');
-  };
-
   useEffect(() => {
-    if (!doctor) { navigate('/hospital/doctor', { replace: true }); return; }
-    api.get(`/doctors/${doctor.doctor_id}/replied`)
-      .then(setReplied)
-      .catch(() => setReplied(session.getRepliedRecords(doctor.doctor_id)))
-      .finally(() => setLoading(false));
-  }, [doctor, navigate]);
+    if (!doctorId) { navigate('/hospital/doctor', { replace: true }); return; }
+    let stopped = false;
+    const load = () => {
+      api.get(`/doctors/${doctorId}/replied`)
+        .then((items) => {
+          if (!stopped) setReplied(items);
+        })
+        .catch(() => {
+          if (!stopped) {
+            const scoped = session.getRepliedRecords(doctorId);
+            setReplied(scoped.length > 0 ? scoped : session.getRepliedRecords());
+          }
+        })
+        .finally(() => {
+          if (!stopped) setLoading(false);
+        });
+    };
+
+    load();
+    const timer = setInterval(load, 5000);
+    return () => {
+      stopped = true;
+      clearInterval(timer);
+    };
+  }, [doctorId, navigate]);
 
   if (!doctor) return null;
 
@@ -38,6 +50,18 @@ export default function RepliedList() {
     <HospitalShell showDoctorArtwork>
       <h1 className="replied-list__title">Replied</h1>
       <p className="replied-list__lede">Patients you've already responded to, and what you sent them.</p>
+
+      <div className="replied-list__nav">
+        <button type="button" onClick={() => navigate('/hospital/patients')} className="replied-list__nav-btn">
+          <Users size={14} /> Waiting
+        </button>
+        <button type="button" onClick={() => navigate('/hospital/patients?view=urgent')} className="replied-list__nav-btn">
+          <AlertTriangle size={14} /> Urgent
+        </button>
+        <button type="button" className="replied-list__nav-btn replied-list__nav-btn--active">
+          <CheckCircle2 size={14} /> Replied
+        </button>
+      </div>
 
       {loading && <Card className="replied-list__empty"><p>Loading…</p></Card>}
 
@@ -70,8 +94,6 @@ export default function RepliedList() {
           ))}
         </div>
       )}
-
-      <button onClick={goBack} className="replied-list__back">← Back</button>
     </HospitalShell>
   );
 }

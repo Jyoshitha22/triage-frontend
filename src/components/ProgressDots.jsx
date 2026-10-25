@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 import './ProgressDots.css';
 
 /**
@@ -9,11 +10,14 @@ import './ProgressDots.css';
 const LABEL_KEYS = ['progressDetails', 'progressSymptoms', 'progressWaiting', 'progressReply'];
 const DEFAULT_LABELS = ['Details', 'Symptoms', 'Waiting', 'Reply'];
 
-export default function ProgressDots({ step, t }) {
+export default function ProgressDots({ step, t, size = 'default' }) {
+  const { t: contextT } = useLanguage();
+  const translate = t || contextT;
   const headerStep = step - 1;
+  const sizeClass = size === 'large' ? 'progress-dots--large' : '';
 
   return (
-    <div className="progress-dots">
+    <div className={`progress-dots ${sizeClass}`}>
       {LABEL_KEYS.map((labelKey, i) => {
         const n = i + 1;
         const done = n < headerStep;
@@ -24,7 +28,7 @@ export default function ProgressDots({ step, t }) {
               <span className={`progress-dots__circle ${done ? 'progress-dots__circle--done' : current ? 'progress-dots__circle--current' : ''}`}>
                 {done ? <Check size={14} /> : n}
               </span>
-              <span className={`progress-dots__label ${current ? 'progress-dots__label--current' : ''}`}>{t ? t(labelKey) : DEFAULT_LABELS[i]}</span>
+              <span className={`progress-dots__label ${current ? 'progress-dots__label--current' : ''}`}>{translate ? translate(labelKey) : DEFAULT_LABELS[i]}</span>
             </div>
             {i < LABEL_KEYS.length - 1 && (
               <span className={`progress-dots__line ${done ? 'progress-dots__line--done' : ''}`} />
