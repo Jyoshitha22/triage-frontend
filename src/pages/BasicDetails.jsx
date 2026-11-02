@@ -78,6 +78,11 @@ function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', i
   const { supported, listening, interimTranscript, error, start, stop } = useSpeechRecognition({ lang, continuous: !!multiline, silenceTimeoutMs: 6000 });
   const [hint, setHint] = useState('');
   const clean = (s) => (sanitize ? sanitize(toAsciiDigits(s)) : s);
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const toggleMic = async () => {
     if (listening) { stop(); return; }
@@ -96,7 +101,8 @@ function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', i
     start((finalText) => {
       const spoken = clean(finalText || '');
       if (!spoken) { setHint("I didn't catch anything. Tap the mic and speak clearly."); return; }
-      onChange(multiline && value ? `${value} ${spoken}` : spoken);
+      const currentValue = valueRef.current || '';
+      onChange(multiline && currentValue ? `${currentValue} ${spoken}` : spoken);
     });
   };
 
@@ -104,6 +110,11 @@ function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', i
   const message = errorText || hint;
   const Tag = multiline ? 'textarea' : 'input';
   const fieldRef = useRef(null);
+  const liveValue = listening
+    ? (multiline
+      ? [value, interimTranscript].filter(Boolean).join(' ').trim()
+      : (interimTranscript || value))
+    : value;
 
   useEffect(() => {
     if (!autoScrollToEnd || !multiline || !fieldRef.current) return;
@@ -124,9 +135,9 @@ function VoiceInput({ id, value, onChange, onBlur, placeholder, type = 'text', i
           ref={fieldRef}
           id={id}
           type={multiline ? undefined : type}
-          rows={multiline ? 1 : undefined}
+          rows={multiline ? 3 : undefined}
           inputMode={inputMode}
-          value={listening ? (interimTranscript || value) : value}
+          value={liveValue}
           onChange={(e) => onChange(sanitize ? sanitize(e.target.value) : e.target.value)}
           onBlur={onBlur}
           readOnly={readOnly}

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Building2, Users, Copy, Check, LogOut } from 'lucide-react';
+import { Building2, Users, Copy, Check, LogOut, FileSpreadsheet } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
 import Card from '../components/Card';
 import session from '../utils/session';
@@ -80,10 +80,10 @@ export default function AdminHome() {
             <span>Manage Specialists</span>
             <span className="admin-home__action-sub">Add, edit, or remove doctors directly</span>
           </button>
-          <button onClick={() => navigate('/hospital/records')} className="admin-home__action-card">
-            <Users size={20} />
+          <button onClick={() => navigate('/hospital/admin/records')} className="admin-home__action-card">
+            <FileSpreadsheet size={20} />
             <span>Hospital Records</span>
-            <span className="admin-home__action-sub">View doctors and treated patient history</span>
+            <span className="admin-home__action-sub">Doctors, departments, and treated patient history</span>
           </button>
         </div>
 

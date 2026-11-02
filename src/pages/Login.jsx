@@ -285,7 +285,7 @@ export default function Login() {
                     </div>
                   </div>
                   <button type="submit" className="pd-submit" disabled={enteredCode.length !== 6 || isVerifyingCode}>
-                    <ArrowRight size={22} strokeWidth={2.2} /> {isVerifyingCode ? 'Verifying...' : t('verifyCode')}
+                    <ArrowRight size={22} strokeWidth={2.2} /> {isVerifyingCode ? t('verifyingCode') : t('verifyCode')}
                   </button>
                   <button type="button" className="patient-resend-code" onClick={sendCode} disabled={isSendingCode}>
                     {t('resendCode')}

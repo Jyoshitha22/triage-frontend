@@ -46,8 +46,23 @@ function summarize(text) {
   return `${cleaned.slice(0, 117)}...`;
 }
 
-function timeAgo(iso) {
-  const mins = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+function safePatientName(value) {
+  const name = String(value || '').trim();
+  return name || 'Patient';
+}
+
+function initialsFromName(value) {
+  const name = safePatientName(value);
+  const parts = name.split(' ').map((n) => n.trim()).filter(Boolean);
+  if (parts.length === 0) return 'P';
+  return parts.map((n) => n[0]).slice(0, 2).join('').toUpperCase();
+}
+
+function timeAgo(iso, waitingMinutes) {
+  const fromApi = Number(waitingMinutes);
+  const mins = Number.isFinite(fromApi) && fromApi >= 0
+    ? Math.round(fromApi)
+    : Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
   if (mins < 1) return 'Waiting: just now';
   if (mins < 60) return `Waiting: ${mins} min`;
   return `Waiting: ${Math.round(mins / 60)} hr`;
@@ -177,14 +192,15 @@ export default function PatientList() {
         <div className="patient-list__items">
           {sorted.map((p) => {
             const u = URGENCY[p.urgency] || URGENCY.medium;
+            const patientName = safePatientName(p.patient_name);
             return (
               <button key={p.symptom_id} onClick={() => selectPatient(p)} className="patient-list__row">
-                <div className="patient-list__avatar">{p.patient_name.split(' ').map((n) => n[0]).slice(0, 2).join('')}</div>
+                <div className="patient-list__avatar">{initialsFromName(p.patient_name)}</div>
 
                 <div className="patient-list__info">
                   <div className="patient-list__info-top">
-                    <p className="patient-list__name">{p.patient_name}</p>
-                    <span className="patient-list__demo">{p.patient_age} · {p.patient_gender}</span>
+                    <p className="patient-list__name">{patientName}</p>
+                    <span className="patient-list__demo">{p.patient_age || '-'} · {p.patient_gender || '-'}</span>
                   </div>
                   <span className="patient-list__urgency-badge" style={{ background: u.bg, color: u.color }}>
                     <span className="patient-list__urgency-dot" style={{ background: u.color }} />
@@ -205,7 +221,7 @@ export default function PatientList() {
                 </div>
 
                 <div className="patient-list__right">
-                  <span className="patient-list__time">{timeAgo(p.created_at)}</span>
+                  <span className="patient-list__time">{timeAgo(p.created_at, p.waiting_minutes)}</span>
                 </div>
               </button>
             );

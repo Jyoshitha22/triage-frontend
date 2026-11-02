@@ -29,9 +29,17 @@ except Exception:
 
 app = FastAPI(title="Healthcare Triage Backend")
 
+LOCAL_FRONTEND_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=LOCAL_FRONTEND_ORIGINS,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -505,10 +513,9 @@ def ensure_symptom_tables(cur):
             FOR col_rec IN
                 SELECT table_name
                 FROM information_schema.columns
-                WHERE table_schema = current_schema()
-                  AND column_name = 'symptom_id'
-                  AND data_type <> 'text'
-                  AND table_name <> 'symptom_records'
+                    WHERE table_schema = current_schema()
+                      AND column_name = 'symptom_id'
+                      AND table_name <> 'symptom_records'
             LOOP
                 EXECUTE format(
                     'ALTER TABLE %I ALTER COLUMN symptom_id TYPE TEXT USING symptom_id::text',
@@ -734,11 +741,245 @@ def load_keyword_training_data() -> dict[str, list[str]]:
 
 TRAINED_KEYWORDS = load_keyword_training_data()
 
+NON_MEDICAL_PHRASES = {
+    "heart break",
+    "heartbreak",
+    "love failure",
+    "breakup",
+    "break up",
+    "relationship issue",
+    "relationship problem",
+    "heart broken",
+    "broken heart",
+    "ప్రీతి విఫలం",
+    "ప్రేమ విఫలం",
+    "లవ్ ఫెయిల్యూర్",
+    "दिल टूट गया",
+    "दिल टूटना",
+    "प्यार में धोखा",
+    "लव फेलियर",
+    "காதல் தோல்வி",
+    "காதல் பிரச்சனை",
+    "மனசு உடைந்தது",
+}
+
+NON_MEDICAL_TOKENS = {
+    "love",
+    "lover",
+    "girlfriend",
+    "boyfriend",
+    "relationship",
+    "romance",
+    "sad",
+    "depressed",
+    "depression",
+    "anxiety",
+    "stress",
+    "stressed",
+    "failed",
+    "failure",
+    "breakup",
+    "break",
+    "heartbroken",
+    "ప్రేమ",
+    "లవ్",
+    "బ్రేకప్",
+    "బాధ",
+    "విషాదం",
+    "दुख",
+    "प्यार",
+    "मोहब्बत",
+    "ब्रेकअप",
+    "तनाव",
+    "उदासी",
+    "காதல்",
+    "பிரேக்அப்",
+    "துக்கம்",
+    "மனஅழுத்தம்",
+}
+
+EXTRA_MEDICAL_PHRASES = {
+    "head pain",
+    "headache",
+    "migraine",
+    "fever",
+    "cough",
+    "vomiting",
+    "nausea",
+    "breathlessness",
+    "shortness of breath",
+    "chest tightness",
+    "stomach pain",
+    "chest pain",
+    "body pain",
+    "tooth pain",
+    "ear pain",
+    "throat pain",
+    "తల నొప్పి",
+    "తలనొప్పి",
+    "తలనొప్పిగా",
+    "జ్వరం",
+    "జలుబు",
+    "దగ్గు",
+    "నోటికి రుచి తెలియడం లేదు",
+    "రుచి తెలియడం లేదు",
+    "నోటి రుచి పోయింది",
+    "ఛాతి నొప్పి",
+    "కడుపు నొప్పి",
+    "శ్వాస తీసుకోవడంలో ఇబ్బంది",
+    "వాంతులు",
+    "సर्दी",
+    "सिर दर्द",
+    "बुखार",
+    "खांसी",
+    "छाती में दर्द",
+    "पेट दर्द",
+    "सांस लेने में तकलीफ",
+    "उल्टी",
+    "चक्कर",
+    "स्वाद नहीं आ रहा",
+    "मुंह का स्वाद नहीं आ रहा",
+    "தலைவலி",
+    "காய்ச்சல்",
+    "இருமல்",
+    "சளி",
+    "வாயில் சுவை தெரியவில்லை",
+    "சுவை தெரியவில்லை",
+    "மார்பு வலி",
+    "வயிற்று வலி",
+    "மூச்சுத்திணறல்",
+    "வாந்தி",
+    "மயக்கம்",
+    "loss of taste",
+    "cannot taste",
+}
+
+
+def is_medical_symptom_text(symptom_text: str) -> bool:
+    text = (symptom_text or "").strip().lower()
+    if not text:
+        return False
+
+    non_medical_score = 0
+    for phrase in NON_MEDICAL_PHRASES:
+        if phrase in text:
+            non_medical_score += 2
+
+    # Count medical keyword evidence from trained routing vocabulary.
+    medical_score = 0
+    for keywords in TRAINED_KEYWORDS.values():
+        for keyword in keywords:
+            normalized_keyword = str(keyword or "").strip().lower()
+            if normalized_keyword and normalized_keyword in text:
+                medical_score += 1
+
+    for phrase in EXTRA_MEDICAL_PHRASES:
+        if phrase in text:
+            medical_score += 1
+
+    tokens = [tok for tok in re.split(r"[^\w\u0900-\u097F\u0B80-\u0BFF\u0C00-\u0C7F]+", text) if tok]
+    token_set = set(tokens)
+    non_medical_hits = len(token_set.intersection(NON_MEDICAL_TOKENS))
+    non_medical_score += non_medical_hits
+
+    # Reject clearly non-medical content with no medical evidence.
+    if non_medical_score > 0 and medical_score == 0:
+        return False
+
+    # Reject strongly non-medical messages even if a weak medical token matched
+    # (for example, "heartbreak" matching a generic "heart" keyword).
+    if non_medical_score >= 3 and non_medical_score > medical_score:
+        return False
+
+    # Require at least one recognized medical symptom/disease clue.
+    return medical_score > 0
+
 
 def infer_department(symptom_text: str) -> str:
     text = (symptom_text or "").lower()
     if not text:
         return "General Physician"
+
+    # Route routine cold/cough/flu complaints to General Physician first.
+    # Escalate to Pulmonologist only when severe breathing distress markers exist.
+    routine_general_markers = {
+        "cold",
+        "common cold",
+        "flu",
+        "viral fever",
+        "sore throat",
+        "runny nose",
+        "sneezing",
+        "mild fever",
+        "cough",
+        "fever",
+        "headache",
+        "జలుబు",
+        "దగ్గు",
+        "జ్వరం",
+        "తలనొప్పి",
+        "सर्दी",
+        "खांसी",
+        "बुखार",
+        "सिर दर्द",
+        "சளி",
+        "இருமல்",
+        "காய்ச்சல்",
+        "தலைவலி",
+    }
+    severe_pulmo_markers = {
+        "breathlessness",
+        "shortness of breath",
+        "wheezing",
+        "asthma",
+        "oxygen",
+        "low spo2",
+        "spo2",
+        "శ్వాస తీసుకోవడంలో ఇబ్బంది",
+        "सांस लेने में तकलीफ",
+        "மூச்சுத்திணறல்",
+    }
+    has_routine_general = any(marker in text for marker in routine_general_markers)
+    has_severe_pulmo = any(marker in text for marker in severe_pulmo_markers)
+    if has_routine_general and not has_severe_pulmo:
+        return "General Physician"
+
+    # Keep emotional/non-medical "heart" language out of cardiology routing.
+    emotional_markers = {
+        "breakup",
+        "break up",
+        "heart broken",
+        "broken heart",
+        "relationship",
+        "love",
+        "sad",
+        "depressed",
+        "stress",
+        "stressed",
+        "anxiety",
+        "anxious",
+    }
+    cardio_medical_markers = {
+        "chest pain",
+        "chest tightness",
+        "shortness of breath",
+        "palpitation",
+        "palpitations",
+        "angina",
+        "cardiac",
+        "blood pressure",
+        "bp",
+        "fainting",
+        "sweating",
+        "left arm pain",
+        "jaw pain",
+        "heart attack",
+    }
+    if "heart" in text:
+        has_emotional = any(marker in text for marker in emotional_markers)
+        has_medical = any(marker in text for marker in cardio_medical_markers)
+        if has_emotional and not has_medical:
+            return "General Physician"
 
     best_department = "General Physician"
     best_score = 0
@@ -936,69 +1177,48 @@ def register_hospital(payload: HospitalRegisterPayload):
     with db_conn() as conn:
         with conn.cursor() as cur:
             ensure_hospital_tables(cur)
+            try:
+                cur.execute(
+                    """
+                    INSERT INTO hospitals (hospital_code, hospital_name, registration_id, phone, city, state, address, hospital_type)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING hospital_id, hospital_code, hospital_name, registration_id, phone, city, state, address, hospital_type
+                    """,
+                    (
+                        generate_hospital_code(cur),
+                        payload.hospital_name.strip(),
+                        payload.registration_id.strip(),
+                        payload.phone.strip(),
+                        payload.city.strip(),
+                        payload.state.strip(),
+                        payload.address.strip(),
+                        payload.hospital_type.strip(),
+                    ),
+                )
+                hospital_row = cur.fetchone()
+                hospital_id = hospital_row[0]
 
-            # Keep hospital identity stable for an already-registered admin email.
-            cur.execute(
-                """
-                SELECT a.admin_id, a.email, h.hospital_id, h.hospital_code, h.hospital_name, h.registration_id,
-                       h.phone, h.city, h.state, h.address, h.hospital_type
-                FROM admins a
-                JOIN hospitals h ON h.hospital_id = a.hospital_id
-                WHERE LOWER(a.email) = %s
-                LIMIT 1
-                """,
-                (email,),
-            )
-            existing = cur.fetchone()
-            if existing:
-                hospital = {
-                    "hospital_id": existing[2],
-                    "hospital_code": existing[3],
-                    "hospital_name": existing[4],
-                    "registration_id": existing[5],
-                    "phone": existing[6],
-                    "city": existing[7],
-                    "state": existing[8],
-                    "address": existing[9],
-                    "hospital_type": existing[10],
-                }
-                return {
-                    "admin_id": existing[0],
-                    "email": existing[1],
-                    "hospital_id": existing[2],
-                    "hospital": hospital,
-                }
-
-            cur.execute(
-                """
-                INSERT INTO hospitals (hospital_code, hospital_name, registration_id, phone, city, state, address, hospital_type)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                RETURNING hospital_id, hospital_code, hospital_name, registration_id, phone, city, state, address, hospital_type
-                """,
-                (
-                    generate_hospital_code(cur),
-                    payload.hospital_name.strip(),
-                    payload.registration_id.strip(),
-                    payload.phone.strip(),
-                    payload.city.strip(),
-                    payload.state.strip(),
-                    payload.address.strip(),
-                    payload.hospital_type.strip(),
-                ),
-            )
-            hospital_row = cur.fetchone()
-            hospital_id = hospital_row[0]
-
-            cur.execute(
-                """
-                INSERT INTO admins (email, password, hospital_id)
-                VALUES (%s, %s, %s)
-                RETURNING admin_id
-                """,
-                (email, payload.password, hospital_id),
-            )
-            admin_id = cur.fetchone()[0]
-            conn.commit()
+                cur.execute(
+                    """
+                    INSERT INTO admins (email, password, hospital_id)
+                    VALUES (%s, %s, %s)
+                    RETURNING admin_id
+                    """,
+                    (email, payload.password, hospital_id),
+                )
+                admin_id = cur.fetchone()[0]
+                conn.commit()
+            except Exception as exc:
+                conn.rollback()
+                if getattr(exc, "pgcode", None) == "23505":
+                    if "admins_email_key" in str(exc):
+                        raise HTTPException(status_code=409, detail="Admin email already exists. Use another email for a new hospital.")
+                    if "hospitals_registration_id_key" in str(exc):
+                        raise HTTPException(status_code=409, detail="Registration ID already exists.")
+                    if "idx_hospitals_hospital_code" in str(exc) or "hospitals_hospital_code_key" in str(exc):
+                        raise HTTPException(status_code=409, detail="Hospital ID conflict. Please retry registration.")
+                    raise HTTPException(status_code=409, detail="Duplicate hospital/admin details.")
+                raise
 
     hospital_keys = [
         "hospital_id",
@@ -1267,6 +1487,16 @@ def notify_reply_ready(payload: NotificationPayload):
 
 @app.post("/prescriptions", status_code=201)
 def save_prescription(payload: PrescriptionPayload):
+    normalized_email = ensure_email(payload.patient_email)
+    symptom_id = (payload.symptom_id or "").strip()
+    medicines = (payload.medicines or "").strip()
+    tests = (payload.tests or "").strip()
+    advice = (payload.advice or "").strip()
+    if not symptom_id:
+        raise HTTPException(status_code=400, detail="Missing symptom_id")
+    if not (medicines or tests or advice):
+        raise HTTPException(status_code=400, detail="Prescription cannot be empty")
+
     with db_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -1278,29 +1508,76 @@ def save_prescription(payload: PrescriptionPayload):
                     medicines TEXT,
                     tests TEXT,
                     advice TEXT,
+                    is_explicit_save BOOLEAN NOT NULL DEFAULT FALSE,
                     language TEXT,
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
                 """
             )
+            cur.execute("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS is_explicit_save BOOLEAN NOT NULL DEFAULT FALSE")
             cur.execute(
                 """
-                INSERT INTO prescriptions (symptom_id, patient_email, medicines, tests, advice, language)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO prescriptions (symptom_id, patient_email, medicines, tests, advice, is_explicit_save, language)
+                VALUES (%s, %s, %s, %s, %s, TRUE, %s)
                 RETURNING prescription_id
                 """,
                 (
-                    payload.symptom_id,
-                    payload.patient_email,
-                    payload.medicines,
-                    payload.tests,
-                    payload.advice,
+                    symptom_id,
+                    normalized_email,
+                    medicines,
+                    tests,
+                    advice,
                     payload.language,
                 ),
             )
             pid = cur.fetchone()[0]
             conn.commit()
             return {"saved": True, "prescription_id": pid}
+
+
+@app.get("/prescriptions")
+def list_saved_prescriptions(patient_email: str):
+    normalized_email = ensure_email(patient_email)
+    with db_conn() as conn:
+        with conn.cursor() as cur:
+            ensure_symptom_tables(cur)
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS prescriptions (
+                    prescription_id BIGSERIAL PRIMARY KEY,
+                    symptom_id TEXT,
+                    patient_email TEXT,
+                    medicines TEXT,
+                    tests TEXT,
+                    advice TEXT,
+                    is_explicit_save BOOLEAN NOT NULL DEFAULT FALSE,
+                    language TEXT,
+                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                )
+                """
+            )
+            cur.execute("ALTER TABLE prescriptions ADD COLUMN IF NOT EXISTS is_explicit_save BOOLEAN NOT NULL DEFAULT FALSE")
+            cur.execute(
+                """
+                SELECT p.prescription_id,
+                       p.symptom_id,
+                       COALESCE(sr.symptom_text, ''),
+                       COALESCE(p.medicines, ''),
+                       COALESCE(p.tests, ''),
+                       COALESCE(p.advice, ''),
+                       COALESCE(p.language, 'en'),
+                       p.created_at
+                FROM prescriptions p
+                LEFT JOIN symptom_records sr ON sr.symptom_id = p.symptom_id
+                WHERE LOWER(TRIM(p.patient_email)) = %s
+                                    AND COALESCE(p.is_explicit_save, FALSE) = TRUE
+                ORDER BY p.created_at DESC
+                """,
+                (normalized_email,),
+            )
+            rows = cur.fetchall()
+    keys = ["prescription_id", "symptom_id", "symptom_text", "medicines", "tests", "advice", "language", "created_at"]
+    return [dict(zip(keys, row)) for row in rows]
 
 
 @app.get("/departments")
@@ -1332,6 +1609,115 @@ def list_doctors(hospital_id: int | None = None):
             conn.commit()
 
     keys = ["doctor_id", "name", "department", "experience_years", "hospital_id", "qualification", "languages_spoken", "is_available", "phone", "email"]
+    return [dict(zip(keys, row)) for row in rows]
+
+
+@app.get("/hospital-records/doctors")
+def list_hospital_doctor_records(hospital_id: int, department: str | None = None):
+    with db_conn() as conn:
+        with conn.cursor() as cur:
+            ensure_hospital_tables(cur)
+            ensure_symptom_tables(cur)
+            params: list[Any] = [hospital_id]
+            where = "WHERE d.hospital_id = %s"
+            if department and str(department).strip():
+                normalized_department = normalize_department_name(department)
+                where += " AND LOWER(TRIM(d.department)) = LOWER(TRIM(%s))"
+                params.append(normalized_department)
+
+            cur.execute(
+                f"""
+                SELECT d.doctor_id,
+                       d.name,
+                       d.department,
+                       d.experience_years,
+                      d.email,
+                      d.phone,
+                      d.qualification,
+                      d.languages_spoken,
+                       d.is_available,
+                       COUNT(DISTINCT sr.symptom_id) FILTER (WHERE sr.status = 'replied')::INT AS treated_count
+                FROM doctors d
+                LEFT JOIN symptom_records sr
+                       ON sr.doctor_id = d.doctor_id
+                {where}
+                  GROUP BY d.doctor_id, d.name, d.department, d.experience_years, d.email, d.phone, d.qualification, d.languages_spoken, d.is_available
+                ORDER BY treated_count DESC, d.name ASC
+                """,
+                tuple(params),
+            )
+            rows = cur.fetchall()
+            keys = [
+             "doctor_id",
+             "name",
+             "department",
+             "experience_years",
+             "email",
+             "phone",
+             "qualification",
+             "languages_spoken",
+             "is_available",
+             "treated_count",
+            ]
+    return [dict(zip(keys, row)) for row in rows]
+
+
+@app.get("/hospital-records/doctors/{doctor_id}/patients")
+def list_doctor_treated_patients(doctor_id: int, hospital_id: int):
+    with db_conn() as conn:
+        with conn.cursor() as cur:
+            ensure_hospital_tables(cur)
+            ensure_symptom_tables(cur)
+            cur.execute(
+                """
+                SELECT 1
+                FROM doctors
+                WHERE doctor_id = %s AND hospital_id = %s
+                LIMIT 1
+                """,
+                (doctor_id, hospital_id),
+            )
+            if not cur.fetchone():
+                raise HTTPException(status_code=404, detail="Doctor not found for this hospital.")
+
+            cur.execute(
+                """
+                SELECT sr.symptom_id,
+                       sr.patient_name,
+                       sr.patient_age,
+                       sr.patient_gender,
+                       sr.symptom_text,
+                       COALESCE(MAX(CASE WHEN rsp.response_type = 'medicine' THEN rsp.response_text END), '') AS medicines,
+                       COALESCE(MAX(CASE WHEN rsp.response_type = 'test' THEN rsp.response_text END), '') AS tests,
+                       COALESCE(MAX(CASE WHEN rsp.response_type = 'advice' THEN rsp.response_text END), '') AS advice,
+                       COALESCE(MAX(CASE WHEN rsp.response_type = 'reason' THEN rsp.response_text END), '') AS reason,
+                      COALESCE(sr.replied_at, sr.created_at) AS treated_at,
+                      sr.replied_at,
+                      sr.created_at
+                FROM symptom_records sr
+                LEFT JOIN symptom_responses rsp ON rsp.symptom_id = sr.symptom_id
+                WHERE sr.doctor_id = %s
+                  AND sr.status = 'replied'
+                  GROUP BY sr.symptom_id, sr.patient_name, sr.patient_age, sr.patient_gender, sr.symptom_text, sr.replied_at, sr.created_at
+                  ORDER BY treated_at DESC
+                """,
+                (doctor_id,),
+            )
+            rows = cur.fetchall()
+    keys = [
+        "symptom_id",
+        "patient_name",
+        "patient_age",
+        "patient_gender",
+        "symptom_text",
+        "medicines",
+        "tests",
+        "advice",
+        "reason",
+        "treated_at",
+        "replied_at",
+        "created_at",
+    ]
     return [dict(zip(keys, row)) for row in rows]
 
 
@@ -1420,35 +1806,14 @@ def doctor_self_register(payload: DoctorSelfRegisterPayload):
                     detail="This doctor is not approved by admin yet. Please contact your hospital admin.",
                 )
 
-            if normalize_department_name(name_row[2]) != normalized_department or int(name_row[3] or 0) != int(payload.experience_years):
-                raise HTTPException(
-                    status_code=400,
-                    detail="Details do not match admin-approved records for this doctor.",
-                )
-
-            cur.execute(
-                """
-                SELECT doctor_id, name, department, experience_years, hospital_id, qualification,
-                       languages_spoken, is_available, phone, email, password
-                FROM doctors
-                WHERE hospital_id = %s
-                  AND LOWER(TRIM(name)) = LOWER(TRIM(%s))
-                  AND department = %s
-                  AND experience_years = %s
-                LIMIT 1
-                """,
-                (hospital_id, normalized_name, normalized_department, payload.experience_years),
-            )
-            row = cur.fetchone()
-            if not row:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Details do not match admin-approved records for this doctor.",
-                )
+            approved_department = normalize_department_name(name_row[2])
+            approved_experience = int(name_row[3] or 0)
+            row = name_row
 
             saved_email = (row[9] or "").strip().lower()
             saved_password = (row[10] or "").strip()
-            if saved_email and saved_password:
+            is_registered = bool(saved_email and saved_password)
+            if is_registered:
                 credential_match = saved_email == email and saved_password == payload.password
                 previous_match = previous_email == saved_email and previous_password == saved_password
                 if not credential_match and not previous_match:
@@ -1456,6 +1821,15 @@ def doctor_self_register(payload: DoctorSelfRegisterPayload):
                         status_code=409,
                         detail="This doctor is already registered. Login with current credentials before updating details.",
                     )
+            else:
+                if approved_department != normalized_department or approved_experience != int(payload.experience_years):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Details do not match admin-approved records for this doctor.",
+                    )
+
+            updated_department = normalized_department if is_registered else approved_department
+            updated_experience = int(payload.experience_years) if is_registered else approved_experience
 
             try:
                 cur.execute(
@@ -1463,6 +1837,8 @@ def doctor_self_register(payload: DoctorSelfRegisterPayload):
                     UPDATE doctors
                     SET email = %s,
                         password = %s,
+                        department = %s,
+                        experience_years = %s,
                         phone = COALESCE(NULLIF(%s, ''), phone)
                     WHERE doctor_id = %s
                     RETURNING doctor_id, name, department, experience_years, hospital_id, qualification, languages_spoken, is_available, phone, email
@@ -1470,6 +1846,8 @@ def doctor_self_register(payload: DoctorSelfRegisterPayload):
                     (
                         email,
                         payload.password,
+                        updated_department,
+                        updated_experience,
                         payload.phone or "",
                         row[0],
                     ),
@@ -1686,7 +2064,8 @@ def list_symptom_records(status: str | None = None, doctor_id: int | None = None
             base = """
                 SELECT symptom_id, patient_name, patient_age, patient_gender, patient_contact,
                        patient_location, patient_email, symptom_text, doctor_summary, duration_days, urgency, department,
-                       language, status, doctor_id, doctor_name, reviewed_by_doctor_id, review_locked_at, reply_access_token, created_at, replied_at
+                       language, status, doctor_id, doctor_name, reviewed_by_doctor_id, review_locked_at, reply_access_token, created_at, replied_at,
+                       GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (NOW() - created_at)) / 60))::INT AS waiting_minutes
                 FROM symptom_records
             """
             params: list[Any] = []
@@ -1734,6 +2113,7 @@ def list_symptom_records(status: str | None = None, doctor_id: int | None = None
         "reply_access_token",
         "created_at",
         "replied_at",
+        "waiting_minutes",
     ]
     return [dict(zip(keys, row)) for row in rows]
 
@@ -1743,6 +2123,11 @@ def create_symptom_record(payload: SymptomCreatePayload):
     symptom_id = (payload.symptom_id or f"symptom-{int(time.time() * 1000)}").strip()
     if not symptom_id:
         raise HTTPException(status_code=400, detail="symptom_id is required")
+    if not is_medical_symptom_text(payload.symptom_text):
+        raise HTTPException(
+            status_code=400,
+            detail="invalid details",
+        )
 
     with db_conn() as conn:
         with conn.cursor() as cur:

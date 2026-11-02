@@ -61,6 +61,10 @@ function isTransientNetworkError(message) {
   );
 }
 
+function isInvalidDetailsError(message) {
+  return String(message || '').trim().toLowerCase() === 'invalid details';
+}
+
 export default function SymptomRecording() {
   const navigate = useNavigate();
   const { bcp47, t, language } = useLanguage();
@@ -194,6 +198,8 @@ export default function SymptomRecording() {
       const message = String(submitErr?.message || '');
       if (isTransientNetworkError(message)) {
         showErrorKey('symptomServerUnreachable');
+      } else if (isInvalidDetailsError(message)) {
+        showErrorKey('invalidDetails');
       } else {
         showErrorKey('symptomSendFailed');
       }

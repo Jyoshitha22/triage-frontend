@@ -77,9 +77,12 @@ export default function DoctorReply() {
   const { speak: speakWithBrowser, cancel: cancelBrowserSpeech } = useSpeechSynthesis();
   const [playing, setPlaying] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [note, setNote] = useState(EMPTY_NOTE);
   const [sourceNote, setSourceNote] = useState(null);
   const [sourceLanguage, setSourceLanguage] = useState('en-IN');
+  const [activeSymptomId, setActiveSymptomId] = useState(session.getActiveSymptomId() || '');
+  const [activePatientEmail, setActivePatientEmail] = useState(session.getPatient()?.email || '');
   const [voiceLanguage, setVoiceLanguage] = useState(bcp47);
   const [translatedLanguage, setTranslatedLanguage] = useState(null);
   const [failedLanguage, setFailedLanguage] = useState(null);
@@ -159,6 +162,8 @@ export default function DoctorReply() {
           '';
         setSourceNote(real);
         setSourceLanguage(detectReplyLanguage(real));
+        setActiveSymptomId((record?.symptom_id || symptomId || '').trim());
+        setActivePatientEmail((record?.patient_email || session.getPatient()?.email || '').trim());
         setDoctorMeta({ name: replyDoctorName, specialty: replyDoctorSpecialty });
         setFromDoctor(true);
       }
@@ -256,23 +261,31 @@ export default function DoctorReply() {
   }, [language, displayedNote, replyReady, playReply, cancelReply]);
 
   const saveNote = async () => {
-    const symptomId = session.getActiveSymptomId();
+    const symptomId = (activeSymptomId || session.getActiveSymptomId() || '').trim();
+    const patientEmail = (activePatientEmail || session.getPatient()?.email || '').trim();
+    const hasContent = Boolean(displayedNote.medicines || displayedNote.tests || displayedNote.advice);
+
+    if (!symptomId || !patientEmail || !hasContent) {
+      setSaveError(t('savePrescriptionFailed'));
+      return;
+    }
+
+    setSaveError('');
     try {
       await api.post('/prescriptions', {
         symptom_id: symptomId,
-        patient_email: session.getPatient()?.email || '',
+        patient_email: patientEmail,
         medicines: displayedNote.medicines || '',
         tests: displayedNote.tests || '',
         advice: displayedNote.advice || '',
         language: language,
       });
+      setSaved(true);
     } catch {
-      // Keep local save confirmation even when backend is temporarily unavailable.
+      setSaveError(t('savePrescriptionFailed'));
     }
-    setSaved(true);
   };
   const goHome = () => { session.clearPending(); session.clearActiveSymptomId(); navigate('/'); };
-  const openSaved = () => navigate('/saved-prescriptions');
 
   return (
     <div className="pd pd--reply-page-scroll">
@@ -331,18 +344,14 @@ export default function DoctorReply() {
               })}
             </div>
             <div className="reply-actions" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', width: '100%' }}>
-              <button type="button" onClick={saveNote} disabled={saved} className={'reply-save-btn ' + (saved ? 'is-saved' : '')} style={{ flex: 1 }}>
+              <button type="button" onClick={saveNote} disabled={saved || !sections.length} className={'reply-save-btn ' + (saved ? 'is-saved' : '')} style={{ flex: 1 }}>
                 {saved ? <><CheckCircle2 size={16} /> {t('prescriptionSaved')}</> : <><Bookmark size={16} /> {t('savePrescription')}</>}
               </button>
               <button type="button" onClick={goHome} className="pd-btn pd-btn--primary reply-home-btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0 }}>
                 {t('backToHome')} <ArrowRight size={18} />
               </button>
             </div>
-            <div style={{ marginTop: '10px' }}>
-              <button type="button" onClick={openSaved} className="pd-btn pd-btn--ghost" style={{ width: '100%' }}>
-                View Saved Prescriptions
-              </button>
-            </div>
+            {saveError && <p role="alert" className="reply-translation-status">{saveError}</p>}
           </section>
         </main>
       </div>

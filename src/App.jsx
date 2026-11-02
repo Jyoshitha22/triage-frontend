@@ -19,8 +19,8 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import PatientList from "./pages/PatientList";
 import RepliedList from "./pages/RepliedList";
 import RecordReply from "./pages/RecordReply";
-import HospitalRecords from "./pages/HospitalRecords";
 import SavedPrescriptions from "./pages/SavedPrescriptions";
+import HospitalRecords from "./pages/HospitalRecords";
 import AppBackground from "./components/AppBackground";
 import AppHeader from "./components/AppHeader.jsx";
 import PatientLanguageScope from "./components/PatientLanguageScope";
@@ -100,7 +100,7 @@ function App() {
           <Route path="/waiting" element={<WaitingForDoctor />} />
           <Route path="/reply" element={<DoctorReply />} />
           <Route path="/reply/:token" element={<DoctorReply />} />
-          <Route path="/saved-prescriptions" element={<SavedPrescriptions />} />
+          <Route path="/saved" element={<SavedPrescriptions />} />
 
           {/* Hospital side: Admin and Doctor */}
           <Route path="/hospital" element={<HospitalRoleSelect />} />
@@ -108,6 +108,7 @@ function App() {
           <Route path="/hospital/admin/register" element={<AdminRegister />} />
           <Route path="/hospital/admin/home" element={<AdminHome />} />
           <Route path="/hospital/admin/edit" element={<EditHospital />} />
+          <Route path="/hospital/admin/records" element={<HospitalRecords />} />
           <Route path="/hospital/doctor" element={<DoctorLogin />} />
           <Route path="/hospital/doctor/register" element={<DoctorRegister />} />
           <Route path="/hospital/specialists" element={<SpecialistDetails />} />
@@ -115,7 +116,6 @@ function App() {
           <Route path="/hospital/patients" element={<PatientList />} />
           <Route path="/hospital/replied" element={<RepliedList />} />
           <Route path="/hospital/reply" element={<RecordReply />} />
-          <Route path="/hospital/records" element={<HospitalRecords />} />
         </Routes>
       </BrowserRouter>
     </LanguageProvider>

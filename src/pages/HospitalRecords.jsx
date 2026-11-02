@@ -11,20 +11,7 @@ function formatDate(value) {
   if (!value) return '-';
   const dt = new Date(value);
   if (Number.isNaN(dt.getTime())) return '-';
-  return dt.toLocaleDateString();
-}
-
-function formatPrescription(row) {
-  const parts = [];
-  const medicines = String(row?.medicines || '').trim();
-  const tests = String(row?.tests || '').trim();
-  const advice = String(row?.advice || '').trim();
-  const reason = String(row?.reason || '').trim();
-  if (medicines) parts.push(`Medicines: ${medicines}`);
-  if (tests) parts.push(`Tests: ${tests}`);
-  if (advice) parts.push(`Advice: ${advice}`);
-  if (reason) parts.push(`Reason: ${reason}`);
-  return parts.length ? parts.join(' | ') : '-';
+  return dt.toLocaleString();
 }
 
 export default function HospitalRecords() {
@@ -175,7 +162,7 @@ export default function HospitalRecords() {
                   <article key={row.symptom_id} className="hospital-records__patient-row">
                     <p><strong>{row.patient_name}</strong> ({row.patient_age || '-'} · {row.patient_gender || '-'})</p>
                     <p><b>Symptom:</b> {row.symptom_text || '-'}</p>
-                    <p><b>Prescription:</b> {formatPrescription(row)}</p>
+                    <p><b>Precaution:</b> {row.advice || row.reason || '-'}</p>
                     <p><b>Treated date:</b> {formatDate(row.treated_at || row.replied_at || row.created_at)}</p>
                   </article>
                 ))}

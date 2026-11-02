@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Plus, X, Pencil, Check, AlertCircle, ChevronLeft, Power } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
@@ -51,23 +51,46 @@ export default function SpecialistDetails() {
   const [error, setError] = useState(null);
   const [rosterLoadError, setRosterLoadError] = useState('');
 
+  const loadRoster = useCallback(async () => {
+    if (!hospitalId) return;
+    try {
+      const docs = await api.get(`/doctors?hospital_id=${hospitalId}`);
+      setRoster(docs || []);
+      setRosterLoadError('');
+    } catch (loadErr) {
+      setRosterLoadError(String(loadErr?.message || 'Could not load specialists right now.'));
+    }
+  }, [hospitalId]);
+
   useEffect(() => {
     if (!adminId || !hospitalId) { navigate('/hospital/admin', { replace: true }); return; }
     Promise.all([
       api.get('/departments').catch(() => ({ departments: DEFAULT_DEPARTMENTS })),
-      api.get(`/doctors?hospital_id=${hospitalId}`).catch((loadErr) => {
-        setRosterLoadError(String(loadErr?.message || 'Could not load specialists right now.'));
-        return [];
-      }),
+      loadRoster().then(() => null),
     ])
-      .then(([deps, docs]) => {
+      .then(([deps]) => {
         const dList = deps?.departments || DEFAULT_DEPARTMENTS;
         setDepartments(dList);
         setDraft((d) => ({ ...d, department: dList[0] }));
-        setRoster(docs || []);
       })
       .finally(() => setLoading(false));
-  }, [adminId, hospitalId, navigate]);
+  }, [adminId, hospitalId, navigate, loadRoster]);
+
+  useEffect(() => {
+    if (!adminId || !hospitalId) return undefined;
+    const refresh = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      loadRoster();
+    };
+    refresh();
+    const timer = setInterval(refresh, 10000);
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [adminId, hospitalId, loadRoster]);
 
   const toggleLang = (list, code, setter) => {
     setter(list.includes(code) ? list.filter((c) => c !== code) : [...list, code]);
