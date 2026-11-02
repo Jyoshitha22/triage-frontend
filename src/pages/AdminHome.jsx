@@ -80,6 +80,11 @@ export default function AdminHome() {
             <span>Manage Specialists</span>
             <span className="admin-home__action-sub">Add, edit, or remove doctors directly</span>
           </button>
+          <button onClick={() => navigate('/hospital/records')} className="admin-home__action-card">
+            <Users size={20} />
+            <span>Hospital Records</span>
+            <span className="admin-home__action-sub">View doctors and treated patient history</span>
+          </button>
         </div>
 
         <button onClick={logout} className="admin-home__logout"><LogOut size={14} /> Log out</button>

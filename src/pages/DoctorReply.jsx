@@ -272,6 +272,7 @@ export default function DoctorReply() {
     setSaved(true);
   };
   const goHome = () => { session.clearPending(); session.clearActiveSymptomId(); navigate('/'); };
+  const openSaved = () => navigate('/saved-prescriptions');
 
   return (
     <div className="pd pd--reply-page-scroll">
@@ -335,6 +336,11 @@ export default function DoctorReply() {
               </button>
               <button type="button" onClick={goHome} className="pd-btn pd-btn--primary reply-home-btn" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: 0 }}>
                 {t('backToHome')} <ArrowRight size={18} />
+              </button>
+            </div>
+            <div style={{ marginTop: '10px' }}>
+              <button type="button" onClick={openSaved} className="pd-btn pd-btn--ghost" style={{ width: '100%' }}>
+                View Saved Prescriptions
               </button>
             </div>
           </section>

@@ -418,6 +418,24 @@
   margin-top: 2px;
 }
 
+/* Keep the email card bottom tight to the Send Verification button. */
+.patient-email-card.pd-card {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: auto;
+  max-height: none;
+  padding-bottom: 2px;
+}
+
+.patient-email-card:not(.has-code) .patient-email-form {
+  flex: 0 0 auto;
+}
+
+.patient-email-card .patient-email-form .pd-submit {
+  position: static;
+  margin-bottom: 0;
+}
+
 @media (min-width: 801px) {
   .pd.pd--page-scroll {
     height: auto;

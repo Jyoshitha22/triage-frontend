@@ -1,0 +1,14 @@
+.saved-page { min-height: calc(100vh - 96px); background: linear-gradient(180deg, #f5fcf8 0%, #e9f6ef 100%); }
+.saved-page__body { display: grid; grid-template-columns: clamp(190px, 17.5vw, 270px) minmax(0, 1fr); gap: 16px; padding: 10px 20px 24px; }
+.saved-page__main { display: flex; justify-content: center; }
+.saved-page__card { width: min(860px, 100%); border-radius: 22px; background: #fbfefc; box-shadow: 0 22px 60px -30px rgba(30, 100, 70, 0.4); padding: 20px; }
+.saved-page__head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.saved-page__icon { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #d9efe4; color: #12614a; }
+.saved-page__title { margin: 0; color: #12614a; font-size: 26px; }
+.saved-page__sub { margin: 4px 0 0; color: #6f9a8b; }
+.saved-page__empty { color: #5f7d73; margin: 14px 0; }
+.saved-page__list { display: grid; gap: 12px; }
+.saved-page__item { border: 1px solid #d8e9e1; border-radius: 14px; background: #fff; padding: 12px; }
+.saved-page__item p { margin: 6px 0; color: #0f4a3a; display: flex; gap: 8px; align-items: flex-start; }
+.saved-page__symptom { font-weight: 600; }
+@media (max-width: 900px) { .saved-page__body { grid-template-columns: 1fr; } }
