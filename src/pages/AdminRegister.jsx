@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Building2, ArrowRight, AlertCircle, ChevronLeft } from 'lucide-react';
@@ -24,35 +24,42 @@ const FIELDS = [
 export default function AdminRegister() {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const savedDraft = session.getAdminRegistrationDraft();
-  const savedAdmin = session.getAdmin();
-  const loginPrefill = session.getAdminLoginPrefill() || {};
-  const draft = {
-    ...(savedAdmin?.hospital || {}),
-    ...(state?.registeredHospital || {}),
-    ...(savedDraft || {}),
-  };
-  const hasRegisteredData = Boolean(
-    state?.registeredHospital ||
-    savedDraft?.isRegistered ||
-    savedAdmin?.hospital?.hospital_id ||
-    savedAdmin?.hospital_id
-  );
+  const hasRegisteredData = Boolean(state?.registeredHospital?.hospital_id);
   const [values, setValues] = useState({
-    hospital_name: draft.hospital_name || '',
-    registration_id: draft.registration_id || '',
-    phone: draft.phone || '',
-    city: draft.city || '',
-    state: draft.state || '',
+    hospital_name: '',
+    registration_id: '',
+    phone: '',
+    city: '',
+    state: '',
   });
-  const [address, setAddress] = useState(draft.address || '');
-  const [hospitalType, setHospitalType] = useState(draft.hospital_type || HOSPITAL_TYPES[1]);
-  const [email, setEmail] = useState(draft.email || loginPrefill.email || state?.email || '');
+  const [address, setAddress] = useState('');
+  const [hospitalType, setHospitalType] = useState(HOSPITAL_TYPES[1]);
+  const [email, setEmail] = useState('');
   const [emailTouched, setEmailTouched] = useState(false);
-  const [password, setPassword] = useState(draft.password || loginPrefill.password || state?.password || '');
+  const [password, setPassword] = useState('');
   const [attempted, setAttempted] = useState(false);
   const [serverError, setServerError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    session.clearAdminRegistrationDraft();
+    session.clearAdminLoginPrefill();
+    // Browser credential managers can repopulate after initial paint.
+    const clearTimer = setTimeout(() => {
+      setValues({
+        hospital_name: '',
+        registration_id: '',
+        phone: '',
+        city: '',
+        state: '',
+      });
+      setAddress('');
+      setHospitalType(HOSPITAL_TYPES[1]);
+      setEmail('');
+      setPassword('');
+    }, 50);
+    return () => clearTimeout(clearTimer);
+  }, []);
 
   const set = (key, v) => setValues((prev) => ({ ...prev, [key]: v }));
   const fieldsValid = FIELDS.every((f) => f.validate(values[f.key] || ''));
@@ -171,12 +178,12 @@ export default function AdminRegister() {
           <div className="hospital-registration__grid">
             <div>
               <FieldLabel>Email</FieldLabel>
-              <input type="email" autoComplete="email" maxLength={254} value={email} onBlur={() => setEmailTouched(true)} onChange={(e) => { setEmail(e.target.value); setEmailTouched(true); }} placeholder="admin@hospital.org" className={`hospital-registration__input ${hasRegisteredData ? 'hospital-registration__input--locked' : ''}`} readOnly={hasRegisteredData} />
+              <input type="email" autoComplete="off" name="hospital-admin-register-email" maxLength={254} value={email} onBlur={() => setEmailTouched(true)} onChange={(e) => { setEmail(e.target.value); setEmailTouched(true); }} placeholder="admin@hospital.org" className={`hospital-registration__input ${hasRegisteredData ? 'hospital-registration__input--locked' : ''}`} readOnly={hasRegisteredData} />
               {(attempted || emailTouched) && !emailValid && <p className="field-error"><AlertCircle size={12} /> Enter a valid email address.</p>}
             </div>
             <div>
               <FieldLabel>Password</FieldLabel>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" className={`hospital-registration__input ${hasRegisteredData ? 'hospital-registration__input--locked' : ''}`} readOnly={hasRegisteredData} />
+              <input type="password" autoComplete="new-password" name="hospital-admin-register-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" className={`hospital-registration__input ${hasRegisteredData ? 'hospital-registration__input--locked' : ''}`} readOnly={hasRegisteredData} />
               {attempted && !passwordValid && <p className="field-error"><AlertCircle size={12} /> 8+ characters, with an uppercase letter, a number, and a symbol.</p>}
             </div>
           </div>

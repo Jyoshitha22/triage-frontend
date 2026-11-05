@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, ArrowRight, AlertCircle, ChevronLeft } from 'lucide-react';
 import HospitalShell from '../components/HospitalShell';
@@ -49,24 +49,20 @@ function isNumericHospitalCode(value) {
 
 export default function DoctorRegister() {
   const navigate = useNavigate();
-  const doctorDraft = useMemo(() => session.getDoctorRegistrationDraft() || {}, []);
-  const activeDoctor = useMemo(() => session.getDoctor() || {}, []);
-  const mergedDoctorSetup = useMemo(
-    () => ({
-      doctorId: doctorDraft.doctorId ?? activeDoctor.doctor_id ?? null,
-      name: activeDoctor.name || doctorDraft.name || '',
-      phone: activeDoctor.phone || doctorDraft.phone || '',
-      department: activeDoctor.department || doctorDraft.department || '',
-      experience: String(activeDoctor.experience_years || doctorDraft.experience || ''),
-      hospitalCode: String(activeDoctor.hospital_code || activeDoctor.hospital_id || doctorDraft.hospitalCode || ''),
-      email: doctorDraft.email || activeDoctor.email || '',
-      password: doctorDraft.password || '',
-      isRegistered: Boolean(doctorDraft.isRegistered || activeDoctor.doctor_id),
-      previousEmail: (doctorDraft.previousEmail || doctorDraft.email || activeDoctor.email || '').trim().toLowerCase(),
-      previousPassword: doctorDraft.previousPassword || doctorDraft.password || '',
-    }),
-    [doctorDraft, activeDoctor],
-  );
+  const doctorDraft = {};
+  const mergedDoctorSetup = {
+    doctorId: null,
+    name: '',
+    phone: '',
+    department: '',
+    experience: '',
+    hospitalCode: '',
+    email: '',
+    password: '',
+    isRegistered: false,
+    previousEmail: '',
+    previousPassword: '',
+  };
   const hasPrefilledSetup = Boolean(
     mergedDoctorSetup.name ||
     mergedDoctorSetup.department ||
@@ -92,6 +88,17 @@ export default function DoctorRegister() {
   const [liveValidationError, setLiveValidationError] = useState('');
   const [liveValidationCode, setLiveValidationCode] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    session.clearDoctorLoginPrefill();
+    session.clearDoctorRegistrationDraft();
+    // Browser credential managers can repopulate after initial render.
+    const clearTimer = setTimeout(() => {
+      setEmail('');
+      setPassword('');
+    }, 50);
+    return () => clearTimeout(clearTimer);
+  }, []);
 
   useEffect(() => {
     const normalizedEmail = String(mergedDoctorSetup.email || '').trim().toLowerCase();
@@ -503,7 +510,8 @@ export default function DoctorRegister() {
                   <label className="hospital-registration__field-label">Email</label>
                   <input
                     type="email"
-                    autoComplete="email"
+                    autoComplete="off"
+                    name="doctor-register-login-email"
                     maxLength={254}
                     value={email}
                     onBlur={() => setEmailTouched(true)}
@@ -526,6 +534,8 @@ export default function DoctorRegister() {
                   <label className="hospital-registration__field-label">Password</label>
                   <input
                     type="password"
+                    autoComplete="new-password"
+                    name="doctor-register-login-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="At least 8 characters"

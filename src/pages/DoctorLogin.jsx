@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ShieldCheck, AlertCircle, Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import DoctorArtwork from '../components/DoctorArtwork';
@@ -18,13 +18,21 @@ import './DoctorStaff.css';
  */
 export default function DoctorLogin() {
   const navigate = useNavigate();
-  const loginPrefill = useMemo(() => session.getDoctorLoginPrefill() || {}, []);
-  const doctorDraft = useMemo(() => session.getDoctorRegistrationDraft() || {}, []);
-  const [email, setEmail] = useState(loginPrefill.email || doctorDraft.email || '');
-  const [password, setPassword] = useState(loginPrefill.password || doctorDraft.password || '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    session.clearDoctorLoginPrefill();
+    // Some browsers re-apply saved credentials after initial render.
+    const clearTimer = setTimeout(() => {
+      setEmail('');
+      setPassword('');
+    }, 50);
+    return () => clearTimeout(clearTimer);
+  }, []);
 
   const emailValid = isValidEmail(email);
   const passwordValid = isValidPassword(password);
@@ -38,7 +46,6 @@ export default function DoctorLogin() {
       const doctor = await api.post('/doctors/login', { email, password });
       await saveLocalStaffAccount('doctor', email.trim().toLowerCase(), password, doctor);
       session.saveDoctor(doctor);
-      session.saveDoctorLoginPrefill({ email: email.trim().toLowerCase(), password });
       session.saveDoctorRegistrationDraft({
         ...(session.getDoctorRegistrationDraft() || {}),
         doctorId: doctor.doctor_id || session.getDoctorRegistrationDraft()?.doctorId || null,
@@ -86,7 +93,6 @@ export default function DoctorLogin() {
           return;
         }
         session.saveDoctor(localAccount.profile);
-        session.saveDoctorLoginPrefill({ email: email.trim().toLowerCase(), password });
         session.saveDoctorRegistrationDraft({
           ...(session.getDoctorRegistrationDraft() || {}),
           doctorId: localAccount.profile?.doctor_id || session.getDoctorRegistrationDraft()?.doctorId || null,
@@ -124,7 +130,6 @@ export default function DoctorLogin() {
 
   const goToRegister = async () => {
     const normalizedEmail = email.trim().toLowerCase();
-    session.saveDoctorLoginPrefill({ email: normalizedEmail, password });
     const existingDraft = session.getDoctorRegistrationDraft() || {};
 
     if (isValidEmail(normalizedEmail) && password.trim().length > 0) {
@@ -214,7 +219,8 @@ export default function DoctorLogin() {
             <Mail size={16} className="hospital-login__input-icon" />
             <input
               type="email"
-              autoComplete="email"
+              autoComplete="off"
+              name="doctor-login-email"
               maxLength={254}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -232,6 +238,8 @@ export default function DoctorLogin() {
             <Lock size={16} className="hospital-login__input-icon" />
             <input
               type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              name="doctor-login-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Your password"

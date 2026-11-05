@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, ShieldCheck, AlertCircle, Eye, EyeOff, ChevronLeft } from 'lucide-react';
 import DoctorArtwork from '../components/DoctorArtwork';
@@ -35,12 +35,21 @@ function normalizeAdminForSession(admin) {
 
 export default function AdminLogin() {
   const navigate = useNavigate();
-  const prefill = session.getAdminLoginPrefill() || {};
-  const [email, setEmail] = useState(prefill.email || '');
-  const [password, setPassword] = useState(prefill.password || '');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    session.clearAdminLoginPrefill();
+    // Some browsers re-apply saved credentials after initial render.
+    const clearTimer = setTimeout(() => {
+      setEmail('');
+      setPassword('');
+    }, 50);
+    return () => clearTimeout(clearTimer);
+  }, []);
 
   const emailValid = isValidEmail(email);
   const passwordValid = isValidPassword(password);
@@ -60,7 +69,6 @@ export default function AdminLogin() {
         admin = await api.post('/api/admin/login', { email, password });
       }
       admin = normalizeAdminForSession(admin);
-      session.saveAdminLoginPrefill({ email: email.trim().toLowerCase(), password });
       session.saveAdminRegistrationDraft({
         ...admin.hospital,
         email: email.trim().toLowerCase(),
@@ -84,7 +92,6 @@ export default function AdminLogin() {
         if (valid) {
           const normalizedLocal = normalizeAdminForSession(localAccount.profile);
           session.saveAdmin(normalizedLocal);
-          session.saveAdminLoginPrefill({ email: email.trim().toLowerCase(), password });
           session.saveAdminRegistrationDraft({
             ...(normalizedLocal?.hospital || {}),
             email: email.trim().toLowerCase(),
@@ -111,7 +118,6 @@ export default function AdminLogin() {
 
   const goToRegister = async () => {
     const normalizedEmail = email.trim().toLowerCase();
-    session.saveAdminLoginPrefill({ email: normalizedEmail, password });
     let registeredHospital = null;
 
     if (isValidEmail(normalizedEmail) && isValidPassword(password)) {
@@ -161,7 +167,8 @@ export default function AdminLogin() {
               <Mail size={16} className="hospital-login__input-icon" />
               <input
                 type="email"
-                autoComplete="email"
+                autoComplete="off"
+                name="admin-login-email"
                 maxLength={254}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -179,6 +186,8 @@ export default function AdminLogin() {
               <Lock size={16} className="hospital-login__input-icon" />
               <input
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                name="admin-login-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Your password"

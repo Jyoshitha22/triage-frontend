@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronDown, Home, Languages, HelpCircle, X, Check } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, Home, Languages, HelpCircle, X, Check, Bookmark } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import './PatientSidebar.css';
 
@@ -10,16 +10,30 @@ import './PatientSidebar.css';
  */
 export default function PatientSidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { language, setLanguage, languages, t } = useLanguage();
   const [langOpen, setLangOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const current = languages.find((l) => l.code === language);
+  const onSavedPage = location.pathname === '/saved';
 
   return (
     <>
       <nav className="psb" aria-label={t('menuLabel')}>
-        <button type="button" className="psb__item psb__item--active" onClick={() => navigate('/')}>
+        <button
+          type="button"
+          className={`psb__item ${onSavedPage ? '' : 'psb__item--active'}`}
+          onClick={() => navigate('/')}
+        >
           <Home size={28} /> <span>{t('homeLabel')}</span>
+        </button>
+
+        <button
+          type="button"
+          className={`psb__item ${onSavedPage ? 'psb__item--active' : ''}`}
+          onClick={() => navigate('/saved')}
+        >
+          <Bookmark size={28} /> <span>{t('savedMenuLabel')}</span>
         </button>
 
         <button type="button" className="psb__item" onClick={() => setLangOpen((o) => !o)} aria-label={t('languageLabel')} aria-haspopup="listbox" aria-expanded={langOpen}>

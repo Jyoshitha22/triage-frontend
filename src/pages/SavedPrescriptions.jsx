@@ -48,17 +48,17 @@ export default function SavedPrescriptions() {
               </div>
             </div>
 
-            {loading && <p className="saved-page__empty">Loading...</p>}
+            {loading && <p className="saved-page__empty">{t('savedLoading')}</p>}
             {!loading && items.length === 0 && <p className="saved-page__empty">{t('savedEmpty')}</p>}
 
             {!loading && items.length > 0 && (
               <div className="saved-page__list">
                 {items.map((row) => (
                   <article key={row.prescription_id} className="saved-page__item">
-                    <p className="saved-page__symptom"><Stethoscope size={14} /> {row.symptom_text || '-'}</p>
-                    <p><Pill size={14} /> {row.medicines || '-'}</p>
-                    <p><ClipboardList size={14} /> {row.tests || '-'}</p>
-                    <p><MessageSquare size={14} /> {row.advice || '-'}</p>
+                    <p className="saved-page__symptom"><Stethoscope size={14} /> <strong>{t('savedSymptomsLabel')}:</strong> {row.symptom_text || '-'}</p>
+                    <p><Pill size={14} /> <strong>{t('savedMedicinesLabel')}:</strong> {row.medicines || '-'}</p>
+                    <p><ClipboardList size={14} /> <strong>{t('savedTestsLabel')}:</strong> {row.tests || '-'}</p>
+                    <p><MessageSquare size={14} /> <strong>{t('savedAdviceLabel')}:</strong> {row.advice || '-'}</p>
                   </article>
                 ))}
               </div>

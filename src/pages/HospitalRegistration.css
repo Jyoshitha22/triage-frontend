@@ -43,6 +43,51 @@
 .hospital-registration__input:focus, .hospital-registration__textarea:focus { border-color: var(--color-gold); box-shadow: 0 0 0 2px rgba(16,185,129,0.3); }
 .hospital-registration__input::placeholder, .hospital-registration__textarea::placeholder { color: rgba(92,107,100,0.5); }
 
+.hospital-registration__password-wrap {
+  position: relative;
+}
+
+.hospital-registration__input--password {
+  padding-right: 42px;
+}
+
+.hospital-registration__password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--color-slate);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.hospital-registration__password-toggle:hover {
+  color: var(--color-navy);
+}
+
+.hospital-registration__actions {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.hospital-registration__back-validation {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b42318;
+}
+
 .hospital-registration__input--locked {
   opacity: 1;
   color: var(--color-navy);
@@ -60,4 +105,4 @@ select.hospital-registration__input--locked:disabled {
   border-color: rgba(14,107,71,0.22);
 }
 
-.hospital-registration__footer { margin-top: 32px; display: flex; justify-content: flex-end; }
+.hospital-registration__footer { display: flex; justify-content: flex-end; }
