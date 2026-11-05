@@ -265,6 +265,11 @@ class SymptomCreatePayload(BaseModel):
     language: str | None = "en"
 
 
+class SymptomValidationPayload(BaseModel):
+    symptom_text: str
+    language: str | None = "en"
+
+
 def sanitize_lang(language: str) -> str:
     return language if language in {"en", "te", "hi", "ta"} else "en"
 
@@ -741,158 +746,224 @@ def load_keyword_training_data() -> dict[str, list[str]]:
 
 TRAINED_KEYWORDS = load_keyword_training_data()
 
-NON_MEDICAL_PHRASES = {
-    "heart break",
-    "heartbreak",
-    "love failure",
-    "breakup",
-    "break up",
-    "relationship issue",
-    "relationship problem",
-    "heart broken",
-    "broken heart",
-    "ప్రీతి విఫలం",
-    "ప్రేమ విఫలం",
-    "లవ్ ఫెయిల్యూర్",
-    "दिल टूट गया",
-    "दिल टूटना",
-    "प्यार में धोखा",
-    "लव फेलियर",
-    "காதல் தோல்வி",
-    "காதல் பிரச்சனை",
-    "மனசு உடைந்தது",
+SYMPTOM_CLASSIFICATIONS = {
+    "PERSONAL_SYMPTOM",
+    "MEDICAL_COMPLAINT",
+    "EMERGENCY",
+    "PAST_SYMPTOM",
+    "NEGATED_SYMPTOM",
+    "OTHER_PERSON_SYMPTOM",
+    "GENERAL_MEDICAL_INFORMATION",
+    "NON_MEDICAL",
+    "UNCLEAR",
 }
 
-NON_MEDICAL_TOKENS = {
-    "love",
-    "lover",
-    "girlfriend",
-    "boyfriend",
-    "relationship",
-    "romance",
-    "sad",
-    "depressed",
-    "depression",
-    "anxiety",
-    "stress",
-    "stressed",
-    "failed",
-    "failure",
-    "breakup",
-    "break",
-    "heartbroken",
-    "ప్రేమ",
-    "లవ్",
-    "బ్రేకప్",
-    "బాధ",
-    "విషాదం",
-    "दुख",
-    "प्यार",
-    "मोहब्बत",
-    "ब्रेकअप",
-    "तनाव",
-    "उदासी",
-    "காதல்",
-    "பிரேக்அப்",
-    "துக்கம்",
-    "மனஅழுத்தம்",
+ACCEPTED_TRIAGE_CLASSIFICATIONS = {"PERSONAL_SYMPTOM", "MEDICAL_COMPLAINT"}
+BLOCKED_TRIAGE_CLASSIFICATIONS = SYMPTOM_CLASSIFICATIONS.difference(ACCEPTED_TRIAGE_CLASSIFICATIONS)
+
+MEDICAL_TOPIC_TERMS = {
+    "heart", "chest", "pain", "fever", "cough", "stomach", "breath", "dizzy", "vomit", "headache", "nausea",
+    "గుండె", "హృదయం", "ఛాతి", "నొప్పి", "జ్వరం", "దగ్గు", "కడుపు", "తల", "తలనొప్పి", "శ్వాస", "వాంతి", "తిరగటం",
+    "दिल", "छाती", "दर्द", "बुखार", "खांसी", "पेट", "सांस", "चक्कर", "उल्टी", "सिर दर्द",
+    "இதயம்", "மார்பு", "வலி", "காய்ச்சல்", "இருமல்", "வயிறு", "மூச்சு", "மயக்கம்", "வாந்தி", "தலைவலி",
 }
 
-EXTRA_MEDICAL_PHRASES = {
-    "head pain",
-    "headache",
-    "migraine",
-    "fever",
-    "cough",
-    "vomiting",
-    "nausea",
-    "breathlessness",
-    "shortness of breath",
-    "chest tightness",
-    "stomach pain",
-    "chest pain",
-    "body pain",
-    "tooth pain",
-    "ear pain",
-    "throat pain",
-    "తల నొప్పి",
-    "తలనొప్పి",
-    "తలనొప్పిగా",
-    "జ్వరం",
-    "జలుబు",
-    "దగ్గు",
-    "నోటికి రుచి తెలియడం లేదు",
-    "రుచి తెలియడం లేదు",
-    "నోటి రుచి పోయింది",
-    "ఛాతి నొప్పి",
-    "కడుపు నొప్పి",
-    "శ్వాస తీసుకోవడంలో ఇబ్బంది",
-    "వాంతులు",
-    "సर्दी",
-    "सिर दर्द",
-    "बुखार",
-    "खांसी",
-    "छाती में दर्द",
-    "पेट दर्द",
-    "सांस लेने में तकलीफ",
-    "उल्टी",
-    "चक्कर",
-    "स्वाद नहीं आ रहा",
-    "मुंह का स्वाद नहीं आ रहा",
-    "தலைவலி",
-    "காய்ச்சல்",
-    "இருமல்",
-    "சளி",
-    "வாயில் சுவை தெரியவில்லை",
-    "சுவை தெரியவில்லை",
-    "மார்பு வலி",
-    "வயிற்று வலி",
-    "மூச்சுத்திணறல்",
-    "வாந்தி",
-    "மயக்கம்",
-    "loss of taste",
-    "cannot taste",
+SYMPTOM_SIGNAL_PHRASES = {
+    "personal": {
+        "en": [
+            "i have", "i am having", "i feel", "i am feeling", "hurts", "pain", "fever", "cough",
+            "shortness of breath", "unable to breathe", "dizzy", "vomiting", "nausea", "chest pain",
+            "stomach hurts", "headache", "beating very fast",
+        ],
+        "te": [
+            "నాకు", "నాకి", "నొప్పి", "నొప్పిగా ఉంది", "జ్వరం", "దగ్గు", "శ్వాస తీసుకోవడంలో ఇబ్బంది",
+            "ఉబ్బసం", "వాంతులు", "తలనొప్పి", "గుండె వేగంగా కొడుతోంది", "తిరుగుతోంది",
+        ],
+        "hi": [
+            "मुझे", "दर्द", "बुखार", "खांसी", "सांस लेने में तकलीफ", "सांस नहीं ले पा रहा",
+            "चक्कर", "उल्टी", "सिर दर्द", "दिल बहुत तेज धड़क रहा", "छाती में दर्द",
+        ],
+        "ta": [
+            "எனக்கு", "வலி", "காய்ச்சல்", "இருமல்", "மூச்சு விட முடியவில்லை", "மூச்சுத்திணறல்",
+            "மயக்கம்", "வாந்தி", "தலைவலி", "இதயம் மிக வேகமாக துடிக்கிறது", "மார்பு வலி",
+        ],
+    },
+    "emergency": {
+        "en": [
+            "severe chest pain", "cannot breathe", "unable to breathe", "shortness of breath", "stroke", "unconscious",
+            "fainted", "severe bleeding", "bleeding heavily", "heart attack",
+        ],
+        "te": [
+            "తీవ్రమైన ఛాతి నొప్పి", "శ్వాస తీసుకోలేకపోతున్నాను", "శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది", "స్ట్రోక్", "స్పృహ లేకుండా",
+            "తీవ్ర రక్తస్రావం", "అధిక రక్తస్రావం", "హార్ట్ అటాక్",
+        ],
+        "hi": [
+            "तेज छाती में दर्द", "गंभीर छाती दर्द", "सांस नहीं ले पा रहा", "सांस लेने में बहुत तकलीफ", "स्ट्रोक",
+            "बेहोश", "बहुत ज्यादा खून बह रहा", "दिल का दौरा",
+        ],
+        "ta": [
+            "கடுமையான மார்பு வலி", "மூச்சு விட முடியவில்லை", "கடுமையான மூச்சுத்திணறல்", "பக்கவாதம்", "மயக்கம் வந்தது",
+            "அதிக இரத்தப்போக்கு", "மாரடைப்பு", "உணர்வு இல்லை",
+        ],
+    },
+    "negation": {
+        "en": ["i don't have", "i do not have", "no", "without", "not having"],
+        "te": ["లేదు", "లేవు", "నాకు లేదు", "నాకు జ్వరం లేదు", "లేకపోవడం"],
+        "hi": ["नहीं है", "मुझे नहीं", "मुझे बुखार नहीं", "नहीं हो रहा"],
+        "ta": ["இல்லை", "எனக்கு இல்லை", "காய்ச்சல் இல்லை", "இல்லாமல்"],
+    },
+    "past": {
+        "en": ["yesterday", "last night", "last week", "had", "earlier", "before"],
+        "te": ["నిన్న", "ముందు", "గత వారం", "ఉండేది", "ఉంది కానీ ఇప్పుడు లేదు"],
+        "hi": ["कल", "पहले", "पिछले हफ्ते", "था", "हो गया था"],
+        "ta": ["நேற்று", "முன்பு", "கடந்த வாரம்", "இருந்தது", "இருந்தது ஆனால் இப்போது இல்லை"],
+    },
+    "other_person": {
+        "en": ["my friend", "my mother", "my father", "my child", "he has", "she has", "they have"],
+        "te": ["నా స్నేహితుడు", "నా స్నేహితుడికి", "నా అమ్మ", "నా నాన్న", "అతనికి", "ఆమెకు", "వారికి"],
+        "hi": ["मेरे दोस्त", "मेरे दोस्त को", "मेरी मां", "मेरे पिता", "उसे", "उसको", "उन्हें"],
+        "ta": ["என் நண்பர்", "என் நண்பருக்கு", "என் அம்மா", "என் அப்பா", "அவருக்கு", "அவளுக்கு", "அவர்களுக்கு"],
+    },
+    "general_info": {
+        "en": ["what is", "learn about", "tell me about", "information", "causes of", "how does"],
+        "te": ["ఏమిటి", "గురించి తెలుసుకోవాలి", "సమాచారం", "ఎలా పనిచేస్తుంది", "వివరాలు"],
+        "hi": ["क्या है", "के बारे में सीखना", "जानकारी", "कैसे काम करता है", "बताइए"],
+        "ta": ["என்ன", "பற்றி கற்க", "தகவல்", "எப்படி வேலை செய்கிறது", "சொல்லுங்கள்"],
+    },
+    "non_medical": {
+        "en": [
+            "hello", "hi", "good morning", "buy a mobile", "heart sank in water", "in a picture", "in the movie",
+            "song", "poem", "joke", "relationship", "breakup", "love story",
+        ],
+        "te": [
+            "హలో", "మొబైల్ కొనాలి", "చిత్రంలో గుండె", "గుండె మునిగింది", "నీళ్లలో గుండె మునిగింది", "పాట", "జోకు", "ప్రేమ", "బ్రేకప్",
+        ],
+        "hi": [
+            "हेलो", "मोबाइल खरीदना", "तस्वीर में दिल", "दिल डूब गया", "पानी में दिल डूब गया", "गाना", "मजाक", "प्यार", "ब्रेकअप",
+        ],
+        "ta": [
+            "ஹலோ", "மொபைல் வாங்க", "படத்தில் இதயம்", "இதயம் மூழ்கியது", "நீரில் இதயம் மூழ்கியது", "பாட்டு", "ஜோக்", "காதல்", "பிரேக்அப்",
+        ],
+    },
 }
 
+EMERGENCY_RED_FLAG_COMBOS = [
+    ("chest", "pain"),
+    ("sansa", "taklif"),
+    ("breath", "unable"),
+    ("ఛాతి", "తీవ్ర"),
+    ("श्वास", "कठिन"),
+    ("மூச்சு", "முடியவில்லை"),
+]
 
-def is_medical_symptom_text(symptom_text: str) -> bool:
-    text = (symptom_text or "").strip().lower()
-    if not text:
-        return False
 
-    non_medical_score = 0
-    for phrase in NON_MEDICAL_PHRASES:
-        if phrase in text:
-            non_medical_score += 2
+def _normalize_text(value: str) -> str:
+    text = (value or "").strip().lower()
+    text = re.sub(r"\s+", " ", text)
+    return text
 
-    # Count medical keyword evidence from trained routing vocabulary.
-    medical_score = 0
+
+def _contains_any(text: str, phrases: list[str] | set[str]) -> bool:
+    return any(phrase and phrase in text for phrase in phrases)
+
+
+def _medical_keyword_hits(text: str) -> int:
+    score = 0
     for keywords in TRAINED_KEYWORDS.values():
         for keyword in keywords:
             normalized_keyword = str(keyword or "").strip().lower()
             if normalized_keyword and normalized_keyword in text:
-                medical_score += 1
+                score += 1
+    return score
 
-    for phrase in EXTRA_MEDICAL_PHRASES:
-        if phrase in text:
-            medical_score += 1
 
-    tokens = [tok for tok in re.split(r"[^\w\u0900-\u097F\u0B80-\u0BFF\u0C00-\u0C7F]+", text) if tok]
-    token_set = set(tokens)
-    non_medical_hits = len(token_set.intersection(NON_MEDICAL_TOKENS))
-    non_medical_score += non_medical_hits
-
-    # Reject clearly non-medical content with no medical evidence.
-    if non_medical_score > 0 and medical_score == 0:
+def _looks_like_gibberish(text: str) -> bool:
+    plain = re.sub(r"\s+", "", text)
+    if not plain:
         return False
-
-    # Reject strongly non-medical messages even if a weak medical token matched
-    # (for example, "heartbreak" matching a generic "heart" keyword).
-    if non_medical_score >= 3 and non_medical_score > medical_score:
+    if plain in {"asdfghjkl", "qwerty", "zxcvbn", "asdf", "qwert"}:
+        return True
+    if len(plain) < 6:
         return False
+    latin_only = re.sub(r"[^a-z]", "", plain)
+    if not latin_only:
+        return False
+    vowel_ratio = sum(ch in "aeiou" for ch in latin_only) / max(len(latin_only), 1)
+    return vowel_ratio < 0.12
 
-    # Require at least one recognized medical symptom/disease clue.
-    return medical_score > 0
+
+def _language_bucket(language: str | None) -> str:
+    normalized = sanitize_lang((language or "en").strip().lower())
+    return normalized
+
+
+def _signals_for(signal_type: str, language: str) -> list[str]:
+    localized = SYMPTOM_SIGNAL_PHRASES.get(signal_type, {})
+    return list(localized.get(language, [])) + list(localized.get("en", []))
+
+
+def classify_symptom_text(symptom_text: str, language: str | None = "en") -> dict[str, Any]:
+    text = _normalize_text(symptom_text)
+    lang = _language_bucket(language)
+    if not text:
+        return {"category": "UNCLEAR", "confidence": 0.99, "reasons": ["empty_input"], "suggested_urgency": "medium"}
+
+    if _looks_like_gibberish(text):
+        return {"category": "NON_MEDICAL", "confidence": 0.98, "reasons": ["gibberish"], "suggested_urgency": "low"}
+
+    if _contains_any(text, _signals_for("non_medical", lang)) and not _contains_any(text, _signals_for("personal", lang)):
+        return {"category": "NON_MEDICAL", "confidence": 0.93, "reasons": ["non_medical_context"], "suggested_urgency": "low"}
+
+    if _contains_any(text, _signals_for("general_info", lang)) and _contains_any(text, MEDICAL_TOPIC_TERMS):
+        return {"category": "GENERAL_MEDICAL_INFORMATION", "confidence": 0.9, "reasons": ["general_medical_question"], "suggested_urgency": "low"}
+
+    emergency_signal = _contains_any(text, _signals_for("emergency", lang))
+    emergency_combo_signal = any(left in text and right in text for left, right in EMERGENCY_RED_FLAG_COMBOS)
+    if emergency_signal or emergency_combo_signal:
+        return {"category": "EMERGENCY", "confidence": 0.98, "reasons": ["emergency_red_flag"], "suggested_urgency": "emergency"}
+
+    medical_hits = _medical_keyword_hits(text)
+    personal_signal = _contains_any(text, _signals_for("personal", lang))
+    other_person_signal = _contains_any(text, _signals_for("other_person", lang))
+    negation_signal = _contains_any(text, _signals_for("negation", lang))
+    past_signal = _contains_any(text, _signals_for("past", lang))
+
+    if negation_signal and (personal_signal or medical_hits > 0):
+        return {"category": "NEGATED_SYMPTOM", "confidence": 0.92, "reasons": ["negated_symptom"], "suggested_urgency": "low"}
+
+    if past_signal and (personal_signal or medical_hits > 0):
+        return {"category": "PAST_SYMPTOM", "confidence": 0.88, "reasons": ["past_only_context"], "suggested_urgency": "low"}
+
+    if other_person_signal and (medical_hits > 0 or _contains_any(text, _signals_for("personal", lang))):
+        return {"category": "OTHER_PERSON_SYMPTOM", "confidence": 0.9, "reasons": ["third_person_context"], "suggested_urgency": "medium"}
+
+    heartbeat_signal = (
+        ("heart" in text and "beat" in text)
+        or ("గుండె" in text and "కొడుతోంది" in text)
+        or ("दिल" in text and "धड़क" in text)
+        or ("இதயம்" in text and "துடிக்க" in text)
+    )
+    if heartbeat_signal:
+        return {"category": "PERSONAL_SYMPTOM", "confidence": 0.91, "reasons": ["heartbeat_symptom_context"], "suggested_urgency": "medium"}
+
+    if personal_signal and medical_hits > 0:
+        return {"category": "PERSONAL_SYMPTOM", "confidence": 0.95, "reasons": ["self_reported_current_symptom"], "suggested_urgency": "medium"}
+
+    if personal_signal and _contains_any(text, MEDICAL_TOPIC_TERMS):
+        return {"category": "PERSONAL_SYMPTOM", "confidence": 0.9, "reasons": ["self_reported_medical_context"], "suggested_urgency": "medium"}
+
+    if medical_hits > 0 and not _contains_any(text, _signals_for("general_info", lang)):
+        return {"category": "MEDICAL_COMPLAINT", "confidence": 0.82, "reasons": ["medical_complaint_without_clear_owner"], "suggested_urgency": "medium"}
+
+    if _contains_any(text, MEDICAL_TOPIC_TERMS):
+        return {"category": "UNCLEAR", "confidence": 0.7, "reasons": ["medical_topic_without_clear_symptom_intent"], "suggested_urgency": "low"}
+
+    return {"category": "NON_MEDICAL", "confidence": 0.9, "reasons": ["no_medical_context"], "suggested_urgency": "low"}
+
+
+def is_medical_symptom_text(symptom_text: str, language: str | None = "en") -> bool:
+    classification = classify_symptom_text(symptom_text, language)
+    return classification.get("category") in ACCEPTED_TRIAGE_CLASSIFICATIONS
 
 
 def infer_department(symptom_text: str) -> str:
@@ -2118,15 +2189,30 @@ def list_symptom_records(status: str | None = None, doctor_id: int | None = None
     return [dict(zip(keys, row)) for row in rows]
 
 
+@app.post("/symptom-records/validate")
+def validate_symptom_record(payload: SymptomValidationPayload):
+    classification = classify_symptom_text(payload.symptom_text, payload.language)
+    category = classification.get("category", "UNCLEAR")
+    return {
+        "ok": category in ACCEPTED_TRIAGE_CLASSIFICATIONS,
+        **classification,
+    }
+
+
 @app.post("/symptom-records", status_code=201)
 def create_symptom_record(payload: SymptomCreatePayload):
     symptom_id = (payload.symptom_id or f"symptom-{int(time.time() * 1000)}").strip()
     if not symptom_id:
         raise HTTPException(status_code=400, detail="symptom_id is required")
-    if not is_medical_symptom_text(payload.symptom_text):
+
+    classification = classify_symptom_text(payload.symptom_text, payload.language)
+    category = classification.get("category", "UNCLEAR")
+    if category == "EMERGENCY":
+        raise HTTPException(status_code=409, detail="validation:EMERGENCY")
+    if category in BLOCKED_TRIAGE_CLASSIFICATIONS:
         raise HTTPException(
             status_code=400,
-            detail="invalid details",
+            detail=f"validation:{category}",
         )
 
     with db_conn() as conn:
@@ -2136,6 +2222,9 @@ def create_symptom_record(payload: SymptomCreatePayload):
             ensure_patient_tables(cur)
             inferred_department = infer_department(payload.symptom_text)
             doctor_summary = summarize_symptoms_for_doctor(payload.symptom_text)
+            effective_urgency = (payload.urgency or "medium").strip() or "medium"
+            if classification.get("suggested_urgency") == "emergency":
+                effective_urgency = "emergency"
 
             normalized_email = ensure_email(payload.patient_email) if payload.patient_email else None
             patient_allergies = ""
@@ -2200,7 +2289,7 @@ def create_symptom_record(payload: SymptomCreatePayload):
                     payload.symptom_text.strip(),
                     doctor_summary,
                     payload.duration_days,
-                    (payload.urgency or "medium").strip(),
+                    effective_urgency,
                     inferred_department,
                     short_lang(payload.language or "en"),
                 ),

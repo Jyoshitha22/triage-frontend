@@ -65,6 +65,33 @@ function isInvalidDetailsError(message) {
   return String(message || '').trim().toLowerCase() === 'invalid details';
 }
 
+function getValidationCategory(message) {
+  const normalized = String(message || '').trim();
+  if (!normalized.toLowerCase().startsWith('validation:')) return '';
+  return normalized.split(':')[1] || '';
+}
+
+function errorKeyForValidationCategory(category) {
+  switch ((category || '').toUpperCase()) {
+    case 'EMERGENCY':
+      return 'symptomEmergencyGuidance';
+    case 'NEGATED_SYMPTOM':
+      return 'symptomNeedsCurrentIssue';
+    case 'PAST_SYMPTOM':
+      return 'symptomPastNeedsCurrent';
+    case 'OTHER_PERSON_SYMPTOM':
+      return 'symptomOnlySelf';
+    case 'GENERAL_MEDICAL_INFORMATION':
+      return 'symptomNotPersonal';
+    case 'NON_MEDICAL':
+      return 'symptomNonMedical';
+    case 'UNCLEAR':
+      return 'symptomClarify';
+    default:
+      return '';
+  }
+}
+
 export default function SymptomRecording() {
   const navigate = useNavigate();
   const { bcp47, t, language } = useLanguage();
@@ -198,8 +225,10 @@ export default function SymptomRecording() {
       const message = String(submitErr?.message || '');
       if (isTransientNetworkError(message)) {
         showErrorKey('symptomServerUnreachable');
+      } else if (getValidationCategory(message)) {
+        showErrorKey(errorKeyForValidationCategory(getValidationCategory(message)) || 'symptomSendFailed');
       } else if (isInvalidDetailsError(message)) {
-        showErrorKey('invalidDetails');
+        showErrorKey('symptomNonMedical');
       } else {
         showErrorKey('symptomSendFailed');
       }
