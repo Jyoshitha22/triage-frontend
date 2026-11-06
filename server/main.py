@@ -864,7 +864,20 @@ def _normalize_text(value: str) -> str:
 
 
 def _contains_any(text: str, phrases: list[str] | set[str]) -> bool:
-    return any(phrase and phrase in text for phrase in phrases)
+    for phrase in phrases:
+        normalized = (phrase or "").strip().lower()
+        if not normalized:
+            continue
+
+        # Match complete words/phrases to avoid substring bugs such as
+        # "no" incorrectly matching inside "nose".
+        parts = [re.escape(part) for part in re.split(r"\s+", normalized) if part]
+        if not parts:
+            continue
+        pattern = r"\s+".join(parts)
+        if re.search(rf"(?<!\w){pattern}(?!\w)", text):
+            return True
+    return False
 
 
 def _medical_keyword_hits(text: str) -> int:
